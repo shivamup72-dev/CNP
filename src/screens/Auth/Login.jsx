@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Container, Card, Button, Row, Col } from "react-bootstrap";
 import colors from "../../assets/css/colors.js";
+import { FaEye, FaEyeSlash } from "react-icons/fa";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -9,6 +10,7 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+  const [showPassword, setShowPassword] = useState(false);
 
   // Track window resize for responsive adjustments
   useEffect(() => {
@@ -141,22 +143,43 @@ const Login = () => {
                 fontSize: responsiveStyles.input.fontSize,
               }}
             />
-            <input
-              type="password"
-              placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              style={{
-                width: "100%",
-                padding: responsiveStyles.input.padding,
-                marginBottom: responsiveStyles.input.marginBottom,
-                border: "1px solid #ccc",
-                borderRadius: "0.5rem",
-                fontSize: responsiveStyles.input.fontSize,
-              }}
-            />
-            
-            <div 
+            <div style={{ position: "relative" }}>
+              <input
+                type={showPassword ? "text" : "password"}
+                placeholder="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                style={{
+                  width: "100%",
+                  padding: responsiveStyles.input.padding,
+                  marginBottom: responsiveStyles.input.marginBottom,
+                  border: "1px solid #ccc",
+                  borderRadius: "0.5rem",
+                  fontSize: responsiveStyles.input.fontSize,
+                  paddingRight: "2.5rem",
+                }}
+              />
+              <div
+                onClick={() => setShowPassword(!showPassword)}
+                style={{
+                  position: "absolute",
+                  right: "10px",
+                  top: "27px",
+                  transform: "translateY(-50%)",
+                  cursor: "pointer",
+                  color: colors.primary_black,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  width: "30px",
+                  height: "30px",
+                }}
+              >
+                {showPassword ? <FaEyeSlash size={18} /> : <FaEye size={18} />}
+              </div>
+            </div>
+
+            <div
               style={{
                 textAlign: "right",
                 marginBottom: "1rem",
@@ -168,7 +191,7 @@ const Login = () => {
             >
               Forgot Password?
             </div>
-            
+
             <Button
               style={{
                 backgroundColor: colors.btncolor,
