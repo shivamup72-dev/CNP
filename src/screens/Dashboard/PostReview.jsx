@@ -87,6 +87,10 @@ const PostReview = ({
   const [editedPost, setEditedPost] = useState(null);
   const [approvingPostId, setApprovingPostId] = useState(null);
   const [showNewPostModal, setShowNewPostModal] = useState(false);
+  const [flagComment, setFlagComment] = useState('');
+  const [deleteComment, setDeleteComment] = useState('');
+  const [deleteReason, setDeleteReason] = useState('Hate speech or discrimination');
+  const [flagReason, setFlagReason] = useState('Hate speech or discrimination');
 
   const navigate = useNavigate();
 
@@ -114,7 +118,7 @@ const PostReview = ({
     const updatedPosts = posts.map(p => {
       if (p.id === selectedPost.id) {
         console.log("Updating post:", p.id, "with flagged: true");
-        return { ...p, flagged: true };
+        return { ...p, flagged: true, flagComment: flagComment, flagReason: flagReason };
       }
       return p;
     });
@@ -126,6 +130,8 @@ const PostReview = ({
     setPosts(updatedPosts);
     setShowFlagModal(false);
     setSelectedPost(null);
+    setFlagComment(''); // Reset the comment
+    setFlagReason('Hate speech or discrimination'); // Reset to default reason
   };
 
   // Handle edit changes
@@ -414,6 +420,19 @@ const PostReview = ({
       setSelectedPost(post);
       setShowFlagModal(true);
     }
+  };
+
+  // Helper function to check if comment is required
+  const isCommentRequired = (reason) => {
+    return reason === 'Other (please specify)';
+  };
+
+  // Helper function to check if action can be confirmed
+  const canConfirmAction = (reason, comment) => {
+    if (isCommentRequired(reason)) {
+      return comment.trim().length > 0;
+    }
+    return true;
   };
 
   return (
@@ -1070,7 +1089,11 @@ const PostReview = ({
       {/* Flag Warning Modal */}
       <Modal
         show={showFlagModal}
-        onHide={() => setShowFlagModal(false)}
+        onHide={() => {
+          setShowFlagModal(false);
+          setFlagComment(''); // Reset the comment when closing
+          setFlagReason('Hate speech or discrimination'); // Reset to default reason
+        }}
         centered
         className="custom-modal"
       >
@@ -1079,7 +1102,11 @@ const PostReview = ({
           <button
             type="button"
             className="btn-close"
-            onClick={() => setShowFlagModal(false)}
+            onClick={() => {
+              setShowFlagModal(false);
+              setFlagComment(''); // Reset the comment when closing
+              setFlagReason('Hate speech or discrimination'); // Reset to default reason
+            }}
             style={{
               position: 'absolute',
               right: '1rem',
@@ -1110,35 +1137,48 @@ const PostReview = ({
             may be suspended or permanently banned.
           </p>
           <p>Please select a reason for flagging this content:</p>
-          <select className="form-select mb-3">
-            <option>Hate speech or discrimination</option>
-            <option>Violence or threatening content</option>
-            <option>Harassment or bullying</option>
-            <option>Misinformation</option>
-            <option>Other (please specify)</option>
+          <select 
+            className="form-select mb-3"
+            value={flagReason}
+            onChange={(e) => setFlagReason(e.target.value)}
+          >
+            <option value="Hate speech or discrimination">Hate speech or discrimination</option>
+            <option value="Violence or threatening content">Violence or threatening content</option>
+            <option value="Harassment or bullying">Harassment or bullying</option>
+            <option value="Misinformation">Misinformation</option>
+            <option value="Spam or irrelevant content">Spam or irrelevant content</option>
+            <option value="Duplicate content">Duplicate content</option>
+            <option value="Other (please specify)">Other (please specify)</option>
           </select>
+          <p>Additional comments:</p>
+          <textarea
+            className="form-control mb-3"
+            rows="3"
+            placeholder={isCommentRequired(flagReason) ? "Please specify the reason for flagging this content..." : "Please provide any additional details about why you are flagging this content..."}
+            value={flagComment}
+            onChange={(e) => setFlagComment(e.target.value)}
+          />
+          {isCommentRequired(flagReason) && !flagComment.trim() && (
+            <p className="text-danger mb-3">Please provide a reason when selecting 'Other'</p>
+          )}
           <p>Do you want to proceed with flagging this post?</p>
         </Modal.Body>
         <Modal.Footer>
           <Button
             variant="secondary"
-            onClick={() => setShowFlagModal(false)}
+            onClick={() => {
+              setShowFlagModal(false);
+              setFlagComment(''); // Reset the comment when closing
+              setFlagReason('Hate speech or discrimination'); // Reset to default reason
+            }}
             style={{ backgroundColor: '#000', borderColor: '#000' }}
           >
             Cancel
           </Button>
           <Button
             variant="danger"
-            onClick={() => {
-              console.log("Confirm flag clicked for post:", selectedPost);
-              // Handle flag confirmation logic here
-              const updatedPosts = posts.map((p) =>
-                p.id === selectedPost.id ? { ...p, flagged: true } : p
-              );
-              console.log("Updated posts after flag:", updatedPosts);
-              setPosts(updatedPosts);
-              setShowFlagModal(false);
-            }}
+            onClick={confirmFlag}
+            disabled={!canConfirmAction(flagReason, flagComment)}
           >
             Confirm Flag
           </Button>
@@ -1148,7 +1188,11 @@ const PostReview = ({
       {/* Delete Confirmation Modal */}
       <Modal
         show={showDeleteModal}
-        onHide={() => setShowDeleteModal(false)}
+        onHide={() => {
+          setShowDeleteModal(false);
+          setDeleteComment(''); // Reset the comment when closing
+          setDeleteReason('Hate speech or discrimination'); // Reset to default reason
+        }}
         centered
         className="custom-modal"
       >
@@ -1157,7 +1201,11 @@ const PostReview = ({
           <button
             type="button"
             className="btn-close"
-            onClick={() => setShowDeleteModal(false)}
+            onClick={() => {
+              setShowDeleteModal(false);
+              setDeleteComment(''); // Reset the comment when closing
+              setDeleteReason('Hate speech or discrimination'); // Reset to default reason
+            }}
             style={{
               position: 'absolute',
               right: '1rem',
@@ -1186,12 +1234,41 @@ const PostReview = ({
               <p className="text-muted mb-0 small">{selectedPost.content}</p>
             </div>
           )}
+          <p>Please select a reason for deletion:</p>
+          <select 
+            className="form-select mb-3"
+            value={deleteReason}
+            onChange={(e) => setDeleteReason(e.target.value)}
+          >
+            <option value="Hate speech or discrimination">Hate speech or discrimination</option>
+            <option value="Violence or threatening content">Violence or threatening content</option>
+            <option value="Harassment or bullying">Harassment or bullying</option>
+            <option value="Misinformation">Misinformation</option>
+            <option value="Spam or irrelevant content">Spam or irrelevant content</option>
+            <option value="Duplicate content">Duplicate content</option>
+            <option value="Other (please specify)">Other (please specify)</option>
+          </select>
+          <p>Additional comments:</p>
+          <textarea
+            className="form-control mb-3"
+            rows="3"
+            placeholder={isCommentRequired(deleteReason) ? "Please specify the reason for deleting this post..." : "Please provide any additional details about why you are deleting this post..."}
+            value={deleteComment}
+            onChange={(e) => setDeleteComment(e.target.value)}
+          />
+          {isCommentRequired(deleteReason) && !deleteComment.trim() && (
+            <p className="text-danger mb-3">Please provide a reason when selecting 'Other'</p>
+          )}
           <p className="text-danger">This action cannot be undone.</p>
         </Modal.Body>
         <Modal.Footer>
           <Button
             variant="secondary"
-            onClick={() => setShowDeleteModal(false)}
+            onClick={() => {
+              setShowDeleteModal(false);
+              setDeleteComment(''); // Reset the comment when closing
+              setDeleteReason('Hate speech or discrimination'); // Reset to default reason
+            }}
             style={{ backgroundColor: '#000', borderColor: '#000' }}
           >
             Cancel
@@ -1200,9 +1277,18 @@ const PostReview = ({
             variant="danger"
             onClick={() => {
               // Handle delete confirmation logic here
-              setPosts(posts.filter((post) => post.id !== selectedPost?.id));
+              const updatedPosts = posts.map(p => {
+                if (p.id === selectedPost?.id) {
+                  return { ...p, isDeleted: true, deleteComment: deleteComment, deleteReason: deleteReason };
+                }
+                return p;
+              });
+              setPosts(updatedPosts);
               setShowDeleteModal(false);
+              setDeleteComment(''); // Reset the comment after deletion
+              setDeleteReason('Hate speech or discrimination'); // Reset to default reason
             }}
+            disabled={!canConfirmAction(deleteReason, deleteComment)}
           >
             Delete Permanently
           </Button>
