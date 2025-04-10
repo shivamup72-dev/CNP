@@ -180,7 +180,17 @@ const PostReview = ({
   // Generate pagination items
   const renderPaginationItems = () => {
     const items = [];
-    console.log(`Rendering pagination for page ${currentPage} of ${totalPages}`);
+    
+    // Calculate actual maximum pages based on the total posts
+    // Use the totalPages prop as it's set based on API response in Dashboard.jsx
+    const maxPages = totalPages;
+    
+    console.log(`Rendering pagination for page ${currentPage} of ${maxPages}`);
+
+    // If there are no pages or just one page, don't render pagination
+    if (maxPages <= 1) {
+      return [];
+    }
 
     // Previous button
     items.push(
@@ -196,61 +206,81 @@ const PostReview = ({
       />
     );
 
-    // First page
-    items.push(
-      <Pagination.Item
-        key={1}
-        active={currentPage === 1}
-        onClick={() => {
-          console.log(`Page 1 clicked, current page: ${currentPage}`);
-          onPageChange(1);
-        }}
-      >
-        1
-      </Pagination.Item>
-    );
-
-    // Ellipsis if needed
-    if (currentPage > 3) {
-      items.push(<Pagination.Ellipsis key="ellipsis1" disabled />);
-    }
-
-    // Pages around current page
-    for (let page = Math.max(2, currentPage - 1); page <= Math.min(totalPages - 1, currentPage + 1); page++) {
-      if (page === 1 || page === totalPages) continue; // Skip first and last pages as they're handled separately
+    // For small number of pages (5 or fewer), just show all page numbers
+    if (maxPages <= 5) {
+      for (let page = 1; page <= maxPages; page++) {
+        items.push(
+          <Pagination.Item
+            key={page}
+            active={currentPage === page}
+            onClick={() => {
+              console.log(`Page ${page} clicked, current page: ${currentPage}`);
+              onPageChange(page);
+            }}
+          >
+            {page}
+          </Pagination.Item>
+        );
+      }
+    } else {
+      // For larger number of pages, use the more complex pagination with ellipses
+      
+      // First page
       items.push(
         <Pagination.Item
-          key={page}
-          active={currentPage === page}
+          key={1}
+          active={currentPage === 1}
           onClick={() => {
-            console.log(`Page ${page} clicked, current page: ${currentPage}`);
-            onPageChange(page);
+            console.log(`Page 1 clicked, current page: ${currentPage}`);
+            onPageChange(1);
           }}
         >
-          {page}
+          1
         </Pagination.Item>
       );
-    }
 
-    // Ellipsis if needed
-    if (currentPage < totalPages - 2) {
-      items.push(<Pagination.Ellipsis key="ellipsis2" disabled />);
-    }
+      // Ellipsis if needed
+      if (currentPage > 3) {
+        items.push(<Pagination.Ellipsis key="ellipsis1" disabled />);
+      }
 
-    // Last page (if there's more than one page)
-    if (totalPages > 1) {
-      items.push(
-        <Pagination.Item
-          key={totalPages}
-          active={currentPage === totalPages}
-          onClick={() => {
-            console.log(`Last page ${totalPages} clicked, current page: ${currentPage}`);
-            onPageChange(totalPages);
-          }}
-        >
-          {totalPages}
-        </Pagination.Item>
-      );
+      // Pages around current page
+      for (let page = Math.max(2, currentPage - 1); page <= Math.min(maxPages - 1, currentPage + 1); page++) {
+        if (page === 1 || page === maxPages) continue; // Skip first and last pages as they're handled separately
+        items.push(
+          <Pagination.Item
+            key={page}
+            active={currentPage === page}
+            onClick={() => {
+              console.log(`Page ${page} clicked, current page: ${currentPage}`);
+              onPageChange(page);
+            }}
+          >
+            {page}
+          </Pagination.Item>
+        );
+      }
+
+      // Ellipsis if needed
+      if (currentPage < maxPages - 2) {
+        items.push(<Pagination.Ellipsis key="ellipsis2" disabled />);
+      }
+
+      // Last page (only if it's different from the first page)
+      if (maxPages > 1) {
+        items.push(
+          <Pagination.Item
+            key={maxPages}
+            active={currentPage === maxPages}
+            onClick={() => {
+              console.log(`Last page ${maxPages} clicked, current page: ${currentPage}`);
+              onPageChange(maxPages);
+            }}
+          >
+            {maxPages}
+          </Pagination.Item>
+        );
+      }
     }
 
     // Next button
@@ -259,11 +289,11 @@ const PostReview = ({
         key="next"
         onClick={() => {
           console.log(`Next button clicked, current page: ${currentPage}`);
-          if (currentPage < totalPages) {
+          if (currentPage < maxPages) {
             onPageChange(currentPage + 1);
           }
         }}
-        disabled={currentPage === totalPages}
+        disabled={currentPage === maxPages}
       />
     );
 
@@ -721,17 +751,24 @@ const PostReview = ({
                     </div>
                   </div>
 
-                  {/* Pagination - Always show when there are posts */}
-                  {getCurrentFilteredPosts().length > 0 && (
+                  {/* Pagination - Only show details when there are posts */}
+                  {getCurrentFilteredPosts().length > 0 ? (
                     <div className="d-flex flex-column align-items-center mt-5 mb-3 px-3">
                       <div className="text-muted small text-center mb-2">
-                        Showing page {currentPage} of {totalPages} (Total posts per page: {getCurrentFilteredPosts().length})
+                        Showing page {currentPage} of {totalPages} (Total posts: {getCurrentFilteredPosts().length})
                       </div>
-                      <div className="w-100 overflow-auto">
-                        <Pagination className="mb-5 flex-wrap justify-content-center">
-                          {renderPaginationItems()}
-                        </Pagination>
-                      </div>
+                      {/* Only render pagination controls when multiple pages exist */}
+                      {totalPages > 1 && (
+                        <div className="w-100 overflow-auto">
+                          <Pagination className="mb-5 flex-wrap justify-content-center">
+                            {renderPaginationItems()}
+                          </Pagination>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="text-center text-muted mt-5 mb-3">
+                      No posts found matching your current filters
                     </div>
                   )}
                 </Card.Body>
@@ -1137,7 +1174,7 @@ const PostReview = ({
             may be suspended or permanently banned.
           </p>
           <p>Please select a reason for flagging this content:</p>
-          <select 
+          <select
             className="form-select mb-3"
             value={flagReason}
             onChange={(e) => setFlagReason(e.target.value)}
@@ -1235,7 +1272,7 @@ const PostReview = ({
             </div>
           )}
           <p>Please select a reason for deletion:</p>
-          <select 
+          <select
             className="form-select mb-3"
             value={deleteReason}
             onChange={(e) => setDeleteReason(e.target.value)}

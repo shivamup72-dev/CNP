@@ -7,6 +7,7 @@ import PrivateRoute from "./components/PrivateRoute";
 import Posts from "./screens/Dashboard/Posts";
 import Demo from "./screens/Demo";
 import PostReview from "./screens/Dashboard/PostReview";
+import AccessControl from "./screens/AccessControl/AccessControl";
 
 const App = () => {
   return (
@@ -25,6 +26,14 @@ const App = () => {
         <Route path="/posts" element={<Posts />} />
         <Route path="/postreview" element={<PostReview />} />
         <Route path="/demo" element={<Demo />} />
+        <Route
+          path="/access-control"
+          element={
+            <PrivateRoute>
+              <AccessControl />
+            </PrivateRoute>
+          }
+        />
       </Routes>
     </Router>
   );

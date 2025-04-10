@@ -37,7 +37,7 @@ import {
   Cell,
 } from "recharts";
 import "../../assets/css/Dashboard.css";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { FaPoll } from "react-icons/fa";
 
 // Comment out the initialPosts
@@ -69,6 +69,7 @@ import { FaPoll } from "react-icons/fa";
 // ];
 
 const Dashboard = () => {
+  const navigate = useNavigate();
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -95,6 +96,29 @@ const Dashboard = () => {
   const [formErrors, setFormErrors] = useState({});
   const [activeFilter, setActiveFilter] = useState("all");
 
+  // Add responsiveness for Access Control Center button
+  useEffect(() => {
+    const handleResize = () => {
+      const accessBtn = document.querySelector('.access-control-btn');
+      if (accessBtn) {
+        if (window.innerWidth < 768) { // Smaller than tablet
+          accessBtn.style.width = '100%';
+        } else {
+          accessBtn.style.width = 'auto';
+        }
+      }
+    };
+
+    // Initial check
+    handleResize();
+
+    // Add event listener
+    window.addEventListener('resize', handleResize);
+
+    // Cleanup
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   useEffect(() => {
     // Fetch posts from API
     const fetchPosts = async () => {
@@ -112,45 +136,39 @@ const Dashboard = () => {
         let totalCount = 0;
 
         if (activeFilter === "all") {
-          // Fetch both pending and approved posts
-          const [pendingResponse, approvedResponse] = await Promise.all([
-            fetch(`https://stage.suniyenetajee.com/api/v1/web/posts/?status=pending&page=${currentPage}&ordering=date_created&page_size=10`, { headers }),
-            fetch(`https://stage.suniyenetajee.com/api/v1/web/posts/?status=approved&page=${currentPage}&ordering=date_created&page_size=10`, { headers })
-          ]);
-
-          if (!pendingResponse.ok || !approvedResponse.ok) {
-            throw new Error(`HTTP error! Status: ${pendingResponse.status} or ${approvedResponse.status}`);
+          // Use the new API endpoint for "all" status
+          apiUrl = `https://stage.suniyenetajee.com/api/v1/web/posts/?status=all&page=${currentPage}&page_size=100`;
+          
+          console.log('Fetching all posts from:', apiUrl);
+          
+          const response = await fetch(apiUrl, { headers });
+          
+          if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
           }
-
-          const pendingData = await pendingResponse.json();
-          const approvedData = await approvedResponse.json();
-
-          console.log('Pending Posts API Response:', {
-            count: pendingData.count,
-            results: pendingData.results,
-            next: pendingData.next,
-            previous: pendingData.previous
+          
+          const data = await response.json();
+          
+          console.log('All Posts API Response:', {
+            count: data.count,
+            results: data.results,
+            next: data.next,
+            previous: data.previous
           });
-
-          console.log('Approved Posts API Response:', {
-            count: approvedData.count,
-            results: approvedData.results,
-            next: approvedData.next,
-            previous: approvedData.previous
-          });
-
-          // Combine the results
-          allPosts = [...pendingData.results, ...approvedData.results];
-          totalCount = pendingData.count + approvedData.count;
-
-          // Set approved post IDs
-          const approvedPostIds = approvedData.results.map(post => post.id);
+          
+          allPosts = data.results;
+          totalCount = data.count;
+          
+          // Extract approved post IDs
+          const approvedPostIds = data.results
+            .filter(post => post.status === "approved")
+            .map(post => post.id);
+            
           setApprovedPosts(approvedPostIds);
-          console.log('Approved Post IDs:', approvedPostIds);
         } else {
           // Use the specific filter
           const status = activeFilter === "approved" ? "approved" : "pending";
-          apiUrl = `https://stage.suniyenetajee.com/api/v1/web/posts/?status=${status}&page=${currentPage}&ordering=date_created&page_size=10`;
+          apiUrl = `https://stage.suniyenetajee.com/api/v1/web/posts/?status=${status}&page=${currentPage}&page_size=100`;
 
           console.log('Fetching posts from:', apiUrl);
 
@@ -180,8 +198,16 @@ const Dashboard = () => {
         }
 
         setTotalPosts(totalCount);
-        setTotalPages(Math.ceil(totalCount / 10));
+        
+        // Calculate total pages based on the API response
+        // For "all" filter, we fetch all posts at once and do client-side pagination
+        const calculatedTotalPages = activeFilter === "all" 
+          ? Math.max(1, Math.ceil(totalCount / 100)) 
+          : Math.max(1, Math.ceil(totalCount / 100));
+        console.log(`Calculated total pages: ${calculatedTotalPages} based on total count: ${totalCount} with filter: ${activeFilter}`);
+        setTotalPages(calculatedTotalPages);
 
+        // Format the posts for display
         const formattedPosts = allPosts.map(post => ({
           id: post.id,
           title: post.description || "No title",
@@ -199,7 +225,14 @@ const Dashboard = () => {
         setPosts(formattedPosts);
       } catch (err) {
         console.error("Error fetching posts:", err);
-        setError("Failed to load posts. Please try again later.");
+        // Handle 404 errors specially for pagination
+        if (err.message.includes("404")) {
+          console.log("Page not found, resetting to page 1");
+          setError("The requested page does not exist because there aren't enough posts to fill this many pages. Showing page 1 instead.");
+          setCurrentPage(1);
+        } else {
+          setError("Failed to load posts. Please try again later.");
+        }
       } finally {
         setLoading(false);
       }
@@ -412,8 +445,22 @@ const Dashboard = () => {
 
   return (
     <Container fluid className="p-4" style={dashboardStyle}>
-      <h4 className="mb-4 fw-bold">Suniye Netaji Admin Dashboard</h4>
-      <p style={{ fontSize: "12px", marginTop: "-15px", marginBottom: "20px" }}>
+      <div className="d-flex justify-content-between align-items-center mb-4 flex-md-row flex-column">
+        <h4 className="fw-bold m-0">Suniye Netaji Admin Dashboard</h4>
+        <Button
+          variant="dark"
+          className="px-3 py-2 mt-md-0 mt-3 access-control-btn"
+          style={{
+            backgroundColor: "#000",
+            borderColor: "#000",
+            fontWeight: "500"
+          }}
+          onClick={() => navigate("/access-control")}
+        >
+          Access Control Center
+        </Button>
+      </div>
+      <p style={{ fontSize: "12px", marginTop: "-5px", marginBottom: "20px" }}>
         Welcome, <span style={{ fontWeight: "bold" }}>Shri Venkateshwara</span>{" "}
         (Reporter) - Delhi
       </p>

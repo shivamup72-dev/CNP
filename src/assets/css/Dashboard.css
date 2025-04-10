@@ -194,6 +194,17 @@
   opacity: 0.9 !important;
 }
 
+/* Access Control Center Button */
+.access-control-btn {
+  transition: width 0.3s ease !important;
+}
+
+@media (max-width: 767.98px) {
+  .access-control-btn {
+    width: 100% !important;
+  }
+}
+
 /* Remove blue outline from form inputs */
 input:focus,
 select:focus,
