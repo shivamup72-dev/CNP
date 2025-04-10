@@ -138,32 +138,32 @@ const Dashboard = () => {
         if (activeFilter === "all") {
           // Use the new API endpoint for "all" status
           apiUrl = `https://stage.suniyenetajee.com/api/v1/web/posts/?status=all&page=${currentPage}&page_size=100`;
-          
+
           console.log('Fetching all posts from:', apiUrl);
-          
+
           const response = await fetch(apiUrl, { headers });
-          
+
           if (!response.ok) {
             throw new Error(`HTTP error! Status: ${response.status}`);
           }
-          
+
           const data = await response.json();
-          
+
           console.log('All Posts API Response:', {
             count: data.count,
             results: data.results,
             next: data.next,
             previous: data.previous
           });
-          
+
           allPosts = data.results;
           totalCount = data.count;
-          
+
           // Extract approved post IDs
           const approvedPostIds = data.results
             .filter(post => post.status === "approved")
             .map(post => post.id);
-            
+
           setApprovedPosts(approvedPostIds);
         } else {
           // Use the specific filter
@@ -198,11 +198,11 @@ const Dashboard = () => {
         }
 
         setTotalPosts(totalCount);
-        
+
         // Calculate total pages based on the API response
         // For "all" filter, we fetch all posts at once and do client-side pagination
-        const calculatedTotalPages = activeFilter === "all" 
-          ? Math.max(1, Math.ceil(totalCount / 100)) 
+        const calculatedTotalPages = activeFilter === "all"
+          ? Math.max(1, Math.ceil(totalCount / 100))
           : Math.max(1, Math.ceil(totalCount / 100));
         console.log(`Calculated total pages: ${calculatedTotalPages} based on total count: ${totalCount} with filter: ${activeFilter}`);
         setTotalPages(calculatedTotalPages);

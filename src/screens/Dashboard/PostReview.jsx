@@ -180,11 +180,11 @@ const PostReview = ({
   // Generate pagination items
   const renderPaginationItems = () => {
     const items = [];
-    
+
     // Calculate actual maximum pages based on the total posts
     // Use the totalPages prop as it's set based on API response in Dashboard.jsx
     const maxPages = totalPages;
-    
+
     console.log(`Rendering pagination for page ${currentPage} of ${maxPages}`);
 
     // If there are no pages or just one page, don't render pagination
@@ -224,7 +224,7 @@ const PostReview = ({
       }
     } else {
       // For larger number of pages, use the more complex pagination with ellipses
-      
+
       // First page
       items.push(
         <Pagination.Item

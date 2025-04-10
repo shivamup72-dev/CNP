@@ -92,7 +92,7 @@ const AccessControl = () => {
       const headers = {
         'Authorization': 'Token 7b257e1452f1115b0c70f80a1d54ccd8615aa52c'
       };
-      
+
       const response = await fetch('https://stage.suniyenetajee.com/api/v1/web/posts/?status=all&page=1&page_size=100', { headers });
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -127,7 +127,7 @@ const AccessControl = () => {
     "ground_zero": "Can view posts from their Zila only. Can view flagged & deleted posts with reasons only of their zila. Cannot edit or delete posts.",
     "city_manager": "Can view both Ground Zero & City posts. Can view flagged & deleted posts with reasons only of their zila and city. Cannot edit or delete posts.",
     "state_manager": "Can view Ground Zero, City & State posts. Can view flagged & deleted posts with reasons only of their zila, city and state, not of others city or state. Cannot edit or delete posts.",
-    "national_manager": "Can view Ground Zero, City, State & National posts. Can view flagged & deleted posts with reasons of all city, state, zila everything. As part of the core team, they can edit and delete users posts but not admin posts.",
+    "national_manager": "Can view Ground Zero, City, State & National posts. Can view flagged & deleted posts with reasons of all city, state, zila everything. Cannot edit or delete posts.",
     "god_admin": "Can view all 5 level's posts. Can view flagged & deleted posts with reasons of all city, state, zila everything. Has full control of adding, editing & deleting all posts of users & admins. Can delete users and admin accounts if needed."
   };
 
@@ -172,9 +172,9 @@ const AccessControl = () => {
   // Format ISO date to readable format
   const formatDate = (isoDate) => {
     const date = new Date(isoDate);
-    return date.toLocaleDateString('en-US', { 
-      year: 'numeric', 
-      month: 'short', 
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
       day: 'numeric',
       hour: '2-digit',
       minute: '2-digit'
@@ -191,11 +191,11 @@ const AccessControl = () => {
         <Button
           variant="light"
           className="me-3 rounded-circle p-2 d-flex align-items-center justify-content-center"
-          style={{ 
-            width: "40px", 
-            height: "40px", 
-            backgroundColor: "#ffffff", 
-            boxShadow: "0 1px 3px rgba(0,0,0,0.1)" 
+          style={{
+            width: "40px",
+            height: "40px",
+            backgroundColor: "#ffffff",
+            boxShadow: "0 1px 3px rgba(0,0,0,0.1)"
           }}
           onClick={() => navigate("/dashboard")}
         >
@@ -249,21 +249,21 @@ const AccessControl = () => {
                   )}
                 </div>
               </div>
-              
+
               {loading && <div className="text-center py-3">Loading posts...</div>}
               {error && <Alert variant="danger">{error}</Alert>}
-              
+
               {!loading && !error && (
                 <div className="table-responsive">
                   <Table hover className="table-bordered">
                     <thead>
                       <tr>
-                        <th className="border-end" style={{width: "5%"}}>#</th>
-                        <th className="border-end" style={{width: "15%"}}>Date</th>
-                        <th className="border-end" style={{width: "30%"}}>Post</th>
-                        <th className="border-end" style={{width: "20%"}}>Author</th>
-                        <th className="border-end" style={{width: "15%"}}>Media</th>
-                        <th style={{width: "15%"}}>Actions</th>
+                        <th className="border-end" style={{ width: "5%" }}>#</th>
+                        <th className="border-end" style={{ width: "15%" }}>Date</th>
+                        <th className="border-end" style={{ width: "30%" }}>Post</th>
+                        <th className="border-end" style={{ width: "20%" }}>Author</th>
+                        <th className="border-end" style={{ width: "15%" }}>Media</th>
+                        <th style={{ width: "15%" }}>Actions</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -274,8 +274,8 @@ const AccessControl = () => {
                           <td className="border-end">
                             {post.description ? post.description : <span className="text-muted">No description</span>}
                             <div className="mt-1">
-                              <Badge 
-                                bg={post.status === "approved" ? "success" : "warning"} 
+                              <Badge
+                                bg={post.status === "approved" ? "success" : "warning"}
                                 className="text-capitalize"
                               >
                                 {post.status}
@@ -285,23 +285,23 @@ const AccessControl = () => {
                           <td className="border-end">
                             <div className="d-flex align-items-center">
                               {post.created_by.picture ? (
-                                <img 
-                                  src={`https://stage.suniyenetajee.com${post.created_by.picture}`} 
+                                <img
+                                  src={`https://stage.suniyenetajee.com${post.created_by.picture}`}
                                   alt={post.created_by.full_name}
                                   className="rounded-circle me-2"
-                                  style={{width: "30px", height: "30px", objectFit: "cover"}}
+                                  style={{ width: "30px", height: "30px", objectFit: "cover" }}
                                 />
                               ) : (
-                                <div 
+                                <div
                                   className="rounded-circle me-2 bg-secondary d-flex align-items-center justify-content-center"
-                                  style={{width: "30px", height: "30px"}}
+                                  style={{ width: "30px", height: "30px" }}
                                 >
                                   <FiUser color="white" size={16} />
                                 </div>
                               )}
                               <div>
                                 <div className="fw-semibold small">{post.created_by.full_name}</div>
-                                <div className="text-muted" style={{fontSize: "0.75rem"}}>ID: {post.created_by.user_id}</div>
+                                <div className="text-muted" style={{ fontSize: "0.75rem" }}>ID: {post.created_by.user_id}</div>
                               </div>
                             </div>
                           </td>
@@ -528,12 +528,12 @@ const AccessControl = () => {
                               variant="outline-primary"
                               size="sm"
                               title="Edit"
-                              disabled={user.role !== "god_admin" && user.role !== "national_manager"}
+                              disabled={user.role !== "god_admin"}
                               style={{
-                                opacity: user.role !== "god_admin" && user.role !== "national_manager" ? 0.5 : 1,
-                                backgroundColor: user.role !== "god_admin" && user.role !== "national_manager" ? "#f5f5f5" : "",
-                                borderColor: user.role !== "god_admin" && user.role !== "national_manager" ? "#e0e0e0" : "",
-                                color: user.role !== "god_admin" && user.role !== "national_manager" ? "#9e9e9e" : ""
+                                opacity: user.role !== "god_admin" ? 0.5 : 1,
+                                backgroundColor: user.role !== "god_admin" ? "#f5f5f5" : "",
+                                borderColor: user.role !== "god_admin" ? "#e0e0e0" : "",
+                                color: user.role !== "god_admin" ? "#9e9e9e" : ""
                               }}
                             >
                               <FiEdit />
@@ -541,13 +541,13 @@ const AccessControl = () => {
                             <Button
                               variant="outline-danger"
                               size="sm"
-                              title={user.role === "god_admin" ? "Delete User/Admin" : user.role === "national_manager" ? "Delete User Only" : "Delete (Restricted)"}
-                              disabled={user.role !== "god_admin" && user.role !== "national_manager"}
+                              title={user.role === "god_admin" ? "Delete User/Admin" : "Delete (Restricted)"}
+                              disabled={user.role !== "god_admin"}
                               style={{
-                                opacity: user.role !== "god_admin" && user.role !== "national_manager" ? 0.5 : 1,
-                                backgroundColor: user.role !== "god_admin" && user.role !== "national_manager" ? "#f5f5f5" : "",
-                                borderColor: user.role !== "god_admin" && user.role !== "national_manager" ? "#e0e0e0" : "",
-                                color: user.role !== "god_admin" && user.role !== "national_manager" ? "#9e9e9e" : ""
+                                opacity: user.role !== "god_admin" ? 0.5 : 1,
+                                backgroundColor: user.role !== "god_admin" ? "#f5f5f5" : "",
+                                borderColor: user.role !== "god_admin" ? "#e0e0e0" : "",
+                                color: user.role !== "god_admin" ? "#9e9e9e" : ""
                               }}
                             >
                               <FiTrash />
@@ -764,10 +764,10 @@ const AccessControl = () => {
                           <span className="me-2 text-success">✓</span> Flagged & deleted posts (all levels)
                         </li>
                         <li className="d-flex align-items-center mb-2">
-                          <span className="me-2 text-success">✓</span> Edit user posts
+                          <span className="me-2 text-danger">✗</span> Edit user posts
                         </li>
                         <li className="d-flex align-items-center mb-2">
-                          <span className="me-2 text-success">✓</span> Delete user posts
+                          <span className="me-2 text-danger">✗</span> Delete user posts
                         </li>
                         <li className="d-flex align-items-center">
                           <span className="me-2 text-danger">✗</span> Edit/delete admin posts
