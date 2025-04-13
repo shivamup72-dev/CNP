@@ -1,14 +1,21 @@
 // src/screens/Demo.jsx
-import { Button } from "@/components/ui/button";
+import React from "react";
+import { Button } from "react-bootstrap";
 
 const Demo = () => {
   const handleClick = () => {
-    alert("Shadcn Button Clicked!");
+    alert("Button Clicked!");
   };
 
   return (
-    <div className="flex justify-center items-center h-screen bg-gray-100">
-      <Button onClick={handleClick} variant="default" size="lg">
+    <div style={{
+      display: "flex",
+      justifyContent: "center",
+      alignItems: "center",
+      height: "100vh",
+      backgroundColor: "#f8f9fa"
+    }}>
+      <Button onClick={handleClick} variant="primary" size="lg">
         Click Me
       </Button>
     </div>

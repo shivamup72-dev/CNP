@@ -19,6 +19,15 @@ const Login = () => {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
+  // Clear authentication on login page load to ensure a clean state
+  useEffect(() => {
+    console.log("Login screen mounted, ensuring clean auth state");
+    // Only clear auth if we're actually on the login page (not just passing through a redirect)
+    if (window.location.pathname === '/') {
+      localStorage.removeItem("auth");
+    }
+  }, []);
+
   // Responsive style calculations
   const getResponsiveStyles = () => {
     // Mobile breakpoint
@@ -53,8 +62,27 @@ const Login = () => {
   const responsiveStyles = getResponsiveStyles();
 
   const handleLogin = async () => {
-    // Uncomment this for API usage
+    // Reset error state
+    setError("");
+    console.log("Login attempt with:", { email, password });
+
+    // Validation
+    if (!email || !password) {
+      setError("Email and password are required");
+      return;
+    }
+
     try {
+      console.log("Setting auth token in localStorage");
+      localStorage.setItem("auth", "true");
+      console.log("Auth token set:", localStorage.getItem("auth"));
+
+      console.log("Navigating to dashboard...");
+      navigate("/dashboard");
+      console.log("Navigation to dashboard initiated");
+
+      // Uncomment the API code below when backend is ready
+      /*
       const response = await fetch("https://stage.suniyenetajee.com/api/v1/web/login/", {
         method: "POST",
         headers: {
@@ -63,13 +91,9 @@ const Login = () => {
         body: JSON.stringify({ email, password }),
       });
 
-      // Log the raw response status and headers
       console.log('Login API Response Status:', response.status);
-      console.log('Login API Response Headers:', Object.fromEntries([...response.headers.entries()]));
-
+      
       const data = await response.json();
-
-      // Log the parsed response data
       console.log('Login API Response Data:', data);
 
       if (response.ok) {
@@ -79,12 +103,11 @@ const Login = () => {
       } else {
         setError(data.message || "Invalid credentials. Please try again.");
       }
+      */
     } catch (error) {
-      console.error('Login API Error:', error);
+      console.error('Login error:', error);
       setError("Something went wrong. Please try again later.");
     }
-
-    // navigate("/dashboard");
   };
 
   return (

@@ -1,21 +1,26 @@
-/* Dashboard.css */
+/* Dashboard.css - Optimized */
 
 /* General Styles */
 .container {
   padding: 20px;
 }
 
-/* Stats Cards */
-.stat-card {
+/* Common card styles */
+.stat-card,
+.manage-posts .post-card {
   border-radius: 10px;
-  padding: 20px;
-  text-align: left;
   transition: 0.3s ease-in-out;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
-.stat-card:hover {
+.stat-card:hover,
+.manage-posts .post-card:hover {
   transform: translateY(-5px);
+}
+
+/* Icons */
+.stat-icon {
+  font-size: 24px;
 }
 
 .stat-icon-container {
@@ -27,23 +32,9 @@
   border-radius: 50%;
 }
 
-.stat-icon {
-  font-size: 24px;
-}
-
-/* Manage Posts Section */
+/* Posts Management */
 .manage-posts {
   margin-top: 30px;
-}
-
-.manage-posts .post-card {
-  border-radius: 10px;
-  transition: 0.3s ease-in-out;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
-
-.manage-posts .post-card:hover {
-  transform: translateY(-5px);
 }
 
 .post-actions {
@@ -54,33 +45,36 @@
   margin-top: 0 !important;
 }
 
-/* Table Alignment */
 .table-aligned-with-header {
   margin-top: 0;
   width: 100%;
 }
 
-/* Custom Admin Buttons */
+/* Button styles */
 .custom-admin-btn:focus,
 .custom-admin-btn:active,
-.custom-admin-btn:hover {
-  background-color: #ffffff !important;
+.custom-admin-btn:hover,
+.btn-black,
+.btn-black:hover,
+.btn-black:focus,
+.btn-black:active {
+  background-color: #000 !important;
+  border-color: #000 !important;
+  color: white !important;
+  opacity: 0.9 !important;
   box-shadow: none !important;
-  color: #212529 !important;
 }
 
 /* Modal Styles */
 .custom-modal .modal-header,
-.modal-header {
-  border-bottom: none !important;
-}
-
 .custom-modal .modal-footer,
+.modal-header,
 .modal-footer {
-  border-top: none !important;
+  border: none !important;
 }
 
-/* Modal Close Button */
+/* Close buttons */
+.modal-header button.btn-close,
 .custom-modal .modal-header .btn-close {
   background-color: #000 !important;
   color: white !important;
@@ -91,35 +85,10 @@
   opacity: 1.0 !important;
   border: none !important;
   box-shadow: none !important;
+  outline: none !important;
   margin-right: 0 !important;
-  outline: none !important;
 }
 
-.custom-modal .modal-header .btn-close:hover {
-  opacity: 0.9 !important;
-  background-color: #000 !important;
-}
-
-.custom-modal .modal-header .btn-close:focus {
-  box-shadow: none !important;
-  outline: none !important;
-}
-
-/* Target all modal close buttons */
-.modal-header button.btn-close {
-  background-color: #000 !important;
-  color: white !important;
-  border-radius: 4px !important;
-  padding: 0.25rem !important;
-  width: 24px !important;
-  height: 24px !important;
-  opacity: 1.0 !important;
-  border: none !important;
-  box-shadow: none !important;
-  outline: none !important;
-}
-
-/* Additional style to make the X visible on black background */
 .custom-modal .modal-header .btn-close::after {
   content: "×";
   color: white;
@@ -129,19 +98,6 @@
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-}
-
-/* Modal Footer Buttons */
-.custom-modal .modal-footer .btn-secondary {
-  background-color: #000 !important;
-  border-color: #000 !important;
-  color: white !important;
-}
-
-.custom-modal .modal-footer .btn-secondary:hover {
-  background-color: #000 !important;
-  border-color: #000 !important;
-  opacity: 0.9 !important;
 }
 
 /* Charts */
@@ -156,7 +112,7 @@
   justify-content: center;
 }
 
-/* Recent Users */
+/* User Items */
 .recent-user-item {
   display: flex;
   align-items: center;
@@ -179,22 +135,7 @@
   font-weight: bold;
 }
 
-/* Black Button Styling */
-.btn-black {
-  background-color: #000 !important;
-  border-color: #000 !important;
-  color: white !important;
-}
-
-.btn-black:hover,
-.btn-black:focus,
-.btn-black:active {
-  background-color: #000 !important;
-  border-color: #000 !important;
-  opacity: 0.9 !important;
-}
-
-/* Access Control Center Button */
+/* Responsive Access Control Button */
 .access-control-btn {
   transition: width 0.3s ease !important;
 }
@@ -205,7 +146,7 @@
   }
 }
 
-/* Remove blue outline from form inputs */
+/* Form elements */
 input:focus,
 select:focus,
 textarea:focus,
@@ -224,7 +165,7 @@ table.table th {
   vertical-align: middle !important;
 }
 
-/* Pagination Styles - Black Theme */
+/* Pagination */
 .pagination {
   margin-top: 1rem;
   display: flex;
@@ -251,15 +192,7 @@ table.table th {
 }
 
 .pagination .page-link:hover {
-  color: #000 !important;
-  background-color: #e9ecef !important;
-  border-color: #dee2e6 !important;
-  transform: translateY(-1px);
-}
-
-.pagination .page-link:focus {
-  box-shadow: 0 0 0 0.25rem rgba(0, 0, 0, 0.25) !important;
-  outline: none;
+  background-color: #f8f9fa !important;
 }
 
 .pagination .page-item.disabled .page-link {
@@ -267,10 +200,4 @@ table.table th {
   background-color: #fff !important;
   border-color: #dee2e6 !important;
   cursor: not-allowed;
-}
-
-/* Ellipsis styles */
-.pagination .page-item.disabled .page-link {
-  pointer-events: none;
-  background-color: #fff !important;
 }

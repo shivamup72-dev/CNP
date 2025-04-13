@@ -1,0 +1,195 @@
+/* Button base styles */
+.custom-responsive-btn {
+  white-space: nowrap;
+  font-size: 0.75rem;
+  padding: 0.25rem 0.5rem;
+  line-height: 1.3;
+  min-height: 32px;
+}
+
+/* Media query styles for different screen sizes */
+/* Extra small phones (< 320px) */
+@media screen and (max-width: 320px) {
+  .custom-responsive-btn {
+    font-size: 0.6rem !important;
+    padding: 0.15rem 0.3rem !important;
+    line-height: 1 !important;
+    min-height: 28px !important;
+  }
+
+  /* Make icons smaller */
+  .custom-responsive-btn svg {
+    width: 0.8em;
+    height: 0.8em;
+  }
+}
+
+/* Small phones (< 375px) */
+@media screen and (min-width: 321px) and (max-width: 375px) {
+  .custom-responsive-btn {
+    font-size: 0.65rem !important;
+    padding: 0.15rem 0.35rem !important;
+    line-height: 1.1 !important;
+    min-height: 28px !important;
+  }
+
+  .custom-responsive-btn svg {
+    width: 0.85em;
+    height: 0.85em;
+  }
+}
+
+/* Phones (< 576px) */
+@media screen and (min-width: 376px) and (max-width: 576px) {
+  .custom-responsive-btn {
+    font-size: 0.68rem !important;
+    padding: 0.2rem 0.4rem !important;
+    line-height: 1.1 !important;
+    min-height: 30px !important;
+  }
+
+  .custom-responsive-btn svg {
+    width: 0.9em;
+    height: 0.9em;
+  }
+}
+
+/* Tablets (< 768px) */
+@media screen and (min-width: 577px) and (max-width: 768px) {
+  .custom-responsive-btn {
+    font-size: 0.7rem !important;
+    padding: 0.2rem 0.45rem !important;
+    line-height: 1.2 !important;
+  }
+}
+
+/* Small desktops/tablets (< 992px) */
+@media screen and (min-width: 769px) and (max-width: 992px) {
+  .custom-responsive-btn {
+    font-size: 0.72rem !important;
+    padding: 0.25rem 0.5rem !important;
+  }
+}
+
+/* Make sure overflowing text shows ellipsis */
+.custom-responsive-btn {
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
+/* Ensure proper spacing for buttons with icons */
+.custom-responsive-btn svg+span,
+.custom-responsive-btn span+svg {
+  margin-left: 4px;
+}
+
+/* Special handling for buttons in dense layouts */
+.custom-responsive-btn.btn-sm {
+  padding-left: 0.25rem !important;
+  padding-right: 0.25rem !important;
+}
+
+/* Enable touch-friendly tapping on mobile */
+@media (max-width: 576px) {
+  .custom-responsive-btn {
+    touch-action: manipulation;
+  }
+}
+
+/* Custom Pagination Styles for Mobile */
+.custom-mobile-pagination {
+  margin: 0 1px !important;
+  border-width: 1px !important;
+  overflow: hidden !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+@media (max-width: 576px) {
+  .custom-mobile-pagination {
+    max-width: 24px !important;
+    min-width: 24px !important;
+    height: 24px !important;
+    padding: 0 !important;
+    font-size: 0.7rem !important;
+  }
+  
+  .pagination-sm .page-link {
+    padding: 0.1rem 0.2rem !important;
+    font-size: 0.7rem !important;
+    line-height: 1 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    max-width: 24px !important;
+    height: 24px !important;
+  }
+  
+  .pagination {
+    gap: 1px;
+  }
+  
+  /* Fix background color and text overflow issues */
+  .page-item.active .page-link {
+    z-index: 3;
+    color: #fff;
+    background-color: #000 !important;
+    border-color: #000 !important;
+    width: 100% !important;
+    height: 100% !important;
+    text-align: center !important;
+  }
+  
+  /* Ensure borders are visible and consistent */
+  .page-item .page-link {
+    border: 1px solid #000 !important;
+    width: 100% !important;
+    height: 100% !important;
+  }
+}
+
+/* Special styles for specific buttons */
+.custom-responsive-btn.access-control-btn {
+  padding: 0.4rem 1.2rem !important;
+  margin: 0.5rem 0 !important;
+  font-weight: 500 !important;
+  min-width: 200px !important;
+}
+
+/* For small screens, maintain some extra padding */
+@media (max-width: 576px) {
+  .custom-responsive-btn.access-control-btn {
+    padding: 0.3rem 0.8rem !important;
+    margin: 0.4rem 0 !important;
+    min-width: 180px !important;
+  }
+}
+
+/* For very small screens */
+@media (max-width: 320px) {
+  .custom-responsive-btn.access-control-btn {
+    padding: 0.25rem 0.7rem !important;
+    margin: 0.3rem 0 !important;
+    min-width: 150px !important;
+  }
+}
+
+/* Special styles for filter buttons */
+.custom-responsive-btn.filter-btn {
+  padding: 0.3rem 1.2rem !important;
+  margin: 0.2rem 0 !important;
+}
+
+/* Special styles for new post button */
+.custom-responsive-btn.new-post-btn {
+  padding: 0.3rem 1.2rem !important;
+  margin: 0.2rem 0 !important;
+}
+
+@media (max-width: 576px) {
+  .custom-responsive-btn.filter-btn, 
+  .custom-responsive-btn.new-post-btn {
+    padding: 0.25rem 0.9rem !important;
+  }
+}

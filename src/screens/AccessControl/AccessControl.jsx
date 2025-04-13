@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Container, Row, Col, Card, Button, Table, Badge, Tabs, Tab, Nav, Alert } from "react-bootstrap";
+import { Container, Row, Col, Card, Button, Table, Badge, Tabs, Tab, Nav, Alert, Pagination } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 import {
   FiUsers,
@@ -18,6 +18,7 @@ import {
   FiFileText,
   FiImage
 } from "react-icons/fi";
+import PostSection from "../Dashboard/postSection/PostSection.jsx";
 import "../../assets/css/Dashboard.css";
 
 const AccessControl = () => {
@@ -28,6 +29,11 @@ const AccessControl = () => {
   const [postsData, setPostsData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [currentPostsPage, setCurrentPostsPage] = useState(1);
+  const [approvedPostIds, setApprovedPostIds] = useState([]);
+  const [formattedPosts, setFormattedPosts] = useState([]);
+  const [totalPages, setTotalPages] = useState(1);
+  const [activeFilter, setActiveFilter] = useState("all");
 
   // Sample users data
   const [users, setUsers] = useState([
@@ -84,7 +90,7 @@ const AccessControl = () => {
   ]);
 
   // Function to fetch posts data from API
-  const fetchPostsData = async () => {
+  const fetchPostsData = async (page = 1) => {
     setLoading(true);
     setError(null);
     try {
@@ -92,13 +98,48 @@ const AccessControl = () => {
       const headers = {
         'Authorization': 'Token 7b257e1452f1115b0c70f80a1d54ccd8615aa52c'
       };
-
-      const response = await fetch('https://stage.suniyenetajee.com/api/v1/web/posts/?status=all&page=1&page_size=100', { headers });
+      
+      // Determine the API URL based on the activeFilter
+      let apiUrl = `https://stage.suniyenetajee.com/api/v1/web/posts?status=all`;
+      
+      if (activeFilter === "pending") {
+        apiUrl = `https://stage.suniyenetajee.com/api/v1/web/posts?status=pending`;
+      }
+      
+      console.log(`Fetching posts with ${activeFilter} filter using URL: ${apiUrl}`);
+      
+      const response = await fetch(apiUrl, { headers });
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       const data = await response.json();
+      console.log('API Response:', data);
+      
+      // Format the posts for PostSection component
+      const formattedPosts = data.results.map(post => ({
+        id: post.id,
+        title: post.description || "No title",
+        content: post.description || "No content",
+        author: post.created_by.full_name,
+        date: new Date(post.date_created).toISOString().split('T')[0],
+        date_created: post.date_created,
+        flagged: post.flagged || false,
+        image: post.media.length > 0 ? `https://stage.suniyenetajee.com${post.media[0].media}` : null,
+        authorImage: post.created_by.picture ? `https://stage.suniyenetajee.com${post.created_by.picture}` : null,
+        isApproved: post.status === "approved"
+      }));
+      
+      setFormattedPosts(formattedPosts);
+      
+      // Extract approved post IDs
+      const approvedIds = data.results
+        .filter(post => post.status === "approved")
+        .map(post => post.id);
+      setApprovedPostIds(approvedIds);
+      
       setPostsData(data);
+      setCurrentPostsPage(page);
+      setTotalPages(Math.max(1, Math.ceil(data.count / 100)));
       setActiveTab("posts");
     } catch (e) {
       console.error("Error fetching posts:", e);
@@ -172,13 +213,88 @@ const AccessControl = () => {
   // Format ISO date to readable format
   const formatDate = (isoDate) => {
     const date = new Date(isoDate);
-    return date.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
+    return date.toLocaleDateString('en-US', { 
+      year: 'numeric', 
+      month: 'short', 
       day: 'numeric',
       hour: '2-digit',
       minute: '2-digit'
     });
+  };
+
+  // Handle page change for post review component
+  const handlePageChange = (page) => {
+    console.log(`Changing to page ${page}`);
+    fetchPostsData(page);
+    // Scroll to top of the table when page changes
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // Handle filter change for post review component
+  const handleFilterChange = (filter) => {
+    console.log("Access Control: Changing filter to:", filter);
+    setActiveFilter(filter);
+    
+    // Determine the API URL based on the filter
+    let apiUrl = `https://stage.suniyenetajee.com/api/v1/web/posts?status=all`;
+    
+    if (filter === "pending") {
+      apiUrl = `https://stage.suniyenetajee.com/api/v1/web/posts?status=pending`;
+    }
+    
+    console.log(`Fetching posts with ${filter} filter using URL: ${apiUrl}`);
+    
+    // Reset to page 1 when changing filters
+    const headers = {
+      'Authorization': 'Token 7b257e1452f1115b0c70f80a1d54ccd8615aa52c'
+    };
+    
+    fetch(apiUrl, { headers })
+      .then(response => {
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+      })
+      .then(data => {
+        console.log(`Fetched ${data.count} posts`);
+        
+        // Format the posts
+        const formattedPosts = data.results.map(post => ({
+          id: post.id,
+          title: post.description || "No title",
+          content: post.description || "No content",
+          author: post.created_by.full_name,
+          date: new Date(post.date_created).toISOString().split('T')[0],
+          date_created: post.date_created,
+          flagged: post.flagged || false,
+          image: post.media.length > 0 ? `https://stage.suniyenetajee.com${post.media[0].media}` : null,
+          authorImage: post.created_by.picture ? `https://stage.suniyenetajee.com${post.created_by.picture}` : null,
+          isApproved: post.status === "approved"
+        }));
+        
+        setFormattedPosts(formattedPosts);
+        
+        // Extract approved post IDs
+        const approvedIds = data.results
+          .filter(post => post.status === "approved")
+          .map(post => post.id);
+        setApprovedPostIds(approvedIds);
+        
+        setPostsData(data);
+        setCurrentPostsPage(1);
+        setTotalPages(Math.max(1, Math.ceil(data.count / 100)));
+        setActiveTab("posts");
+      })
+      .catch(error => {
+        console.error("Error fetching posts:", error);
+      });
+  };
+  
+  // Handle post updates
+  const handlePostsUpdate = (updatedPosts) => {
+    console.log("Access Control: Updating posts:", updatedPosts);
+    setFormattedPosts(updatedPosts);
   };
 
   return (
@@ -237,121 +353,29 @@ const AccessControl = () => {
       {activeTab === "posts" && postsData && (
         <>
           <Card className="shadow-sm border-0 mb-4">
-            <Card.Body>
-              <div className="d-flex justify-content-between align-items-center mb-3">
-                <h5 className="fw-bold mb-0">All Posts</h5>
-                <div className="d-flex gap-2">
-                  <span className="text-muted">Total: {postsData.count}</span>
-                  {postsData.next && (
-                    <Button variant="outline-primary" size="sm">
-                      Load More
-                    </Button>
-                  )}
+            <Card.Body className="p-0">
+              {loading && (
+                <div className="text-center py-5">
+                  {/* Loading spinner removed as requested */}
                 </div>
-              </div>
-
-              {loading && <div className="text-center py-3">Loading posts...</div>}
-              {error && <Alert variant="danger">{error}</Alert>}
-
-              {!loading && !error && (
-                <div className="table-responsive">
-                  <Table hover className="table-bordered">
-                    <thead>
-                      <tr>
-                        <th className="border-end" style={{ width: "5%" }}>#</th>
-                        <th className="border-end" style={{ width: "15%" }}>Date</th>
-                        <th className="border-end" style={{ width: "30%" }}>Post</th>
-                        <th className="border-end" style={{ width: "20%" }}>Author</th>
-                        <th className="border-end" style={{ width: "15%" }}>Media</th>
-                        <th style={{ width: "15%" }}>Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {postsData.results.map(post => (
-                        <tr key={post.id}>
-                          <td className="border-end">{post.id}</td>
-                          <td className="border-end">{formatDate(post.date_created)}</td>
-                          <td className="border-end">
-                            {post.description ? post.description : <span className="text-muted">No description</span>}
-                            <div className="mt-1">
-                              <Badge
-                                bg={post.status === "approved" ? "success" : "warning"}
-                                className="text-capitalize"
-                              >
-                                {post.status}
-                              </Badge>
-                            </div>
-                          </td>
-                          <td className="border-end">
-                            <div className="d-flex align-items-center">
-                              {post.created_by.picture ? (
-                                <img
-                                  src={`https://stage.suniyenetajee.com${post.created_by.picture}`}
-                                  alt={post.created_by.full_name}
-                                  className="rounded-circle me-2"
-                                  style={{ width: "30px", height: "30px", objectFit: "cover" }}
-                                />
-                              ) : (
-                                <div
-                                  className="rounded-circle me-2 bg-secondary d-flex align-items-center justify-content-center"
-                                  style={{ width: "30px", height: "30px" }}
-                                >
-                                  <FiUser color="white" size={16} />
-                                </div>
-                              )}
-                              <div>
-                                <div className="fw-semibold small">{post.created_by.full_name}</div>
-                                <div className="text-muted" style={{ fontSize: "0.75rem" }}>ID: {post.created_by.user_id}</div>
-                              </div>
-                            </div>
-                          </td>
-                          <td className="border-end">
-                            {post.media && post.media.length > 0 ? (
-                              <div className="d-flex align-items-center">
-                                <FiImage className="me-2" />
-                                <span>{post.media.length} media item{post.media.length !== 1 ? 's' : ''}</span>
-                              </div>
-                            ) : (
-                              <span className="text-muted">No media</span>
-                            )}
-                          </td>
-                          <td>
-                            <div className="d-flex gap-2">
-                              <Button
-                                variant="outline-dark"
-                                size="sm"
-                                title="View Details"
-                              >
-                                <FiEye />
-                              </Button>
-                              <Button
-                                variant="outline-primary"
-                                size="sm"
-                                title="Edit Post"
-                              >
-                                <FiEdit />
-                              </Button>
-                              <Button
-                                variant="outline-danger"
-                                size="sm"
-                                title="Delete Post"
-                              >
-                                <FiTrash />
-                              </Button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                      {postsData.results.length === 0 && (
-                        <tr>
-                          <td colSpan="6" className="text-center py-4">
-                            No posts found
-                          </td>
-                        </tr>
-                      )}
-                    </tbody>
-                  </Table>
-                </div>
+              )}
+              
+              {error && <Alert variant="danger" className="m-3">{error}</Alert>}
+              
+              {!loading && !error && postsData && formattedPosts && (
+                <PostSection
+                  posts={formattedPosts}
+                  setPosts={handlePostsUpdate}
+                  currentPage={currentPostsPage}
+                  totalPages={totalPages}
+                  onPageChange={handlePageChange}
+                  totalPosts={postsData.count}
+                  approvedPosts={approvedPostIds}
+                  setApprovedPosts={setApprovedPostIds}
+                  activeFilter={activeFilter}
+                  onFilterChange={handleFilterChange}
+                  inDashboard={true}
+                />
               )}
             </Card.Body>
           </Card>
@@ -439,7 +463,57 @@ const AccessControl = () => {
                   variant="outline-dark"
                   className="d-flex align-items-center flex-grow-1 flex-md-grow-0"
                   size="sm"
-                  onClick={fetchPostsData}
+                  onClick={() => {
+                    // Reset to page 1, set filter to "all", and fetch all posts
+                    setActiveFilter("all");
+                    console.log("All Posts button clicked - fetching all posts");
+                    
+                    // Use the explicit API call with status=all
+                    const headers = {
+                      'Authorization': 'Token 7b257e1452f1115b0c70f80a1d54ccd8615aa52c'
+                    };
+                    
+                    fetch(`https://stage.suniyenetajee.com/api/v1/web/posts?status=all`, { headers })
+                      .then(response => {
+                        if (!response.ok) {
+                          throw new Error(`HTTP error! status: ${response.status}`);
+                        }
+                        return response.json();
+                      })
+                      .then(data => {
+                        console.log(`Fetched ${data.count} posts`);
+                        
+                        // Format the posts
+                        const formattedPosts = data.results.map(post => ({
+                          id: post.id,
+                          title: post.description || "No title",
+                          content: post.description || "No content",
+                          author: post.created_by.full_name,
+                          date: new Date(post.date_created).toISOString().split('T')[0],
+                          date_created: post.date_created,
+                          flagged: post.flagged || false,
+                          image: post.media.length > 0 ? `https://stage.suniyenetajee.com${post.media[0].media}` : null,
+                          authorImage: post.created_by.picture ? `https://stage.suniyenetajee.com${post.created_by.picture}` : null,
+                          isApproved: post.status === "approved"
+                        }));
+                        
+                        setFormattedPosts(formattedPosts);
+                        
+                        // Extract approved post IDs
+                        const approvedIds = data.results
+                          .filter(post => post.status === "approved")
+                          .map(post => post.id);
+                        setApprovedPostIds(approvedIds);
+                        
+                        setPostsData(data);
+                        setCurrentPostsPage(1);
+                        setTotalPages(Math.max(1, Math.ceil(data.count / 100)));
+                        setActiveTab("posts");
+                      })
+                      .catch(error => {
+                        console.error("Error fetching posts:", error);
+                      });
+                  }}
                 >
                   <FiFileText className="me-1" /> All Posts
                 </Button>
