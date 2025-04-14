@@ -1,25 +1,88 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Modal, Button, Form } from 'react-bootstrap';
 import { formatDate } from '../../utils/DateUtility';
+import API from '../../api/endpoint';
 
 const DeleteModal = ({
   show = false,
   onHide,
   selectedPost,
-  deleteReason = "Hate speech or discrimination",
+  deleteReason = "",
   setDeleteReason,
+  deleteReasonId = null,
+  setDeleteReasonId,
   deleteComment = "",
   setDeleteComment,
   onConfirmDelete,
   canConfirmAction = () => true,
 }) => {
-  if (!show) return null;
+  const [reasons, setReasons] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [remarkRequired, setRemarkRequired] = useState(false);
+
+  // Fetch reasons when modal shows
+  useEffect(() => {
+    if (show) {
+      fetchReasons();
+    }
+  }, [show]);
+
+  const fetchReasons = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await API.getAdminChoices('post');
+      setReasons(data);
+      
+      // Set default reason if reasons are loaded and current reason is empty
+      if (data.length > 0 && !deleteReason) {
+        setDeleteReason(data[0].name);
+        setDeleteReasonId(data[0].id);
+        setRemarkRequired(data[0].is_remark_require);
+      }
+    } catch (err) {
+      console.error('Error fetching deletion reasons:', err);
+      setError('Failed to load deletion reasons');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Update remark requirement when reason changes
+  const handleReasonChange = (e) => {
+    const selectedReasonName = e.target.value;
+    setDeleteReason(selectedReasonName);
+    
+    // Find the selected reason object to get ID and remark requirement
+    const reasonObj = reasons.find(r => r.name === selectedReasonName);
+    if (reasonObj) {
+      setDeleteReasonId(reasonObj.id);
+      setRemarkRequired(reasonObj.is_remark_require);
+    }
+  };
 
   const handleClose = () => {
     onHide?.();
     setDeleteComment?.('');
-    setDeleteReason?.('Hate speech or discrimination');
+    if (reasons.length > 0) {
+      setDeleteReason?.(reasons[0].name);
+      setDeleteReasonId?.(reasons[0].id);
+    } else {
+      setDeleteReason?.('');
+      setDeleteReasonId?.(null);
+    }
   };
+
+  const isFormValid = () => {
+    // If remarks are required, comment must be provided
+    if (remarkRequired && !deleteComment.trim()) {
+      return false;
+    }
+    return true;
+  };
+
+  if (!show) return null;
 
   return (
     <Modal show={show} onHide={handleClose} centered size="lg" className="custom-modal">
@@ -103,32 +166,47 @@ const DeleteModal = ({
           </div>
         )}
 
-        <p>Please select a reason for deleting this post:</p>
-        <select
-          className="form-select mb-3"
-          value={deleteReason}
-          onChange={(e) => setDeleteReason?.(e.target.value)}
-        >
-          <option>Hate speech or discrimination</option>
-          <option>Violence or threatening content</option>
-          <option>Harassment or bullying</option>
-          <option>Misinformation</option>
-          <option>Other (please specify)</option>
-        </select>
+        {loading ? (
+          <div className="text-center py-3">Loading reasons...</div>
+        ) : error ? (
+          <div className="alert alert-danger">{error}</div>
+        ) : (
+          <>
+            <p>Please select a reason for deleting this post:</p>
+            <select
+              className="form-select mb-3"
+              value={deleteReason}
+              onChange={handleReasonChange}
+              disabled={reasons.length === 0}
+            >
+              {reasons.length === 0 ? (
+                <option>No reasons available</option>
+              ) : (
+                reasons.map(reason => (
+                  <option key={reason.id} value={reason.name}>
+                    {reason.name}
+                  </option>
+                ))
+              )}
+            </select>
 
-        <div className="mb-3">
-          <label className="form-label">
-            Comment (required) <span className="text-danger fw-bold">*</span>
-          </label>
-          <textarea
-            className="form-control"
-            rows={3}
-            value={deleteComment}
-            onChange={(e) => setDeleteComment?.(e.target.value)}
-            placeholder="Please explain why you are deleting this post..."
-          />
-          <small className="text-muted">Your explanation helps us maintain quality standards.</small>
-        </div>
+            {remarkRequired && (
+              <div className="mb-3">
+                <label className="form-label">
+                  Comment (required) <span className="text-danger fw-bold">*</span>
+                </label>
+                <textarea
+                  className="form-control"
+                  rows={3}
+                  value={deleteComment}
+                  onChange={(e) => setDeleteComment?.(e.target.value)}
+                  placeholder="Please explain why you are deleting this post..."
+                />
+                <small className="text-muted">Your explanation helps us maintain quality standards.</small>
+              </div>
+            )}
+          </>
+        )}
 
         <p className="text-danger">This action cannot be undone.</p>
       </Modal.Body>
@@ -137,7 +215,11 @@ const DeleteModal = ({
         <Button variant="secondary" onClick={handleClose} style={{ backgroundColor: '#000', borderColor: '#000' }}>
           Cancel
         </Button>
-        <Button variant="danger" onClick={onConfirmDelete} disabled={!canConfirmAction(deleteReason, deleteComment)}>
+        <Button 
+          variant="danger" 
+          onClick={onConfirmDelete} 
+          disabled={loading || reasons.length === 0 || !isFormValid()}
+        >
           Delete Permanently
         </Button>
       </Modal.Footer>

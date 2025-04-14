@@ -48,8 +48,10 @@ const PostSection = ({
   // Form states
   const [flagComment, setFlagComment] = useState('');
   const [deleteComment, setDeleteComment] = useState('');
-  const [flagReason, setFlagReason] = useState('Hate speech or discrimination');
-  const [deleteReason, setDeleteReason] = useState('Hate speech or discrimination');
+  const [flagReason, setFlagReason] = useState('');
+  const [flagReasonId, setFlagReasonId] = useState(null);
+  const [deleteReason, setDeleteReason] = useState('');
+  const [deleteReasonId, setDeleteReasonId] = useState(null);
   const [loading, setLoading] = useState(false);
   const [formErrors, setFormErrors] = useState({});
   const [newPost, setNewPost] = useState({
@@ -84,11 +86,23 @@ const PostSection = ({
   const confirmFlag = () => {
     if (!selectedPost) return;
     setPosts(posts.map(p => p.id === selectedPost.id ?
-      { ...p, flagged: true, flagComment, flagReason } : p));
+      { 
+        ...p, 
+        flagged: true, 
+        flagComment, 
+        flagReason, 
+        flagReasonId,
+        flagReasonData: {
+          id: flagReasonId,
+          name: flagReason,
+          comment: flagComment
+        }
+      } : p));
     setShowFlagModal(false);
     setSelectedPost(null);
     setFlagComment('');
-    setFlagReason('Hate speech or discrimination');
+    setFlagReason('');
+    setFlagReasonId(null);
   };
 
   // Edit functions
@@ -220,8 +234,13 @@ const PostSection = ({
 
   const isAdminPost = () => false;
 
-  const canConfirmAction = (reason, comment) => {
-    return reason !== 'Other (please specify)' || comment.trim().length > 0;
+  const canConfirmAction = (reason, comment, isRemarkRequired) => {
+    // If remark is required, comment must not be empty
+    if (isRemarkRequired && !comment.trim()) {
+      return false;
+    }
+    // Otherwise it's valid
+    return true;
   };
 
   // Filtered posts based on active filter
@@ -307,11 +326,14 @@ const PostSection = ({
           onHide={() => {
             setShowFlagModal(false);
             setFlagComment('');
-            setFlagReason('Hate speech or discrimination');
+            setFlagReason('');
+            setFlagReasonId(null);
           }}
           selectedPost={selectedPost}
           flagReason={flagReason}
           setFlagReason={setFlagReason}
+          flagReasonId={flagReasonId}
+          setFlagReasonId={setFlagReasonId}
           flagComment={flagComment}
           setFlagComment={setFlagComment}
           confirmFlag={confirmFlag}
@@ -323,19 +345,34 @@ const PostSection = ({
           onHide={() => {
             setShowDeleteModal(false);
             setDeleteComment('');
-            setDeleteReason('Hate speech or discrimination');
+            setDeleteReason('');
+            setDeleteReasonId(null);
           }}
           selectedPost={selectedPost}
           deleteReason={deleteReason}
           setDeleteReason={setDeleteReason}
+          deleteReasonId={deleteReasonId}
+          setDeleteReasonId={setDeleteReasonId}
           deleteComment={deleteComment}
           setDeleteComment={setDeleteComment}
           onConfirmDelete={() => {
             setPosts(posts.map(p => p.id === selectedPost?.id ?
-              { ...p, isDeleted: true, deleteComment, deleteReason } : p));
+              { 
+                ...p, 
+                isDeleted: true, 
+                deleteComment, 
+                deleteReason,
+                deleteReasonId,
+                deleteReasonData: {
+                  id: deleteReasonId,
+                  name: deleteReason,
+                  comment: deleteComment
+                }
+              } : p));
             setShowDeleteModal(false);
             setDeleteComment('');
-            setDeleteReason('Hate speech or discrimination');
+            setDeleteReason('');
+            setDeleteReasonId(null);
           }}
           canConfirmAction={canConfirmAction}
         />

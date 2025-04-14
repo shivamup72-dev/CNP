@@ -1,7 +1,7 @@
 // API Configuration
 const API = {
   // Base URLs
-  BASE_URL: 'https://stage.suniyenetajee.com/api/v1',
+  BASE_URL: 'https://stage.suniyenetajee.com',
 
   // Auth headers
   AUTH_TOKEN: '7b257e1452f1115b0c70f80a1d54ccd8615aa52c',
@@ -10,12 +10,15 @@ const API = {
   }),
 
   // Image URL helper
-  getImageUrl: (path) => path ? `https://stage.suniyenetajee.com${path}` : null,
+  getImageUrl: (path) => {
+    if (!path) return null;
+    return path.startsWith('http') ? path : `${API.BASE_URL}${path}`;
+  },
 
   // Endpoints
   ENDPOINTS: {
     // Posts
-    POSTS: '/web/posts',
+    POSTS: '/api/v1/web/posts',
     POST_DETAIL: (id) => `/web/posts/${id}`,
     POST_APPROVE: (id) => `/web/posts/${id}/approve`,
     POST_FLAG: (id) => `/web/posts/${id}/flag`,
@@ -32,6 +35,27 @@ const API = {
 
     // Access Control
     ACCESS_CONTROL: '/web/access-control',
+
+    // New endpoint for fetching admin choices
+    ADMIN_CHOICES: '/api/v1/web/global-admin-choice'
+  },
+
+  // Fetch admin choices for a specific type
+  getAdminChoices: async (type = 'post') => {
+    try {
+      const response = await fetch(`${API.BASE_URL}${API.ENDPOINTS.ADMIN_CHOICES}?applicable_for=${type}`, {
+        headers: API.getHeaders()
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch admin choices: ${response.status}`);
+      }
+      
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching admin choices:', error);
+      return [];
+    }
   }
 };
 
