@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Login from "./screens/Auth/Login";
 import ForgotPassword from "./screens/Auth/ForgotPassword";
@@ -9,12 +9,6 @@ import AccessControl from "./screens/AccessControl/AccessControl";
 import ProtectedLayout from "./auth/ProtectedLayout";
 
 const App = () => {
-  // Log when the app renders
-  useEffect(() => {
-    console.log("App component rendered");
-    console.log("Auth status:", localStorage.getItem("auth"));
-  }, []);
-
   return (
     <Router>
       <Routes>

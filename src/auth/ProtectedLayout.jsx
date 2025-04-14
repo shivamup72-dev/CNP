@@ -13,19 +13,11 @@ const ProtectedLayout = () => {
   // Check if user is authenticated by looking for the auth token in localStorage
   const isAuthenticated = localStorage.getItem("auth") === "true";
 
-  console.log("ProtectedLayout: Initializing with auth =", isAuthenticated);
-
-  // Log authentication state for debugging
+  // Handle authentication state
   useEffect(() => {
-    console.log("ProtectedLayout: Authentication state:", isAuthenticated);
-    console.log("ProtectedLayout: Raw auth value:", localStorage.getItem("auth"));
-
     // If not authenticated, navigate to login
     if (!isAuthenticated) {
-      console.log("Not authenticated, redirecting to login");
       navigate("/");
-    } else {
-      console.log("User is authenticated, proceeding to protected content");
     }
 
     // Mark authentication as checked to avoid multiple redirects
@@ -34,7 +26,6 @@ const ProtectedLayout = () => {
 
   // During initial render, show nothing while authentication is being checked
   if (!authChecked) {
-    console.log("Auth check in progress, showing loading state");
     return (
       <div
         style={{
@@ -53,12 +44,10 @@ const ProtectedLayout = () => {
 
   // If not authenticated, redirect to login page
   if (!isAuthenticated) {
-    console.log("Auth check complete: Not authenticated, redirecting to login");
     return <Navigate to="/" />;
   }
 
   // If authenticated, render the outlet which will render the nested child routes
-  console.log("Auth check complete: User authenticated, rendering protected content");
   return (
     <div
       className="protected-container"
