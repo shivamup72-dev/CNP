@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import "../../../assets/css/Dashboard.css";
-import { Container, Row, Col } from "react-bootstrap";
+import { Container, Row, Col, InputGroup, Form } from "react-bootstrap";
+import { FaSearch } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import DeleteModal from '../../../components/modals/DeleteModal';
 import FlagModal from '../../../components/modals/FlagModal';
@@ -25,7 +26,8 @@ const PostSection = ({
   onFilterChange,
   ordering = "newest",
   onOrderingChange,
-  error = null
+  error = null,
+  searchPosts
 }) => {
   const navigate = useNavigate();
 
@@ -40,6 +42,8 @@ const PostSection = ({
   const [editedPost, setEditedPost] = useState(null);
   const [isEditMode, setIsEditMode] = useState(false);
   const [approvingPostId, setApprovingPostId] = useState(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [isSearching, setIsSearching] = useState(false);
 
   // Form states
   const [flagComment, setFlagComment] = useState('');
@@ -180,6 +184,30 @@ const PostSection = ({
     }
   };
 
+  // Search function
+  const handleSearch = (term) => {
+    setSearchTerm(term);
+    // Set searching state if term is not empty
+    if (term.trim()) {
+      setIsSearching(true);
+    }
+    
+    // Reset to page 1 when searching
+    if (onPageChange) {
+      onPageChange(1);
+    }
+    
+    // Call the parent's search function if provided
+    if (searchPosts) {
+      searchPosts(term, activeFilter);
+      
+      // Clear the searching state after a short delay
+      setTimeout(() => {
+        setIsSearching(false);
+      }, 300);
+    }
+  };
+
   // Helper functions
   const getUserAvatar = (post) => {
     if (post?.authorImage &&
@@ -211,6 +239,24 @@ const PostSection = ({
   return (
     <div>
       <Container fluid className="p-0">
+        {/* Search bar when in dashboard mode */}
+        {inDashboard && (
+          <div className="mb-3 px-2">
+            <InputGroup>
+              <InputGroup.Text id="search-addon">
+                <FaSearch />
+              </InputGroup.Text>
+              <Form.Control
+                placeholder="Search posts..."
+                aria-label="Search"
+                aria-describedby="search-addon"
+                value={searchTerm}
+                onChange={(e) => handleSearch(e.target.value)}
+              />
+            </InputGroup>
+          </div>
+        )}
+        
         <Row className="g-4">
           {/* Posts Under Review Card - Left Side */}
           <Col lg={inDashboard ? 12 : 8}>
@@ -237,6 +283,7 @@ const PostSection = ({
               error={error}
               ordering={ordering}
               onOrderingChange={onOrderingChange}
+              isSearching={isSearching}
             />
           </Col>
 
@@ -247,6 +294,7 @@ const PostSection = ({
                 activeFilter={activeFilter}
                 handleFilterButtonClick={handleFilterButtonClick}
                 handleAllClick={handleAllClick}
+                searchPosts={handleSearch}
               />
               <QuickAdminActions />
             </Col>

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import "../../../assets/css/Dashboard.css";
 import { Card, Row, Col } from "react-bootstrap";
 import { FaSearch, FaFlag, FaCheck, FaListUl } from "react-icons/fa";
@@ -8,10 +8,13 @@ import BootstrapButton from "../../../components/common/BootstrapButton";
 const FilterAndModeration = ({
   activeFilter,
   handleFilterButtonClick,
-  handleAllClick
+  handleAllClick,
+  searchPosts
 }) => {
   // State for tracking hover
   const [hoveredButton, setHoveredButton] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const searchTimeoutRef = useRef(null);
 
   // Common style for button borders
   const buttonStyle = (buttonName, isActive, bgColor) => ({
@@ -33,6 +36,33 @@ const FilterAndModeration = ({
     justifyContent: "center"
   });
 
+  const handleSearch = (e) => {
+    const value = e.target.value;
+    setSearchTerm(value);
+    
+    // Clear existing timeout
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+    
+    // Set a new timeout to debounce the search
+    searchTimeoutRef.current = setTimeout(() => {
+      // Call the searchPosts function with the search term after debounce
+      if (searchPosts) {
+        searchPosts(value, activeFilter);
+      }
+    }, 500); // 500ms debounce
+  };
+
+  // Clean up the timeout when component unmounts
+  useEffect(() => {
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
+  }, []);
+
   return (
     <Card className="shadow-sm border-0 mb-4">
       <Card.Body>
@@ -44,6 +74,8 @@ const FilterAndModeration = ({
             type="text"
             placeholder="Search by keyword..."
             className="form-control ps-5"
+            value={searchTerm}
+            onChange={handleSearch}
             style={{
               color: "#212529",
               fontSize: "13px",

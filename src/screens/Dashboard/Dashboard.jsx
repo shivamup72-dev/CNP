@@ -35,6 +35,7 @@ const Dashboard = () => {
     title: '', content: '', author: '', category: '', image: '', imageFile: null, imagePreview: ''
   });
   const [ordering, setOrdering] = useState("newest"); // Default to newest
+  const [searchTerm, setSearchTerm] = useState(""); // Add search term state
 
   const [modalState, setModalState] = useState({
     flag: { show: false, reason: "Hate speech or discrimination", comment: "" },
@@ -83,71 +84,92 @@ const Dashboard = () => {
     }
   };
 
-  useEffect(() => {
-    (async () => {
-      try {
+  // Function to fetch posts from API with search capability
+  const fetchPosts = useCallback(async (search = "", showLoader = true) => {
+    try {
+      if (showLoader) {
         setLoading(true);
-        // Map the filter to the correct status value
-        const statusMap = {
-          "all": "all",
-          "approved": "approved",
-          "under-review": "pending",
-          "flagged": "red_flag",
-          "deleted": "rejected"
-        };
+      }
+      // Map the filter to the correct status value
+      const statusMap = {
+        "all": "all",
+        "approved": "approved",
+        "under-review": "pending",
+        "flagged": "red_flag",
+        "deleted": "rejected"
+      };
 
-        const status = statusMap[activeFilter] || "all";
-        const url = `${API.BASE_URL}${API.ENDPOINTS.POSTS}?status=${status}&ordering=${ordering}`;
-        console.log(`[DASHBOARD] API Request: GET ${url}`);
-        const res = await fetch(url, { headers: API.getHeaders() });
-        if (!res.ok) throw new Error("Failed to fetch posts");
-        const data = await res.json();
-        console.log(`[DASHBOARD] API Response:`, {
-          url: url,
-          status: res.status,
-          count: data.count,
-          results: data.results,
-          next: data.next,
-          previous: data.previous,
-          ordering: ordering
-        });
+      const status = statusMap[activeFilter] || "all";
+      let url = `${API.BASE_URL}${API.ENDPOINTS.POSTS}?status=${status}&ordering=${ordering}`;
+      
+      // Add search parameter if provided
+      if (search) {
+        url += `&search=${encodeURIComponent(search)}`;
+      }
+      
+      console.log(`[DASHBOARD] API Request: GET ${url}`);
+      const res = await fetch(url, { headers: API.getHeaders() });
+      if (!res.ok) throw new Error("Failed to fetch posts");
+      const data = await res.json();
+      console.log(`[DASHBOARD] API Response:`, {
+        url: url,
+        status: res.status,
+        count: data.count,
+        results: data.results,
+        next: data.next,
+        previous: data.previous,
+        ordering: ordering,
+        search: search
+      });
 
-        const approved = data.results.map(p => p.id);
-        setApprovedPosts(approved);
-        setTotalPosts(data.count);
-        setTotalPages(Math.max(1, Math.ceil(data.count / 100)));
+      const approved = data.results.map(p => p.id);
+      setApprovedPosts(approved);
+      setTotalPosts(data.count);
+      setTotalPages(Math.max(1, Math.ceil(data.count / 100)));
 
-        const formattedPosts = data.results.map(p => ({
-          id: p.id,
-          title: p.description || "No title",
-          content: p.description || "No content",
-          author: p.created_by.full_name,
-          image: p.media.length ? API.getImageUrl(p.media[0].media) : null,
-          post_status: p.post_status,
-          date: formatDate(p.date_created),
-          date_created: p.date_created,
-          age: formatPostAge(p.date_created),
-          ageColor: getPostAgeColor(p.date_created),
-          flagged: p.flagged || false,
-          flagReason: p.flagReason,
-          flagComment: p.flagComment,
-          authorImage: API.getImageUrl(p.created_by.picture),
-          isApproved: p.post_status === "approved"
-        }));
+      const formattedPosts = data.results.map(p => ({
+        id: p.id,
+        title: p.description || "No title",
+        content: p.description || "No content",
+        author: p.created_by.full_name,
+        image: p.media.length ? API.getImageUrl(p.media[0].media) : null,
+        post_status: p.post_status,
+        date: formatDate(p.date_created),
+        date_created: p.date_created,
+        age: formatPostAge(p.date_created),
+        ageColor: getPostAgeColor(p.date_created),
+        flagged: p.flagged || false,
+        flagReason: p.flagReason,
+        flagComment: p.flagComment,
+        authorImage: API.getImageUrl(p.created_by.picture),
+        isApproved: p.post_status === "approved"
+      }));
 
-        setPosts(formattedPosts);
-      } catch (err) {
-        console.error(`[DASHBOARD] API Error:`, {
-          url: url,
-          error: err.message,
-          stack: err.stack
-        });
-        setError("Failed to load posts. Please try again later.");
-      } finally {
+      setPosts(formattedPosts);
+      setError(null);
+    } catch (err) {
+      console.error(`[DASHBOARD] API Error:`, {
+        error: err.message,
+        stack: err.stack
+      });
+      setError("Failed to load posts. Please try again later.");
+    } finally {
+      if (showLoader) {
         setLoading(false);
       }
-    })();
-  }, [currentPage, activeFilter, ordering]);
+    }
+  }, [activeFilter, ordering]);
+
+  // Search posts function to be passed to PostSection - don't show loader during search
+  const searchPosts = (term, filter) => {
+    setSearchTerm(term);
+    // Use false for showLoader parameter to prevent full refresh
+    fetchPosts(term, false);
+  };
+
+  useEffect(() => {
+    fetchPosts(searchTerm);
+  }, [fetchPosts, currentPage, activeFilter, ordering, searchTerm]);
 
   const statsCardsData = [
     { title: "Total Users", value: "1,234", icon: <FiUsers />, color: "primary" },
@@ -208,6 +230,7 @@ const Dashboard = () => {
             ordering={ordering}
             onOrderingChange={setOrdering}
             error={error}
+            searchPosts={searchPosts}
           />
         </>
       )}

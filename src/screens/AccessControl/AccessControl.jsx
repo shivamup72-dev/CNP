@@ -91,8 +91,10 @@ const AccessControl = () => {
   ]);
 
   // Function to fetch posts data from API
-  const fetchPostsData = async (page = 1) => {
-    setLoading(true);
+  const fetchPostsData = async (page = 1, search = "", showLoader = true) => {
+    if (showLoader) {
+      setLoading(true);
+    }
     setError(null);
     try {
       // Add Authorization header with the token
@@ -100,8 +102,13 @@ const AccessControl = () => {
         'Authorization': 'Token 7b257e1452f1115b0c70f80a1d54ccd8615aa52c'
       };
 
-      // API URL with status filter
-      const apiUrl = `https://stage.suniyenetajee.com/api/v1/web/posts?status=${activeFilter}`;
+      // API URL with status filter and search if provided
+      let apiUrl = `https://stage.suniyenetajee.com/api/v1/web/posts?status=${activeFilter}`;
+      
+      // Add search parameter if provided
+      if (search) {
+        apiUrl += `&search=${encodeURIComponent(search)}`;
+      }
 
       console.log(`[GET POST BY STATUS API] Fetching posts with status: ${activeFilter}`);
       console.log(`[GET POST BY STATUS API] Request URL: ${apiUrl}`);
@@ -146,7 +153,9 @@ const AccessControl = () => {
         setError(`Failed to fetch posts: ${e.message}`);
       }
     } finally {
-      setLoading(false);
+      if (showLoader) {
+        setLoading(false);
+      }
     }
   };
 
@@ -218,60 +227,23 @@ const AccessControl = () => {
   const handleFilterChange = (filter) => {
     console.log("Access Control: Changing filter to:", filter);
     setActiveFilter(filter);
-
-    // API URL with the selected filter
-    const apiUrl = `https://stage.suniyenetajee.com/api/v1/web/posts?status=${filter}`;
-
-    console.log(`Fetching posts with ${filter} filter using URL: ${apiUrl}`);
-
-    // Reset to page 1 when changing filters
-    const headers = {
-      'Authorization': 'Token 7b257e1452f1115b0c70f80a1d54ccd8615aa52c'
-    };
-
-    fetch(apiUrl, { headers })
-      .then(response => {
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        return response.json();
-      })
-      .then(data => {
-        console.log(`Fetched ${data.count} posts`);
-
-        // Format the posts
-        const formattedPosts = data.results.map(post => ({
-          id: post.id.toString(),
-          title: post.description || post.message || "No title",
-          content: post.description || post.message || "No content",
-          author: post.user?.name || post.created_by?.full_name || "Unknown",
-          date: formatDate(post.date_created),
-          date_created: post.date_created,
-          flagged: post.flagged || false,
-          post_status: post.status,
-          image: post.media && post.media.length ? API.getImageUrl(post.media[0].media) : post.image || null
-        }));
-
-        setFormattedPosts(formattedPosts);
-
-        // Set approved post IDs directly from API response
-        const approvedIds = data.results.map(post => post.id);
-        setApprovedPostIds(approvedIds);
-
-        setPostsData(data);
-        setCurrentPostsPage(1);
-        setTotalPages(Math.max(1, Math.ceil(data.count / 100)));
-        setActiveTab("posts");
-      })
-      .catch(error => {
-        console.error("Error fetching posts:", error);
-      });
+    
+    // Use the fetchPostsData function directly with the current search term
+    fetchPostsData(1, searchTerm);
   };
 
   // Handle post updates
   const handlePostsUpdate = (updatedPosts) => {
     console.log("Access Control: Updating posts:", updatedPosts);
     setFormattedPosts(updatedPosts);
+  };
+
+  // Search posts function to handle search term updates
+  const searchPosts = (term, filter) => {
+    console.log("Access Control: Searching posts with term:", term);
+    
+    // Fetch posts with the search term but don't show loader
+    fetchPostsData(1, term, false);
   };
 
   return (
@@ -351,6 +323,7 @@ const AccessControl = () => {
                   onFilterChange={handleFilterChange}
                   inDashboard={true}
                   error={error}
+                  searchPosts={searchPosts}
                 />
               )}
             </Card.Body>

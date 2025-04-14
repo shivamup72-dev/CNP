@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import "../../../assets/css/Dashboard.css";
 import { Card } from "react-bootstrap";
 import { FaCheck, FaListUl } from "react-icons/fa";
@@ -52,8 +52,11 @@ const ManagePost = ({
   error = null,
   ordering = "newest",
   onOrderingChange,
+  onSearch,
+  isSearching
 }) => {
   const [selectedButton, setSelectedButton] = useState(ordering === "newest" ? 'New' : 'Old');
+  const [localIsSearching, setLocalIsSearching] = useState(false);
 
   const handleButtonClick = (button) => {
     setSelectedButton(button);
@@ -181,6 +184,7 @@ const ManagePost = ({
               setShowDeleteModal={setShowDeleteModal}
               approvingPostId={approvingPostId}
               error={error}
+              isSearching={isSearching || localIsSearching}
             />
           </div>
 

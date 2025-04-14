@@ -1,5 +1,5 @@
 import React from "react";
-import { Table } from "react-bootstrap";
+import { Table, Spinner } from "react-bootstrap";
 import { FaCheck } from "react-icons/fa";
 import { FiTrash, FiFlag } from "react-icons/fi";
 import Button from "../../../components/common/BootstrapButton";
@@ -15,7 +15,8 @@ const PostTable = ({
     handleFlagButtonClick,
     setShowDeleteModal,
     approvingPostId,
-    error = null
+    error = null,
+    isSearching = false
 }) => {
     // Common table cell style for consistency
     const tableCellStyle = {
@@ -33,11 +34,30 @@ const PostTable = ({
 
     return (
         <div className="table-responsive">
+            {isSearching && (
+                <div style={{
+                    position: "absolute",
+                    top: "10px",
+                    right: "10px",
+                    zIndex: 1000,
+                    background: "rgba(255,255,255,0.9)",
+                    padding: "5px 10px",
+                    borderRadius: "4px",
+                    boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+                    display: "flex",
+                    alignItems: "center",
+                    fontSize: "12px"
+                }}>
+                    <Spinner animation="border" size="sm" variant="primary" className="me-2" />
+                    <span>Searching...</span>
+                </div>
+            )}
             <div style={{
                 borderRadius: "5px",
                 overflow: "hidden",
                 border: "1px solid #e0e0e0",
-                boxShadow: "none"
+                boxShadow: "none",
+                position: "relative"
             }}>
                 <Table hover responsive className="mb-0" style={{
                     border: "none",
