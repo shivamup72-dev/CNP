@@ -48,7 +48,8 @@ const ManagePost = ({
   getCurrentFilteredPosts,
   filteredPosts,
   getUserAvatar,
-  setShowNewPostModal
+  setShowNewPostModal,
+  error = null
 }) => {
   const getFilterTitle = () => {
     const titles = {
@@ -130,6 +131,7 @@ const ManagePost = ({
               handleFlagButtonClick={handleFlagButtonClick}
               setShowDeleteModal={setShowDeleteModal}
               approvingPostId={approvingPostId}
+              error={error}
             />
           </div>
 

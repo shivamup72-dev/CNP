@@ -21,9 +21,11 @@ const FilterAndModeration = ({
         ? bgColor
         : "#ffffff",
     color: isActive ? "#ffffff" : "#000000",
-    borderColor: "#6c757d",
+    borderColor: isActive ? bgColor : "#dee2e6",
+    borderWidth: "1px",
+    borderStyle: "solid",
     gap: "8px",
-    transition: "background-color 0.2s ease",
+    transition: "all 0.2s ease",
     height: "100%",
     minHeight: "38px",
     display: "flex",
@@ -120,14 +122,14 @@ const FilterAndModeration = ({
           {/* Flagged Posts Button */}
           <Col xs={6} sm={6} md={6}>
             <BootstrapButton
-              variant={activeFilter === "flagged" ? "danger" : "light"}
+              variant={activeFilter === "flagged" ? "primary" : "light"}
               className="w-100"
-              style={buttonStyle("flagged", activeFilter === "flagged", "#dc3545")}
+              style={buttonStyle("flagged", activeFilter === "flagged", "#0d6efd")}
               onClick={() => handleFilterButtonClick("flagged")}
               onMouseEnter={() => setHoveredButton("flagged")}
               onMouseLeave={() => setHoveredButton(null)}
             >
-              <FiFlag style={{ color: activeFilter === "flagged" ? "#ffffff" : "#dc3545", marginRight: "8px" }} />
+              <FiFlag style={{ color: activeFilter === "flagged" ? "#ffffff" : "#0d6efd", marginRight: "8px" }} />
               <span className="d-none d-sm-inline">Flagged Posts</span>
               <span className="d-inline d-sm-none">Flagged</span>
             </BootstrapButton>
@@ -136,14 +138,14 @@ const FilterAndModeration = ({
           {/* Deleted Posts Button */}
           <Col xs={12} sm={12} md={12}>
             <BootstrapButton
-              variant={activeFilter === "deleted" ? "secondary" : "light"}
+              variant={activeFilter === "deleted" ? "danger" : "light"}
               className="w-100"
-              style={buttonStyle("deleted", activeFilter === "deleted", "#6c757d")}
+              style={buttonStyle("deleted", activeFilter === "deleted", "#dc3545")}
               onClick={() => handleFilterButtonClick("deleted")}
               onMouseEnter={() => setHoveredButton("deleted")}
               onMouseLeave={() => setHoveredButton(null)}
             >
-              <FiTrash style={{ color: activeFilter === "deleted" ? "#ffffff" : "#6c757d", marginRight: "8px" }} />
+              <FiTrash style={{ color: activeFilter === "deleted" ? "#ffffff" : "#dc3545", marginRight: "8px" }} />
               <span>Deleted Posts</span>
             </BootstrapButton>
           </Col>

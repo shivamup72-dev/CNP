@@ -335,9 +335,7 @@ const AccessControl = () => {
                 </div>
               )}
 
-              {error && <Alert variant="danger" className="m-3">{error}</Alert>}
-
-              {!loading && !error && postsData && formattedPosts && (
+              {!loading && postsData && formattedPosts && (
                 <PostSection
                   posts={formattedPosts}
                   setPosts={handlePostsUpdate}
@@ -350,6 +348,7 @@ const AccessControl = () => {
                   activeFilter={activeFilter}
                   onFilterChange={handleFilterChange}
                   inDashboard={true}
+                  error={error}
                 />
               )}
             </Card.Body>

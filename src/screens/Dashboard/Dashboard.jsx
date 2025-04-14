@@ -128,8 +128,6 @@ const Dashboard = () => {
 
       {loading ? (
         <div className="text-center p-5">Loading...</div>
-      ) : error ? (
-        <div className="alert alert-danger">{error}</div>
       ) : (
         <PostSection
           posts={posts}
@@ -142,6 +140,7 @@ const Dashboard = () => {
           onPageChange={setCurrentPage}
           activeFilter={activeFilter}
           onFilterChange={setActiveFilter}
+          error={error}
         />
       )}
 

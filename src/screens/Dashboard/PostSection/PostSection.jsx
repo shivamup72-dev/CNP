@@ -22,7 +22,8 @@ const PostSection = ({
   approvedPosts = [],
   setApprovedPosts,
   activeFilter = "pending",
-  onFilterChange
+  onFilterChange,
+  error = null
 }) => {
   const navigate = useNavigate();
 
@@ -231,6 +232,7 @@ const PostSection = ({
               filteredPosts={filteredPosts}
               getUserAvatar={getUserAvatar}
               setShowNewPostModal={setShowNewPostModal}
+              error={error}
             />
           </Col>
 

@@ -14,7 +14,8 @@ const PostTable = ({
     handleApprovePost,
     handleFlagButtonClick,
     setShowDeleteModal,
-    approvingPostId
+    approvingPostId,
+    error = null
 }) => {
     // Common table cell style for consistency
     const tableCellStyle = {
@@ -54,7 +55,15 @@ const PostTable = ({
                         </tr>
                     </thead>
                     <tbody>
-                        {getCurrentFilteredPosts().length === 0 ? (
+                        {error ? (
+                            <tr>
+                                <td colSpan="7" className="text-center py-4 text-danger">
+                                    <div className="alert alert-danger mb-0">
+                                        {error}
+                                    </div>
+                                </td>
+                            </tr>
+                        ) : getCurrentFilteredPosts().length === 0 ? (
                             <tr>
                                 <td colSpan="7" className="text-center py-4">No posts available</td>
                             </tr>
