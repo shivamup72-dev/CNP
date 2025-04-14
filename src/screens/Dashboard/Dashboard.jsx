@@ -56,8 +56,8 @@ const Dashboard = () => {
         if (!res.ok) throw new Error("Failed to fetch posts");
         const data = await res.json();
 
-        const approved = data.results.filter(p => p.status === "approved").map(p => p.id);
-        setApprovedPosts(activeFilter === "all" ? approved : []);
+        const approved = data.results.map(p => p.id);
+        setApprovedPosts(approved);
         setTotalPosts(data.count);
         setTotalPages(Math.max(1, Math.ceil(data.count / 100)));
 
@@ -67,7 +67,7 @@ const Dashboard = () => {
           content: p.description || "No content",
           author: p.created_by.full_name,
           image: p.media.length ? API.getImageUrl(p.media[0].media) : null,
-          post_status: p.status === "approved" ? "approved" : "pending",
+          post_status: p.status,
           date: formatDate(p.date_created),
           date_created: p.date_created,
           flagged: p.flagged || false,

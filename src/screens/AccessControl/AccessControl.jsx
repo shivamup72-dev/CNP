@@ -100,12 +100,8 @@ const AccessControl = () => {
         'Authorization': 'Token 7b257e1452f1115b0c70f80a1d54ccd8615aa52c'
       };
 
-      // Determine the API URL based on the activeFilter
-      let apiUrl = `https://stage.suniyenetajee.com/api/v1/web/posts?status=all`;
-
-      if (activeFilter === "pending") {
-        apiUrl = `https://stage.suniyenetajee.com/api/v1/web/posts?status=pending`;
-      }
+      // API URL with status filter
+      const apiUrl = `https://stage.suniyenetajee.com/api/v1/web/posts?status=${activeFilter}`;
 
       console.log(`Fetching posts with ${activeFilter} filter using URL: ${apiUrl}`);
 
@@ -125,16 +121,14 @@ const AccessControl = () => {
         date: formatDate(post.date_created),
         date_created: post.date_created,
         flagged: post.flagged || false,
-        post_status: post.status || "pending",
+        post_status: post.status,
         image: post.media && post.media.length ? API.getImageUrl(post.media[0].media) : post.image || null
       }));
 
       setFormattedPosts(formattedPosts);
 
-      // Extract approved post IDs
-      const approvedIds = data.results
-        .filter(post => post.status === "approved")
-        .map(post => post.id);
+      // Set approved post IDs directly from API response
+      const approvedIds = data.results.map(post => post.id);
       setApprovedPostIds(approvedIds);
 
       setPostsData(data);
@@ -223,12 +217,8 @@ const AccessControl = () => {
     console.log("Access Control: Changing filter to:", filter);
     setActiveFilter(filter);
 
-    // Determine the API URL based on the filter
-    let apiUrl = `https://stage.suniyenetajee.com/api/v1/web/posts?status=all`;
-
-    if (filter === "pending") {
-      apiUrl = `https://stage.suniyenetajee.com/api/v1/web/posts?status=pending`;
-    }
+    // API URL with the selected filter
+    const apiUrl = `https://stage.suniyenetajee.com/api/v1/web/posts?status=${filter}`;
 
     console.log(`Fetching posts with ${filter} filter using URL: ${apiUrl}`);
 
@@ -256,16 +246,14 @@ const AccessControl = () => {
           date: formatDate(post.date_created),
           date_created: post.date_created,
           flagged: post.flagged || false,
-          post_status: post.status || "pending",
+          post_status: post.status,
           image: post.media && post.media.length ? API.getImageUrl(post.media[0].media) : post.image || null
         }));
 
         setFormattedPosts(formattedPosts);
 
-        // Extract approved post IDs
-        const approvedIds = data.results
-          .filter(post => post.status === "approved")
-          .map(post => post.id);
+        // Set approved post IDs directly from API response
+        const approvedIds = data.results.map(post => post.id);
         setApprovedPostIds(approvedIds);
 
         setPostsData(data);
@@ -451,11 +439,11 @@ const AccessControl = () => {
                   className="d-flex align-items-center flex-grow-1 flex-md-grow-0"
                   size="sm"
                   onClick={() => {
-                    // Reset to page 1, set filter to "all", and fetch all posts
+                    // Reset to page 1 and set filter to "all"
                     setActiveFilter("all");
                     console.log("All Posts button clicked - fetching all posts");
 
-                    // Use the explicit API call with status=all
+                    // Use the simplified API call
                     const headers = {
                       'Authorization': 'Token 7b257e1452f1115b0c70f80a1d54ccd8615aa52c'
                     };
@@ -479,16 +467,14 @@ const AccessControl = () => {
                           date: formatDate(post.date_created),
                           date_created: post.date_created,
                           flagged: post.flagged || false,
-                          post_status: post.status || "pending",
+                          post_status: post.status,
                           image: post.media && post.media.length ? API.getImageUrl(post.media[0].media) : post.image || null
                         }));
 
                         setFormattedPosts(formattedPosts);
 
-                        // Extract approved post IDs
-                        const approvedIds = data.results
-                          .filter(post => post.status === "approved")
-                          .map(post => post.id);
+                        // Set approved post IDs directly
+                        const approvedIds = data.results.map(post => post.id);
                         setApprovedPostIds(approvedIds);
 
                         setPostsData(data);
