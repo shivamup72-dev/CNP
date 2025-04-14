@@ -51,7 +51,17 @@ const Dashboard = () => {
     (async () => {
       try {
         setLoading(true);
-        const url = `${API.BASE_URL}${API.ENDPOINTS.POSTS}?status=${activeFilter}`;
+        // Map the filter to the correct status value
+        const statusMap = {
+          "all": "all",
+          "approved": "approved",
+          "under-review": "pending",
+          "flagged": "rejected",
+          "deleted": "red_flag"
+        };
+        
+        const status = statusMap[activeFilter] || "all";
+        const url = `${API.BASE_URL}${API.ENDPOINTS.POSTS}?status=${status}`;
         console.log(`[DASHBOARD] API Request: GET ${url}`);
         const res = await fetch(url, { headers: API.getHeaders() });
         if (!res.ok) throw new Error("Failed to fetch posts");
