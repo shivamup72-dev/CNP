@@ -52,9 +52,18 @@ const Dashboard = () => {
       try {
         setLoading(true);
         const url = `${API.BASE_URL}${API.ENDPOINTS.POSTS}?status=${activeFilter}`;
+        console.log(`[DASHBOARD] API Request: GET ${url}`);
         const res = await fetch(url, { headers: API.getHeaders() });
         if (!res.ok) throw new Error("Failed to fetch posts");
         const data = await res.json();
+        console.log(`[DASHBOARD] API Response:`, {
+          url: url,
+          status: res.status,
+          count: data.count,
+          results: data.results,
+          next: data.next,
+          previous: data.previous
+        });
 
         const approved = data.results.map(p => p.id);
         setApprovedPosts(approved);
@@ -67,18 +76,23 @@ const Dashboard = () => {
           content: p.description || "No content",
           author: p.created_by.full_name,
           image: p.media.length ? API.getImageUrl(p.media[0].media) : null,
-          post_status: p.status,
+          post_status: p.post_status,
           date: formatDate(p.date_created),
           date_created: p.date_created,
           flagged: p.flagged || false,
           flagReason: p.flagReason,
           flagComment: p.flagComment,
           authorImage: API.getImageUrl(p.created_by.picture),
-          isApproved: p.status === "approved"
+          isApproved: p.post_status === "approved"
         }));
 
         setPosts(formattedPosts);
-      } catch {
+      } catch (err) {
+        console.error(`[DASHBOARD] API Error:`, {
+          url: url,
+          error: err.message,
+          stack: err.stack
+        });
         setError("Failed to load posts. Please try again later.");
       } finally {
         setLoading(false);
@@ -129,19 +143,22 @@ const Dashboard = () => {
       {loading ? (
         <div className="text-center p-5">Loading...</div>
       ) : (
-        <PostSection
-          posts={posts}
-          setPosts={setPosts}
-          currentPage={currentPage}
-          totalPages={totalPages}
-          totalPosts={totalPosts}
-          approvedPosts={approvedPosts}
-          setApprovedPosts={setApprovedPosts}
-          onPageChange={setCurrentPage}
-          activeFilter={activeFilter}
-          onFilterChange={setActiveFilter}
-          error={error}
-        />
+        <>
+          {console.log(`[DASHBOARD] Rendering PostSection with ${posts.length} posts`)}
+          <PostSection
+            posts={posts}
+            setPosts={setPosts}
+            currentPage={currentPage}
+            totalPages={totalPages}
+            totalPosts={totalPosts}
+            approvedPosts={approvedPosts}
+            setApprovedPosts={setApprovedPosts}
+            onPageChange={setCurrentPage}
+            activeFilter={activeFilter}
+            onFilterChange={setActiveFilter}
+            error={error}
+          />
+        </>
       )}
 
       {/* Modals */}

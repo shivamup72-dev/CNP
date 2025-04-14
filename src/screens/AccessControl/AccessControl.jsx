@@ -103,14 +103,16 @@ const AccessControl = () => {
       // API URL with status filter
       const apiUrl = `https://stage.suniyenetajee.com/api/v1/web/posts?status=${activeFilter}`;
 
-      console.log(`Fetching posts with ${activeFilter} filter using URL: ${apiUrl}`);
+      console.log(`[GET POST BY STATUS API] Fetching posts with status: ${activeFilter}`);
+      console.log(`[GET POST BY STATUS API] Request URL: ${apiUrl}`);
+      console.log(`[GET POST BY STATUS API] Request Headers:`, headers);
 
       const response = await fetch(apiUrl, { headers });
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       const data = await response.json();
-      console.log('API Response:', data);
+      console.log(`[GET POST BY STATUS API] Response:`, data);
 
       // Format the posts for PostSection component
       const formattedPosts = data.results.map(post => ({
