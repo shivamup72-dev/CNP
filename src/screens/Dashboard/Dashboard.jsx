@@ -47,6 +47,41 @@ const Dashboard = () => {
     setModalState(prev => ({ ...prev, [type]: { ...prev[type], show } }));
   }, []);
 
+  const getPostAgeColor = (dateString) => {
+    const postDate = new Date(dateString);
+    const now = new Date();
+    const diffMs = now - postDate;
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+
+    if (diffHours >= 24) {
+      return "text-danger"; // Red for posts 24+ hours old
+    } else if (diffHours >= 10) {
+      return "text-warning"; // Yellow for posts 10-24 hours old
+    } else {
+      return "text-success"; // Green for posts less than 10 hours old
+    }
+  };
+
+  const formatPostAge = (dateString) => {
+    const postDate = new Date(dateString);
+    const now = new Date();
+    const diffMs = now - postDate;
+    const diffSeconds = Math.floor(diffMs / 1000);
+    const diffMinutes = Math.floor(diffSeconds / 60);
+    const diffHours = Math.floor(diffMinutes / 60);
+    const diffDays = Math.floor(diffHours / 24);
+
+    if (diffDays > 0) {
+      return `${diffDays} ${diffDays === 1 ? 'day' : 'days'}`;
+    } else if (diffHours > 0) {
+      return `${diffHours} ${diffHours === 1 ? 'hr' : 'hrs'}`;
+    } else if (diffMinutes > 0) {
+      return `${diffMinutes} ${diffMinutes === 1 ? 'min' : 'mins'}`;
+    } else {
+      return `${diffSeconds} ${diffSeconds === 1 ? 'sec' : 'secs'}`;
+    }
+  };
+
   useEffect(() => {
     (async () => {
       try {
@@ -59,7 +94,7 @@ const Dashboard = () => {
           "flagged": "rejected",
           "deleted": "red_flag"
         };
-        
+
         const status = statusMap[activeFilter] || "all";
         const url = `${API.BASE_URL}${API.ENDPOINTS.POSTS}?status=${status}`;
         console.log(`[DASHBOARD] API Request: GET ${url}`);
@@ -89,6 +124,8 @@ const Dashboard = () => {
           post_status: p.post_status,
           date: formatDate(p.date_created),
           date_created: p.date_created,
+          age: formatPostAge(p.date_created),
+          ageColor: getPostAgeColor(p.date_created),
           flagged: p.flagged || false,
           flagReason: p.flagReason,
           flagComment: p.flagComment,

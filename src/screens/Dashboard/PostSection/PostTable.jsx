@@ -149,7 +149,7 @@ const PostTable = ({
                                             {post.post_status === "approved" ? (
                                                 <span className="badge bg-success">Approved</span>
                                             ) : (
-                                                <span className="badge bg-warning text-dark">Pending</span>
+                                                <span className={`badge ${post.ageColor}`}>{post.age}</span>
                                             )}
                                         </div>
                                     </td>
