@@ -1,5 +1,6 @@
 import React from 'react';
-import { Modal, Button } from 'react-bootstrap';
+import { Modal, Button, Form } from 'react-bootstrap';
+import { formatDate } from '../../utils/DateUtility';
 
 const FlagModal = ({
   show = false,
@@ -54,7 +55,7 @@ const FlagModal = ({
               )}
               <div>
                 <p className="mb-0 fw-bold">{selectedPost.author || "Unknown"}</p>
-                <p className="text-muted small mb-0">{new Date(selectedPost.date_created || Date.now()).toLocaleString()}</p>
+                <p className="text-muted small mb-0">{formatDate(selectedPost.date_created || Date.now())}</p>
               </div>
             </div>
             {selectedPost.image && (

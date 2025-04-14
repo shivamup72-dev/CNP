@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Container, Row, Col, Card, Button, Table, Badge, Tabs, Tab, Nav, Alert, Pagination } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 import {
@@ -20,6 +20,7 @@ import {
 } from "react-icons/fi";
 import PostSection from "../Dashboard/postSection/PostSection.jsx";
 import "../../assets/css/Dashboard.css";
+import { formatDate } from "../../utils/DateUtility";
 
 const AccessControl = () => {
   const navigate = useNavigate();
@@ -98,45 +99,44 @@ const AccessControl = () => {
       const headers = {
         'Authorization': 'Token 7b257e1452f1115b0c70f80a1d54ccd8615aa52c'
       };
-      
+
       // Determine the API URL based on the activeFilter
       let apiUrl = `https://stage.suniyenetajee.com/api/v1/web/posts?status=all`;
-      
+
       if (activeFilter === "pending") {
         apiUrl = `https://stage.suniyenetajee.com/api/v1/web/posts?status=pending`;
       }
-      
+
       console.log(`Fetching posts with ${activeFilter} filter using URL: ${apiUrl}`);
-      
+
       const response = await fetch(apiUrl, { headers });
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       const data = await response.json();
       console.log('API Response:', data);
-      
+
       // Format the posts for PostSection component
       const formattedPosts = data.results.map(post => ({
-        id: post.id,
-        title: post.description || "No title",
-        content: post.description || "No content",
-        author: post.created_by.full_name,
-        date: new Date(post.date_created).toISOString().split('T')[0],
+        id: post.id.toString(),
+        title: post.description || post.message || "No title",
+        content: post.description || post.message || "No content",
+        author: post.user?.name || post.created_by?.full_name || "Unknown",
+        date: formatDate(post.date_created),
         date_created: post.date_created,
         flagged: post.flagged || false,
-        image: post.media.length > 0 ? `https://stage.suniyenetajee.com${post.media[0].media}` : null,
-        authorImage: post.created_by.picture ? `https://stage.suniyenetajee.com${post.created_by.picture}` : null,
-        isApproved: post.status === "approved"
+        post_status: post.status || "pending",
+        image: post.media && post.media.length ? API.getImageUrl(post.media[0].media) : post.image || null
       }));
-      
+
       setFormattedPosts(formattedPosts);
-      
+
       // Extract approved post IDs
       const approvedIds = data.results
         .filter(post => post.status === "approved")
         .map(post => post.id);
       setApprovedPostIds(approvedIds);
-      
+
       setPostsData(data);
       setCurrentPostsPage(page);
       setTotalPages(Math.max(1, Math.ceil(data.count / 100)));
@@ -210,18 +210,6 @@ const AccessControl = () => {
     }
   };
 
-  // Format ISO date to readable format
-  const formatDate = (isoDate) => {
-    const date = new Date(isoDate);
-    return date.toLocaleDateString('en-US', { 
-      year: 'numeric', 
-      month: 'short', 
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
-
   // Handle page change for post review component
   const handlePageChange = (page) => {
     console.log(`Changing to page ${page}`);
@@ -234,21 +222,21 @@ const AccessControl = () => {
   const handleFilterChange = (filter) => {
     console.log("Access Control: Changing filter to:", filter);
     setActiveFilter(filter);
-    
+
     // Determine the API URL based on the filter
     let apiUrl = `https://stage.suniyenetajee.com/api/v1/web/posts?status=all`;
-    
+
     if (filter === "pending") {
       apiUrl = `https://stage.suniyenetajee.com/api/v1/web/posts?status=pending`;
     }
-    
+
     console.log(`Fetching posts with ${filter} filter using URL: ${apiUrl}`);
-    
+
     // Reset to page 1 when changing filters
     const headers = {
       'Authorization': 'Token 7b257e1452f1115b0c70f80a1d54ccd8615aa52c'
     };
-    
+
     fetch(apiUrl, { headers })
       .then(response => {
         if (!response.ok) {
@@ -258,29 +246,28 @@ const AccessControl = () => {
       })
       .then(data => {
         console.log(`Fetched ${data.count} posts`);
-        
+
         // Format the posts
         const formattedPosts = data.results.map(post => ({
-          id: post.id,
-          title: post.description || "No title",
-          content: post.description || "No content",
-          author: post.created_by.full_name,
-          date: new Date(post.date_created).toISOString().split('T')[0],
+          id: post.id.toString(),
+          title: post.description || post.message || "No title",
+          content: post.description || post.message || "No content",
+          author: post.user?.name || post.created_by?.full_name || "Unknown",
+          date: formatDate(post.date_created),
           date_created: post.date_created,
           flagged: post.flagged || false,
-          image: post.media.length > 0 ? `https://stage.suniyenetajee.com${post.media[0].media}` : null,
-          authorImage: post.created_by.picture ? `https://stage.suniyenetajee.com${post.created_by.picture}` : null,
-          isApproved: post.status === "approved"
+          post_status: post.status || "pending",
+          image: post.media && post.media.length ? API.getImageUrl(post.media[0].media) : post.image || null
         }));
-        
+
         setFormattedPosts(formattedPosts);
-        
+
         // Extract approved post IDs
         const approvedIds = data.results
           .filter(post => post.status === "approved")
           .map(post => post.id);
         setApprovedPostIds(approvedIds);
-        
+
         setPostsData(data);
         setCurrentPostsPage(1);
         setTotalPages(Math.max(1, Math.ceil(data.count / 100)));
@@ -290,7 +277,7 @@ const AccessControl = () => {
         console.error("Error fetching posts:", error);
       });
   };
-  
+
   // Handle post updates
   const handlePostsUpdate = (updatedPosts) => {
     console.log("Access Control: Updating posts:", updatedPosts);
@@ -359,9 +346,9 @@ const AccessControl = () => {
                   {/* Loading spinner removed as requested */}
                 </div>
               )}
-              
+
               {error && <Alert variant="danger" className="m-3">{error}</Alert>}
-              
+
               {!loading && !error && postsData && formattedPosts && (
                 <PostSection
                   posts={formattedPosts}
@@ -467,12 +454,12 @@ const AccessControl = () => {
                     // Reset to page 1, set filter to "all", and fetch all posts
                     setActiveFilter("all");
                     console.log("All Posts button clicked - fetching all posts");
-                    
+
                     // Use the explicit API call with status=all
                     const headers = {
                       'Authorization': 'Token 7b257e1452f1115b0c70f80a1d54ccd8615aa52c'
                     };
-                    
+
                     fetch(`https://stage.suniyenetajee.com/api/v1/web/posts?status=all`, { headers })
                       .then(response => {
                         if (!response.ok) {
@@ -482,29 +469,28 @@ const AccessControl = () => {
                       })
                       .then(data => {
                         console.log(`Fetched ${data.count} posts`);
-                        
+
                         // Format the posts
                         const formattedPosts = data.results.map(post => ({
-                          id: post.id,
-                          title: post.description || "No title",
-                          content: post.description || "No content",
-                          author: post.created_by.full_name,
-                          date: new Date(post.date_created).toISOString().split('T')[0],
+                          id: post.id.toString(),
+                          title: post.description || post.message || "No title",
+                          content: post.description || post.message || "No content",
+                          author: post.user?.name || post.created_by?.full_name || "Unknown",
+                          date: formatDate(post.date_created),
                           date_created: post.date_created,
                           flagged: post.flagged || false,
-                          image: post.media.length > 0 ? `https://stage.suniyenetajee.com${post.media[0].media}` : null,
-                          authorImage: post.created_by.picture ? `https://stage.suniyenetajee.com${post.created_by.picture}` : null,
-                          isApproved: post.status === "approved"
+                          post_status: post.status || "pending",
+                          image: post.media && post.media.length ? API.getImageUrl(post.media[0].media) : post.image || null
                         }));
-                        
+
                         setFormattedPosts(formattedPosts);
-                        
+
                         // Extract approved post IDs
                         const approvedIds = data.results
                           .filter(post => post.status === "approved")
                           .map(post => post.id);
                         setApprovedPostIds(approvedIds);
-                        
+
                         setPostsData(data);
                         setCurrentPostsPage(1);
                         setTotalPages(Math.max(1, Math.ceil(data.count / 100)));

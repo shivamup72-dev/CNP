@@ -75,7 +75,7 @@ const ManagePost = ({
   return (
     <div>
       <Card className="border-0 shadow-sm" style={{ marginTop: "0" }}>
-      <Card.Body className="p-0">
+        <Card.Body className="p-0">
           {/* Header with consistent margin */}
           <div className="d-flex flex-wrap justify-content-between align-items-center" style={sectionStyle}>
             <h5 className="fw-bold mb-0 me-2">{getFilterTitle()}</h5>
@@ -89,30 +89,30 @@ const ManagePost = ({
             >
               + New Post
             </Button>
-        </div>
+          </div>
 
           {/* Filter buttons with consistent spacing */}
           <div className="d-flex flex-wrap justify-content-between align-items-center" style={sectionStyle}>
             <div className="d-flex flex-wrap align-items-center gap-2">
-                          <Button
+              <Button
                 variant={activeFilter === "all" ? "dark" : "outline-dark"}
-                            size="sm"
+                size="sm"
                 className="filter-btn"
                 onClick={handleAllClick}
               >
                 <FaListUl style={{ marginRight: "4px" }} />
                 All Posts
-                          </Button>
-                          <Button
+              </Button>
+              <Button
                 variant={activeFilter === "approved" ? "dark" : "outline-dark"}
-                            size="sm"
+                size="sm"
                 className="filter-btn"
                 onClick={() => handleFilterButtonClick("approved")}
               >
                 <FaCheck style={{ marginRight: "4px" }} />
                 Approved
-                          </Button>
-                        </div>
+              </Button>
+            </div>
             <div className="text-muted small">
               Showing {filteredPosts().length} of {totalPosts} posts
             </div>
@@ -131,10 +131,10 @@ const ManagePost = ({
               setShowDeleteModal={setShowDeleteModal}
               approvingPostId={approvingPostId}
             />
-        </div>
+          </div>
 
           {/* Pagination */}
-        {getCurrentFilteredPosts().length > 0 ? (
+          {getCurrentFilteredPosts().length > 0 ? (
             <div className="d-flex flex-column align-items-center mt-2 mb-2 px-3">
               <CustomPagination
                 currentPage={currentPage}
@@ -144,14 +144,14 @@ const ManagePost = ({
                 onPageChange={onPageChange}
                 className="w-100"
               />
-          </div>
-        ) : (
+            </div>
+          ) : (
             <div className="text-center text-muted mt-3 mb-2">
-            No posts found matching your current filters
-          </div>
-        )}
-      </Card.Body>
-    </Card>
+              No posts found matching your current filters
+            </div>
+          )}
+        </Card.Body>
+      </Card>
     </div>
   );
 };

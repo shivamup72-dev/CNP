@@ -14,6 +14,8 @@ import PostDetailModal from "../../components/modals/PostDetailModal";
 import CreatePostModal from "../../components/modals/CreatePostModal";
 import API from "../../api/endpoint";
 import "../../assets/css/Dashboard.css";
+import { formatDate } from '../../utils/DateUtility';
+
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -59,18 +61,23 @@ const Dashboard = () => {
         setTotalPosts(data.count);
         setTotalPages(Math.max(1, Math.ceil(data.count / 100)));
 
-        setPosts(data.results.map(p => ({
+        const formattedPosts = data.results.map(p => ({
           id: p.id,
           title: p.description || "No title",
           content: p.description || "No content",
           author: p.created_by.full_name,
-          date: new Date(p.date_created).toISOString().split('T')[0],
+          image: p.media.length ? API.getImageUrl(p.media[0].media) : null,
+          post_status: p.status === "approved" ? "approved" : "pending",
+          date: formatDate(p.date_created),
           date_created: p.date_created,
           flagged: p.flagged || false,
-          image: p.media.length ? API.getImageUrl(p.media[0].media) : null,
+          flagReason: p.flagReason,
+          flagComment: p.flagComment,
           authorImage: API.getImageUrl(p.created_by.picture),
           isApproved: p.status === "approved"
-        })));
+        }));
+
+        setPosts(formattedPosts);
       } catch {
         setError("Failed to load posts. Please try again later.");
       } finally {
@@ -97,9 +104,9 @@ const Dashboard = () => {
     <Container fluid className="p-4" style={{ background: "#f8fcf8" }}>
       <div className="d-flex justify-content-between align-items-center mb-4 flex-md-row flex-column">
         <h4 className="fw-bold m-0">Suniye Netaji Admin Dashboard</h4>
-        <BootstrapButton 
+        <BootstrapButton
           variant="dark"
-          className="mt-md-0 mt-3 access-control-btn" 
+          className="mt-md-0 mt-3 access-control-btn"
           onClick={() => navigate("/access-control")}
           style={{ padding: "0.4rem 1.2rem" }}
         >

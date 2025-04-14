@@ -114,7 +114,7 @@
     padding: 0 !important;
     font-size: 0.7rem !important;
   }
-  
+
   .pagination-sm .page-link {
     padding: 0.1rem 0.2rem !important;
     font-size: 0.7rem !important;
@@ -125,11 +125,11 @@
     max-width: 24px !important;
     height: 24px !important;
   }
-  
+
   .pagination {
     gap: 1px;
   }
-  
+
   /* Fix background color and text overflow issues */
   .page-item.active .page-link {
     z-index: 3;
@@ -140,7 +140,7 @@
     height: 100% !important;
     text-align: center !important;
   }
-  
+
   /* Ensure borders are visible and consistent */
   .page-item .page-link {
     border: 1px solid #000 !important;
@@ -188,7 +188,8 @@
 }
 
 @media (max-width: 576px) {
-  .custom-responsive-btn.filter-btn, 
+
+  .custom-responsive-btn.filter-btn,
   .custom-responsive-btn.new-post-btn {
     padding: 0.25rem 0.9rem !important;
   }

@@ -9,6 +9,7 @@ import CreatePostModal from '../../../components/modals/CreatePostModal';
 import ManagePost from './ManagePost';
 import FilterAndModeration from './FilterAndModeration';
 import QuickAdminActions from './QuickAdminActions';
+import { formatDateForAPI } from "../../../utils/DateUtility";
 
 const PostSection = ({
   inDashboard = false,
@@ -149,7 +150,7 @@ const PostSection = ({
       author: newPost.author,
       category: newPost.category,
       image: newPost.imagePreview || null,
-      date: new Date().toISOString().split('T')[0],
+      date: formatDateForAPI(new Date()),
       post_status: "pending",
     };
     setPosts([createdPost, ...posts]);

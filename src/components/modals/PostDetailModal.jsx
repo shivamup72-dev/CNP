@@ -1,6 +1,7 @@
-import React from 'react';
-import { Modal, Button, Badge } from 'react-bootstrap';
+import React, { useState, useEffect } from 'react';
+import { Modal, Button, Badge, Form, Card } from 'react-bootstrap';
 import { FiEdit, FiFlag, FiTrash, FiCheck } from 'react-icons/fi';
+import { formatDate } from '../../utils/DateUtility';
 
 const PostDetailModal = ({
   show = false,
@@ -140,7 +141,7 @@ const PostDetailModal = ({
                     </div>
                     <div className="d-flex align-items-center mt-1">
                       <span style={{ fontSize: "12px", color: "#6c757d" }}>
-                        Published on {new Date(selectedPost.date_created || Date.now()).toLocaleDateString()}
+                        Published on {formatDate(selectedPost.date_created)}
                       </span>
                       {renderStatusBadges()}
                     </div>

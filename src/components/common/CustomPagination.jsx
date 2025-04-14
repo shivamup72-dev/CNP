@@ -32,7 +32,7 @@ const CustomPagination = ({
             setWindowWidth(window.innerWidth);
             setIsMobile(window.innerWidth < 768);
         };
-        
+
         window.addEventListener('resize', handleResize);
         return () => window.removeEventListener('resize', handleResize);
     }, []);
@@ -108,10 +108,10 @@ const CustomPagination = ({
         if (isMobile) {
             if (currentPage > 2) {
                 buttons.push(
-                    <Pagination.Ellipsis 
-                        key="ellipsis1" 
-                        disabled 
-                        className="border border-dark" 
+                    <Pagination.Ellipsis
+                        key="ellipsis1"
+                        disabled
+                        className="border border-dark"
                         style={paginationItemStyle(false)}
                     />
                 );
@@ -133,10 +133,10 @@ const CustomPagination = ({
 
             if (currentPage < actualMaxPages - 1) {
                 buttons.push(
-                    <Pagination.Ellipsis 
-                        key="ellipsis2" 
-                        disabled 
-                        className="border border-dark" 
+                    <Pagination.Ellipsis
+                        key="ellipsis2"
+                        disabled
+                        className="border border-dark"
                         style={paginationItemStyle(false)}
                     />
                 );

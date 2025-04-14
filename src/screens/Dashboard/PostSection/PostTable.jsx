@@ -3,6 +3,7 @@ import { Table } from "react-bootstrap";
 import { FaCheck } from "react-icons/fa";
 import { FiTrash, FiFlag } from "react-icons/fi";
 import Button from "../../../components/common/BootstrapButton";
+import { formatDate } from "../../../utils/DateUtility";
 
 const PostTable = ({
     currentPage,
@@ -17,14 +18,14 @@ const PostTable = ({
 }) => {
     // Common table cell style for consistency
     const tableCellStyle = {
-        verticalAlign: "middle", 
-        borderRight: "1px solid #e0e0e0", 
+        verticalAlign: "middle",
+        borderRight: "1px solid #e0e0e0",
         borderBottom: "1px solid #e0e0e0",
         padding: "0.4rem 0.5rem"
     };
 
     const lastCellStyle = {
-        verticalAlign: "middle", 
+        verticalAlign: "middle",
         borderBottom: "1px solid #e0e0e0",
         padding: "0.4rem"
     };
@@ -68,9 +69,14 @@ const PostTable = ({
                                         }}
                                         style={{ ...tableCellStyle, cursor: "pointer" }}
                                     >
-                                        {post.title?.length > 60
-                                            ? post.title.slice(0, 60) + "..."
-                                            : post.title || "No content"}
+                                        <div style={{
+                                            whiteSpace: "nowrap",
+                                            overflow: "hidden",
+                                            textOverflow: "ellipsis",
+                                            maxWidth: "100%"
+                                        }}>
+                                            {post.title || "No content"}
+                                        </div>
                                     </td>
                                     <td
                                         onClick={() => {
@@ -95,10 +101,11 @@ const PostTable = ({
                                     <td style={tableCellStyle}>
                                         <div className="d-flex align-items-center">
                                             <div
-                                                className="rounded-circle me-2 overflow-hidden"
+                                                className="rounded-circle overflow-hidden flex-shrink-0"
                                                 style={{
                                                     width: "32px",
                                                     height: "32px",
+                                                    minWidth: "32px",
                                                     backgroundSize: "cover",
                                                     backgroundPosition: "center",
                                                     backgroundImage: getUserAvatar(post) ? `url(${getUserAvatar(post)})` : "none",
@@ -107,7 +114,8 @@ const PostTable = ({
                                                     alignItems: "center",
                                                     justifyContent: "center",
                                                     border: "1px solid #dee2e6",
-                                                    boxShadow: "0 1px 3px rgba(0,0,0,0.1)"
+                                                    boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+                                                    marginRight: "8px"
                                                 }}
                                             >
                                                 {!getUserAvatar(post) && (
@@ -116,10 +124,17 @@ const PostTable = ({
                                                     </svg>
                                                 )}
                                             </div>
-                                            {post.author || "Unknown"}
+                                            <div style={{
+                                                whiteSpace: "nowrap",
+                                                overflow: "hidden",
+                                                textOverflow: "ellipsis",
+                                                maxWidth: "calc(100% - 40px)"
+                                            }}>
+                                                {post.author || "Unknown"}
+                                            </div>
                                         </div>
                                     </td>
-                                    <td style={tableCellStyle}>{post.date}</td>
+                                    <td style={tableCellStyle}>{formatDate(post.date)}</td>
                                     <td style={tableCellStyle}>
                                         <div className="d-flex justify-content-start">
                                             {post.post_status === "approved" ? (
