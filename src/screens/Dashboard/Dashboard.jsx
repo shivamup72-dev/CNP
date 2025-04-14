@@ -34,6 +34,7 @@ const Dashboard = () => {
   const [newPost, setNewPost] = useState({
     title: '', content: '', author: '', category: '', image: '', imageFile: null, imagePreview: ''
   });
+  const [ordering, setOrdering] = useState("newest"); // Default to newest
 
   const [modalState, setModalState] = useState({
     flag: { show: false, reason: "Hate speech or discrimination", comment: "" },
@@ -91,12 +92,12 @@ const Dashboard = () => {
           "all": "all",
           "approved": "approved",
           "under-review": "pending",
-          "flagged": "rejected",
-          "deleted": "red_flag"
+          "flagged": "red_flag",
+          "deleted": "rejected"
         };
 
         const status = statusMap[activeFilter] || "all";
-        const url = `${API.BASE_URL}${API.ENDPOINTS.POSTS}?status=${status}`;
+        const url = `${API.BASE_URL}${API.ENDPOINTS.POSTS}?status=${status}&ordering=${ordering}`;
         console.log(`[DASHBOARD] API Request: GET ${url}`);
         const res = await fetch(url, { headers: API.getHeaders() });
         if (!res.ok) throw new Error("Failed to fetch posts");
@@ -107,7 +108,8 @@ const Dashboard = () => {
           count: data.count,
           results: data.results,
           next: data.next,
-          previous: data.previous
+          previous: data.previous,
+          ordering: ordering
         });
 
         const approved = data.results.map(p => p.id);
@@ -145,7 +147,7 @@ const Dashboard = () => {
         setLoading(false);
       }
     })();
-  }, [currentPage, activeFilter]);
+  }, [currentPage, activeFilter, ordering]);
 
   const statsCardsData = [
     { title: "Total Users", value: "1,234", icon: <FiUsers />, color: "primary" },
@@ -203,6 +205,8 @@ const Dashboard = () => {
             onPageChange={setCurrentPage}
             activeFilter={activeFilter}
             onFilterChange={setActiveFilter}
+            ordering={ordering}
+            onOrderingChange={setOrdering}
             error={error}
           />
         </>

@@ -23,6 +23,8 @@ const PostSection = ({
   setApprovedPosts,
   activeFilter = "pending",
   onFilterChange,
+  ordering = "newest",
+  onOrderingChange,
   error = null
 }) => {
   const navigate = useNavigate();
@@ -233,6 +235,8 @@ const PostSection = ({
               getUserAvatar={getUserAvatar}
               setShowNewPostModal={setShowNewPostModal}
               error={error}
+              ordering={ordering}
+              onOrderingChange={onOrderingChange}
             />
           </Col>
 

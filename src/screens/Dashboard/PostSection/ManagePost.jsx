@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import "../../../assets/css/Dashboard.css";
 import { Card } from "react-bootstrap";
 import { FaCheck, FaListUl } from "react-icons/fa";
@@ -49,8 +49,19 @@ const ManagePost = ({
   filteredPosts,
   getUserAvatar,
   setShowNewPostModal,
-  error = null
+  error = null,
+  ordering = "newest",
+  onOrderingChange,
 }) => {
+  const [selectedButton, setSelectedButton] = useState(ordering === "newest" ? 'New' : 'Old');
+
+  const handleButtonClick = (button) => {
+    setSelectedButton(button);
+    // Reset to page 1 when changing ordering
+    onPageChange(1);
+    onOrderingChange(button === 'New' ? 'newest' : 'oldest');
+  };
+
   const getFilterTitle = () => {
     const titles = {
       all: "Manage Posts",
@@ -80,16 +91,54 @@ const ManagePost = ({
           {/* Header with consistent margin */}
           <div className="d-flex flex-wrap justify-content-between align-items-center" style={sectionStyle}>
             <h5 className="fw-bold mb-0 me-2">{getFilterTitle()}</h5>
-            <Button
-              variant="dark"
-              size="sm"
-              className="px-3 new-post-btn"
-              onClick={handleNewPost}
-              onMouseOver={(e) => e.currentTarget.style.opacity = "0.9"}
-              onMouseOut={(e) => e.currentTarget.style.opacity = "1.0"}
-            >
-              + New Post
-            </Button>
+            <div className="d-flex gap-2">
+              <Button
+                variant={selectedButton === 'New' ? "success" : "outline-success"}
+                size="sm"
+                className="px-3 new-post-btn"
+                style={{
+                  minWidth: "60px",
+                  height: "32px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  backgroundColor: selectedButton === 'New' ? "#28a745" : "#fff",
+                  color: selectedButton === 'New' ? "#fff" : "#28a745",
+                  borderColor: "#28a745"
+                }}
+                onClick={() => handleButtonClick('New')}
+              >
+                New
+              </Button>
+              <Button
+                variant={selectedButton === 'Old' ? "success" : "outline-success"}
+                size="sm"
+                className="px-3 new-post-btn"
+                style={{
+                  minWidth: "60px",
+                  height: "32px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  backgroundColor: selectedButton === 'Old' ? "#28a745" : "#fff",
+                  color: selectedButton === 'Old' ? "#fff" : "#28a745",
+                  borderColor: "#28a745"
+                }}
+                onClick={() => handleButtonClick('Old')}
+              >
+                Old
+              </Button>
+              <Button
+                variant="dark"
+                size="sm"
+                className="px-3 new-post-btn"
+                onClick={handleNewPost}
+                onMouseOver={(e) => e.currentTarget.style.opacity = "0.9"}
+                onMouseOut={(e) => e.currentTarget.style.opacity = "1.0"}
+              >
+                + New Post
+              </Button>
+            </div>
           </div>
 
           {/* Filter buttons with consistent spacing */}
