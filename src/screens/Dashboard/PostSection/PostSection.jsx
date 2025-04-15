@@ -11,6 +11,7 @@ import ManagePost from './ManagePost';
 import FilterAndModeration from './FilterAndModeration';
 import QuickAdminActions from './QuickAdminActions';
 import { formatDateForAPI } from "../../../utils/DateUtility";
+import API from '../../../api/endpoint';
 
 const PostSection = ({
   inDashboard = false,
@@ -42,6 +43,7 @@ const PostSection = ({
   const [editedPost, setEditedPost] = useState(null);
   const [isEditMode, setIsEditMode] = useState(false);
   const [approvingPostId, setApprovingPostId] = useState(null);
+  const [flaggingPostId, setFlaggingPostId] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [isSearching, setIsSearching] = useState(false);
 
@@ -65,44 +67,117 @@ const PostSection = ({
   });
 
   // Post action handlers
-  const handleApprovePost = (postId) => {
-    setApprovingPostId(postId);
-    setTimeout(() => {
+  const handleApprovePost = async (postId) => {
+    try {
+      setApprovingPostId(postId);
+      
+      // Call the API to update post status
+      const defaultReasonId = 1; // Using a default reason ID for approval
+      await API.updatePostStatus(postId, "approve", defaultReasonId);
+      
+      // Update the local state
       setPosts(posts.map(post => post.id === postId ?
         { ...post, post_status: "approved" } : post));
-      setApprovingPostId(null);
-    }, 500);
+      
+      // If we have a setApprovedPosts function, update the approved posts list
+      if (setApprovedPosts) {
+        setApprovedPosts(prev => [...prev, postId]);
+      }
+    } catch (error) {
+      console.error("Error approving post:", error);
+      // Optionally show an error notification here
+    } finally {
+      // Clear the approving state after a short delay for UI feedback
+      setTimeout(() => {
+        setApprovingPostId(null);
+      }, 500);
+    }
   };
 
   const handleFlagButtonClick = (post) => {
     if (post.flagged) {
-      setPosts(posts.map(p => p.id === post.id ? { ...p, flagged: false } : p));
+      // If post is already flagged, we need to call the API to unflag it
+      // This assumes there's a way to unflag through API - if not, we need to handle accordingly
+      try {
+        console.log(`[UNFLAG] Attempting to unflag post ID: ${post.id}`);
+        
+        // Call API to unflag post - using an 'approve' action since there's no explicit unflag action
+        API.updatePostStatus(
+          post.id,
+          "approve", // This would reset the flag
+          1, // Default reason ID for approval
+          "" // No remarks for unflagging
+        )
+        .then(response => {
+          console.log(`[UNFLAG] Success! API response:`, response);
+          
+          // Update local state
+          setPosts(posts.map(p => p.id === post.id ? 
+            { 
+              ...p, 
+              flagged: false,
+              post_status: p.post_status === "flagged" ? "pending" : p.post_status // Reset post_status if it was flagged
+            } : p));
+        })
+        .catch(error => {
+          console.error("[UNFLAG] Error unflagging post:", error);
+        });
+      } catch (error) {
+        console.error("[UNFLAG] Error in unflag operation:", error);
+      }
     } else {
       setSelectedPost(post);
       setShowFlagModal(true);
     }
   };
 
-  const confirmFlag = () => {
+  const confirmFlag = async () => {
     if (!selectedPost) return;
-    setPosts(posts.map(p => p.id === selectedPost.id ?
-      { 
-        ...p, 
-        flagged: true, 
-        flagComment, 
-        flagReason, 
-        flagReasonId,
-        flagReasonData: {
-          id: flagReasonId,
-          name: flagReason,
-          comment: flagComment
-        }
-      } : p));
-    setShowFlagModal(false);
-    setSelectedPost(null);
-    setFlagComment('');
-    setFlagReason('');
-    setFlagReasonId(null);
+    
+    try {
+      // Set flagging state for UI feedback
+      setFlaggingPostId(selectedPost.id);
+      
+      console.log(`[FLAG] Attempting to flag post ID: ${selectedPost.id} with reason ID: ${flagReasonId}`);
+      
+      // Call the API to flag the post
+      const response = await API.updatePostStatus(
+        selectedPost.id, 
+        "red_flag", 
+        flagReasonId, 
+        flagComment
+      );
+      
+      console.log(`[FLAG] Success! API response:`, response);
+      
+      // Update the local state
+      setPosts(posts.map(p => p.id === selectedPost.id ?
+        { 
+          ...p, 
+          flagged: true, 
+          post_status: "flagged",
+          flagComment, 
+          flagReason, 
+          flagReasonId,
+          flagReasonData: {
+            id: flagReasonId,
+            name: flagReason,
+            comment: flagComment
+          }
+        } : p));
+      
+    } catch (error) {
+      console.error("[FLAG] Error flagging post:", error);
+      // Optionally show an error notification here
+    } finally {
+      // Reset the UI state
+      setFlaggingPostId(null);
+      setShowFlagModal(false);
+      setSelectedPost(null);
+      setFlagComment('');
+      setFlagReason('');
+      setFlagReasonId(null);
+    }
   };
 
   // Edit functions
@@ -187,7 +262,44 @@ const PostSection = ({
 
   // Filter functions
   const handleFilterButtonClick = (filter) => {
-    if (onFilterChange) onFilterChange(filter);
+    if (filter === "flagged") {
+      // Log information about flagged posts when this filter is selected
+      const flaggedPosts = posts.filter(post => post.flagged || post.post_status === "flagged");
+      console.log(`[POST SECTION] Showing flagged posts: ${flaggedPosts.length} found`);
+      console.log('[POST SECTION] Flagged posts details:', flaggedPosts);
+      
+      // Check what properties are available on these posts to help with debugging
+      if (flaggedPosts.length > 0) {
+        console.log('[POST SECTION] First flagged post example:', {
+          id: flaggedPosts[0].id,
+          flagged: flaggedPosts[0].flagged,
+          post_status: flaggedPosts[0].post_status,
+          title: flaggedPosts[0].title
+        });
+      }
+    }
+    
+    if (filter === "deleted") {
+      // Log information about deleted posts when this filter is selected
+      const deletedPosts = posts.filter(post => post.isDeleted || post.post_status === "rejected");
+      console.log(`[POST SECTION] Showing deleted posts: ${deletedPosts.length} found`);
+      console.log('[POST SECTION] Deleted posts details:', deletedPosts);
+      
+      // Check what properties are available on these posts to help with debugging
+      if (deletedPosts.length > 0) {
+        console.log('[POST SECTION] First deleted post example:', {
+          id: deletedPosts[0].id,
+          isDeleted: deletedPosts[0].isDeleted,
+          post_status: deletedPosts[0].post_status,
+          title: deletedPosts[0].title
+        });
+      }
+    }
+    
+    console.log(`[POST SECTION] Filter button clicked: ${filter}, calling onFilterChange`);
+    if (onFilterChange && typeof onFilterChange === 'function') {
+      onFilterChange(filter);
+    }
   };
 
   const handleAllClick = () => handleFilterButtonClick("all");
@@ -245,14 +357,56 @@ const PostSection = ({
 
   // Filtered posts based on active filter
   const filteredPosts = () => {
+    console.log(`[FILTERED POSTS] Active filter: ${activeFilter}, Total posts: ${posts.length}`);
+    
+    let result;
     switch (activeFilter) {
-      case "all": return posts;
-      case "review": return posts.filter(post => post.post_status !== "approved" && !post.flagged);
-      case "approved": return posts.filter(post => post.post_status === "approved");
-      case "flagged": return posts.filter(post => post.flagged);
-      case "deleted": return posts.filter(post => post.isDeleted);
-      default: return posts;
+      case "all": 
+        result = posts;
+        break;
+      case "review": 
+        result = posts.filter(post => post.post_status !== "approved" && !post.flagged && !post.isDeleted);
+        break;
+      case "approved": 
+        result = posts.filter(post => post.post_status === "approved");
+        break;
+      case "flagged": 
+        result = posts.filter(post => post.flagged || post.post_status === "flagged" || post.post_status === "red_flag");
+        console.log(`[FILTERED POSTS] Found ${result.length} flagged posts`);
+        if (result.length > 0) {
+          console.log('[FILTERED POSTS] Sample flagged post:', {
+            id: result[0].id,
+            flagged: result[0].flagged,
+            post_status: result[0].post_status
+          });
+        } else {
+          console.log('[FILTERED POSTS] No flagged posts found in current posts array');
+          // Log all post statuses to debug
+          const postStatuses = posts.map(p => ({ id: p.id, flagged: p.flagged, post_status: p.post_status }));
+          console.log('[FILTERED POSTS] All post statuses:', postStatuses);
+        }
+        break;
+      case "deleted": 
+        result = posts.filter(post => post.isDeleted || post.post_status === "rejected");
+        console.log(`[FILTERED POSTS] Found ${result.length} deleted posts`);
+        if (result.length > 0) {
+          console.log('[FILTERED POSTS] Sample deleted post:', {
+            id: result[0].id,
+            isDeleted: result[0].isDeleted,
+            post_status: result[0].post_status
+          });
+        } else {
+          console.log('[FILTERED POSTS] No deleted posts found in current posts array');
+          // Log all post statuses to debug
+          const postStatuses = posts.map(p => ({ id: p.id, isDeleted: p.isDeleted, post_status: p.post_status }));
+          console.log('[FILTERED POSTS] All post statuses:', postStatuses);
+        }
+        break;
+      default: 
+        result = posts;
     }
+    
+    return result;
   };
 
   return (
@@ -295,6 +449,7 @@ const PostSection = ({
               setShowDeleteModal={setShowDeleteModal}
               setShowPostDetailModal={setShowPostDetailModal}
               approvingPostId={approvingPostId}
+              flaggingPostId={flaggingPostId}
               getCurrentFilteredPosts={() => filteredPosts()}
               filteredPosts={filteredPosts}
               getUserAvatar={getUserAvatar}
@@ -314,6 +469,7 @@ const PostSection = ({
                 handleFilterButtonClick={handleFilterButtonClick}
                 handleAllClick={handleAllClick}
                 searchPosts={handleSearch}
+                posts={posts}
               />
               <QuickAdminActions />
             </Col>
@@ -355,24 +511,42 @@ const PostSection = ({
           setDeleteReasonId={setDeleteReasonId}
           deleteComment={deleteComment}
           setDeleteComment={setDeleteComment}
-          onConfirmDelete={() => {
-            setPosts(posts.map(p => p.id === selectedPost?.id ?
-              { 
-                ...p, 
-                isDeleted: true, 
-                deleteComment, 
-                deleteReason,
+          onConfirmDelete={async () => {
+            try {
+              // Call the API to reject/delete the post
+              await API.updatePostStatus(
+                selectedPost.id,
+                "reject",
                 deleteReasonId,
-                deleteReasonData: {
-                  id: deleteReasonId,
-                  name: deleteReason,
-                  comment: deleteComment
-                }
-              } : p));
-            setShowDeleteModal(false);
-            setDeleteComment('');
-            setDeleteReason('');
-            setDeleteReasonId(null);
+                deleteComment
+              );
+              
+              // Update the local state
+              setPosts(posts.map(p => p.id === selectedPost?.id ?
+                { 
+                  ...p, 
+                  isDeleted: true, 
+                  post_status: "rejected",
+                  deleteComment, 
+                  deleteReason,
+                  deleteReasonId,
+                  deleteReasonData: {
+                    id: deleteReasonId,
+                    name: deleteReason,
+                    comment: deleteComment
+                  }
+                } : p));
+                
+            } catch (error) {
+              console.error("Error deleting post:", error);
+              // Optionally show an error notification here
+            } finally {
+              // Reset the UI state
+              setShowDeleteModal(false);
+              setDeleteComment('');
+              setDeleteReason('');
+              setDeleteReasonId(null);
+            }
           }}
           canConfirmAction={canConfirmAction}
         />

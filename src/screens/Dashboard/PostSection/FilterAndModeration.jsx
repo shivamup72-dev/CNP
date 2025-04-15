@@ -9,12 +9,29 @@ const FilterAndModeration = ({
   activeFilter,
   handleFilterButtonClick,
   handleAllClick,
-  searchPosts
+  searchPosts,
+  posts = []
 }) => {
   // State for tracking hover
   const [hoveredButton, setHoveredButton] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const searchTimeoutRef = useRef(null);
+
+  // Helper function to get flagged posts
+  const getFlaggedPosts = () => {
+    const flaggedPosts = posts.filter(post => post.flagged || post.post_status === "flagged");
+    console.log('[FLAGGED POSTS] Total flagged posts:', flaggedPosts.length);
+    console.log('[FLAGGED POSTS] List of flagged posts:', flaggedPosts);
+    return flaggedPosts;
+  };
+
+  // Helper function to get deleted posts
+  const getDeletedPosts = () => {
+    const deletedPosts = posts.filter(post => post.isDeleted || post.post_status === "rejected");
+    console.log('[DELETED POSTS] Total deleted posts:', deletedPosts.length);
+    console.log('[DELETED POSTS] List of deleted posts:', deletedPosts);
+    return deletedPosts;
+  };
 
   // Common style for button borders
   const buttonStyle = (buttonName, isActive, bgColor) => ({
@@ -157,7 +174,12 @@ const FilterAndModeration = ({
               variant={activeFilter === "flagged" ? "primary" : "light"}
               className="w-100"
               style={buttonStyle("flagged", activeFilter === "flagged", "#0d6efd")}
-              onClick={() => handleFilterButtonClick("flagged")}
+              onClick={() => {
+                console.log('[FILTER] Flagged button clicked');
+                getFlaggedPosts();
+                console.log('[FILTER] Calling handleFilterButtonClick with: "flagged"');
+                handleFilterButtonClick("flagged");
+              }}
               onMouseEnter={() => setHoveredButton("flagged")}
               onMouseLeave={() => setHoveredButton(null)}
             >
@@ -173,7 +195,12 @@ const FilterAndModeration = ({
               variant={activeFilter === "deleted" ? "danger" : "light"}
               className="w-100"
               style={buttonStyle("deleted", activeFilter === "deleted", "#dc3545")}
-              onClick={() => handleFilterButtonClick("deleted")}
+              onClick={() => {
+                console.log('[FILTER] Deleted button clicked');
+                getDeletedPosts();
+                console.log('[FILTER] Calling handleFilterButtonClick with: "deleted"');
+                handleFilterButtonClick("deleted");
+              }}
               onMouseEnter={() => setHoveredButton("deleted")}
               onMouseLeave={() => setHoveredButton(null)}
             >

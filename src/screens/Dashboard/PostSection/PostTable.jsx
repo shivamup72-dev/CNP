@@ -15,9 +15,23 @@ const PostTable = ({
     handleFlagButtonClick,
     setShowDeleteModal,
     approvingPostId,
+    flaggingPostId,
     error = null,
-    isSearching = false
+    isSearching = false,
+    activeFilter = "all"
 }) => {
+    // Add logging for debugging
+    console.log(`[PostTable] Rendering with activeFilter: ${activeFilter}`);
+    console.log(`[PostTable] Posts count:`, getCurrentFilteredPosts().length);
+    if (activeFilter === "flagged") {
+        console.log(`[PostTable] Flagged posts in table:`, 
+            getCurrentFilteredPosts().filter(post => post.flagged || post.post_status === "flagged"));
+    }
+    if (activeFilter === "deleted") {
+        console.log(`[PostTable] Deleted posts in table:`, 
+            getCurrentFilteredPosts().filter(post => post.isDeleted || post.post_status === "rejected"));
+    }
+    
     // Common table cell style for consistency
     const tableCellStyle = {
         verticalAlign: "middle",
@@ -168,6 +182,10 @@ const PostTable = ({
                                         <div className="d-flex justify-content-start">
                                             {post.post_status === "approved" ? (
                                                 <span className="badge bg-success">Approved</span>
+                                            ) : post.post_status === "flagged" || post.flagged ? (
+                                                <span className="badge bg-danger">Flagged</span>
+                                            ) : post.post_status === "rejected" || post.isDeleted ? (
+                                                <span className="badge bg-danger">Deleted</span>
                                             ) : (
                                                 <span className={`badge ${post.ageColor}`}>{post.age}</span>
                                             )}
@@ -197,12 +215,17 @@ const PostTable = ({
                                                 className="d-flex justify-content-center align-items-center"
                                                 style={{ width: "32px", height: "32px", padding: "0" }}
                                                 onClick={() => handleFlagButtonClick(post)}
+                                                disabled={flaggingPostId === post.id}
                                             >
-                                                <FiFlag
-                                                    style={{
-                                                        color: post.flagged ? "white" : "#6c757d",
-                                                    }}
-                                                />
+                                                {flaggingPostId === post.id ? (
+                                                    <span>...</span>
+                                                ) : (
+                                                    <FiFlag
+                                                        style={{
+                                                            color: post.flagged ? "white" : "#6c757d",
+                                                        }}
+                                                    />
+                                                )}
                                             </Button>
                                             <Button
                                                 variant="danger"

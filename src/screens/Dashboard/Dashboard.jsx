@@ -94,12 +94,14 @@ const Dashboard = () => {
       const statusMap = {
         "all": "all",
         "approved": "approved",
-        "under-review": "pending",
+        "review": "pending",
         "flagged": "red_flag",
         "deleted": "rejected"
       };
 
       const status = statusMap[activeFilter] || "all";
+      console.log(`[DASHBOARD] fetchPosts - activeFilter: "${activeFilter}", mapped to API status: "${status}"`);
+      
       let url = `${API.BASE_URL}${API.ENDPOINTS.POSTS}?status=${status}&ordering=${ordering}`;
       
       // Add search parameter if provided
@@ -108,6 +110,8 @@ const Dashboard = () => {
       }
       
       console.log(`[DASHBOARD] API Request: GET ${url}`);
+      console.log(`[DASHBOARD] Active Filter: ${activeFilter}, Status: ${status}`);
+      
       const res = await fetch(url, { headers: API.getHeaders() });
       if (!res.ok) throw new Error("Failed to fetch posts");
       const data = await res.json();
@@ -138,12 +142,120 @@ const Dashboard = () => {
         date_created: p.date_created,
         age: formatPostAge(p.date_created),
         ageColor: getPostAgeColor(p.date_created),
-        flagged: p.flagged || false,
+        flagged: p.post_status === "red_flag" || p.flagged || false,
+        isDeleted: p.post_status === "rejected" || p.isDeleted || false,
         flagReason: p.flagReason,
         flagComment: p.flagComment,
         authorImage: API.getImageUrl(p.created_by.picture),
         isApproved: p.post_status === "approved"
       }));
+
+      // Special handling for flagged filter since API might not return correct data
+      if (activeFilter === "flagged") {
+        // Get the latest posts that are flagged from memory or API
+        console.log(`[DASHBOARD] Special handling for flagged posts`);
+        
+        // If no flagged posts are found directly from API, we'll filter them from all posts
+        if (formattedPosts.filter(p => p.flagged).length === 0) {
+          console.log(`[DASHBOARD] No flagged posts from API, fetching all posts`);
+          
+          // Fetch all posts to find flagged ones
+          const allPostsUrl = `${API.BASE_URL}${API.ENDPOINTS.POSTS}?status=all&ordering=${ordering}`;
+          const allPostsRes = await fetch(allPostsUrl, { headers: API.getHeaders() });
+          if (allPostsRes.ok) {
+            const allPostsData = await allPostsRes.json();
+            const allFormattedPosts = allPostsData.results.map(p => ({
+              id: p.id,
+              title: p.description || "No title",
+              content: p.description || "No content",
+              author: p.created_by.full_name,
+              image: p.media.length ? API.getImageUrl(p.media[0].media) : null,
+              post_status: p.post_status,
+              date: formatDate(p.date_created),
+              date_created: p.date_created,
+              age: formatPostAge(p.date_created),
+              ageColor: getPostAgeColor(p.date_created),
+              flagged: p.post_status === "red_flag" || p.flagged || false,
+              flagReason: p.flagReason,
+              flagComment: p.flagComment,
+              authorImage: API.getImageUrl(p.created_by.picture),
+              isApproved: p.post_status === "approved"
+            }));
+            
+            // Filter out flagged posts
+            const flaggedPosts = allFormattedPosts.filter(p => p.flagged || p.post_status === "red_flag");
+            console.log(`[DASHBOARD] Found ${flaggedPosts.length} flagged posts from all posts`);
+            
+            if (flaggedPosts.length > 0) {
+              // Use the flagged posts found from all posts
+              setPosts(flaggedPosts);
+              setError(null);
+              return; // Return early since we've handled the posts
+            }
+          }
+        }
+      }
+      
+      // Special handling for deleted filter to ensure deleted posts are properly displayed
+      if (activeFilter === "deleted") {
+        console.log(`[DASHBOARD] Special handling for deleted posts`);
+        
+        // If no deleted posts are found directly from API, fetch all posts
+        if (formattedPosts.filter(p => p.isDeleted || p.post_status === "rejected").length === 0) {
+          console.log(`[DASHBOARD] No deleted posts from API, fetching all posts`);
+          
+          // Fetch all posts to find deleted ones
+          const allPostsUrl = `${API.BASE_URL}${API.ENDPOINTS.POSTS}?status=all&ordering=${ordering}`;
+          const allPostsRes = await fetch(allPostsUrl, { headers: API.getHeaders() });
+          
+          if (allPostsRes.ok) {
+            const allPostsData = await allPostsRes.json();
+            const allFormattedPosts = allPostsData.results.map(p => ({
+              id: p.id,
+              title: p.description || "No title",
+              content: p.description || "No content",
+              author: p.created_by.full_name,
+              image: p.media.length ? API.getImageUrl(p.media[0].media) : null,
+              post_status: p.post_status,
+              date: formatDate(p.date_created),
+              date_created: p.date_created,
+              age: formatPostAge(p.date_created),
+              ageColor: getPostAgeColor(p.date_created),
+              flagged: p.post_status === "red_flag" || p.flagged || false,
+              isDeleted: p.post_status === "rejected" || p.isDeleted || false,
+              deleteReason: p.deleteReason,
+              deleteComment: p.deleteComment,
+              authorImage: API.getImageUrl(p.created_by.picture),
+              isApproved: p.post_status === "approved"
+            }));
+            
+            // Filter out deleted posts
+            const deletedPosts = allFormattedPosts.filter(p => p.isDeleted || p.post_status === "rejected");
+            console.log(`[DASHBOARD] Found ${deletedPosts.length} deleted posts from all posts`);
+            
+            if (deletedPosts.length > 0) {
+              // Use the deleted posts found from all posts
+              setPosts(deletedPosts);
+              setError(null);
+              return; // Return early since we've handled the posts
+            }
+          }
+        }
+      }
+
+      // Log information about flagged posts
+      if (activeFilter === "flagged" || status === "red_flag") {
+        const flaggedCount = formattedPosts.filter(p => p.flagged).length;
+        console.log(`[DASHBOARD] Flagged posts found: ${flaggedCount}`);
+        console.log(`[DASHBOARD] Flagged posts:`, formattedPosts.filter(p => p.flagged));
+      }
+      
+      // Log information about deleted posts
+      if (activeFilter === "deleted" || status === "rejected") {
+        const deletedCount = formattedPosts.filter(p => p.isDeleted || p.post_status === "rejected").length;
+        console.log(`[DASHBOARD] Deleted posts found: ${deletedCount}`);
+        console.log(`[DASHBOARD] Deleted posts:`, formattedPosts.filter(p => p.isDeleted || p.post_status === "rejected"));
+      }
 
       setPosts(formattedPosts);
       setError(null);
@@ -167,7 +279,13 @@ const Dashboard = () => {
     fetchPosts(term, false);
   };
 
+  const onFilterChange = (filter) => {
+    console.log(`[DASHBOARD] Filter changing from ${activeFilter} to ${filter}`);
+    setActiveFilter(filter);
+  };
+
   useEffect(() => {
+    console.log(`[DASHBOARD] useEffect triggered - activeFilter: ${activeFilter}`);
     fetchPosts(searchTerm);
   }, [fetchPosts, currentPage, activeFilter, ordering, searchTerm]);
 
@@ -226,7 +344,7 @@ const Dashboard = () => {
             setApprovedPosts={setApprovedPosts}
             onPageChange={setCurrentPage}
             activeFilter={activeFilter}
-            onFilterChange={setActiveFilter}
+            onFilterChange={onFilterChange}
             ordering={ordering}
             onOrderingChange={setOrdering}
             error={error}

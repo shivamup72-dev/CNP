@@ -23,6 +23,7 @@ const API = {
     POST_APPROVE: (id) => `/web/posts/${id}/approve`,
     POST_FLAG: (id) => `/web/posts/${id}/flag`,
     POST_DELETE: (id) => `/web/posts/${id}/delete`,
+    POST_STATUS_UPDATE: (id) => `/api/v1/web/post-status-update/${id}/`,
 
     // Users
     USERS: '/web/users',
@@ -55,6 +56,55 @@ const API = {
     } catch (error) {
       console.error('Error fetching admin choices:', error);
       return [];
+    }
+  },
+
+  // Update post status (approve, reject, flag)
+  updatePostStatus: async (postId, action, reasonId, remarks = "") => {
+    try {
+      const url = `${API.BASE_URL}${API.ENDPOINTS.POST_STATUS_UPDATE(postId)}`;
+      
+      // Create the request body
+      const body = {
+        action: action, // "approve", "reject", "red_flag"
+        reason: reasonId
+      };
+
+      // Add remarks if provided
+      if (remarks) {
+        body.remarks = remarks;
+      }
+
+      console.log(`[API] Updating post ${postId} status with action: ${action}`, { 
+        url, 
+        requestBody: body,
+        headers: {
+          ...API.getHeaders(),
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          ...API.getHeaders(),
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(body)
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        console.error(`[API] Error response (${response.status}):`, data);
+        throw new Error(data.message || `Failed to update post status: ${response.status}`);
+      }
+      
+      console.log(`[API] Success response for ${action} on post ${postId}:`, data);
+      return data;
+    } catch (error) {
+      console.error('[API] Error updating post status:', error);
+      throw error;
     }
   }
 };

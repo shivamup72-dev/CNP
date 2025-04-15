@@ -52,12 +52,14 @@ const DeleteModal = ({
   // Update remark requirement when reason changes
   const handleReasonChange = (e) => {
     const selectedReasonName = e.target.value;
-    setDeleteReason(selectedReasonName);
+    const selectedReasonId = parseInt(e.target.options[e.target.selectedIndex].dataset.id, 10);
     
-    // Find the selected reason object to get ID and remark requirement
-    const reasonObj = reasons.find(r => r.name === selectedReasonName);
+    setDeleteReason(selectedReasonName);
+    setDeleteReasonId(selectedReasonId);
+    
+    // Find the selected reason object to get remark requirement
+    const reasonObj = reasons.find(r => r.id === selectedReasonId);
     if (reasonObj) {
-      setDeleteReasonId(reasonObj.id);
       setRemarkRequired(reasonObj.is_remark_require);
     }
   };
@@ -183,7 +185,7 @@ const DeleteModal = ({
                 <option>No reasons available</option>
               ) : (
                 reasons.map(reason => (
-                  <option key={reason.id} value={reason.name}>
+                  <option key={reason.id} value={reason.name} data-id={reason.id}>
                     {reason.name}
                   </option>
                 ))

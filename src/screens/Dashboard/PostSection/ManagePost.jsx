@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import "../../../assets/css/Dashboard.css";
 import { Card } from "react-bootstrap";
 import { FaCheck, FaListUl } from "react-icons/fa";
+import { FiFlag } from "react-icons/fi";
 import PostTable from "./PostTable";
 import CustomPagination from "../../../components/common/CustomPagination";
 import Button from "../../../components/common/BootstrapButton";
@@ -45,6 +46,7 @@ const ManagePost = ({
   setShowDeleteModal,
   setShowPostDetailModal,
   approvingPostId,
+  flaggingPostId,
   getCurrentFilteredPosts,
   filteredPosts,
   getUserAvatar,
@@ -165,6 +167,15 @@ const ManagePost = ({
                 <FaCheck style={{ marginRight: "4px" }} />
                 Approved
               </Button>
+              <Button
+                variant={activeFilter === "flagged" ? "dark" : "outline-dark"}
+                size="sm"
+                className="filter-btn"
+                onClick={() => handleFilterButtonClick("flagged")}
+              >
+                <FiFlag style={{ marginRight: "4px" }} />
+                Flagged Posts
+              </Button>
             </div>
             <div className="text-muted small">
               Showing {filteredPosts().length} of {totalPosts} posts
@@ -183,8 +194,10 @@ const ManagePost = ({
               handleFlagButtonClick={handleFlagButtonClick}
               setShowDeleteModal={setShowDeleteModal}
               approvingPostId={approvingPostId}
+              flaggingPostId={flaggingPostId}
               error={error}
               isSearching={isSearching || localIsSearching}
+              activeFilter={activeFilter}
             />
           </div>
 
