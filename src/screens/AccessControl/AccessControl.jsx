@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { Container, Row, Col, Card, Button, Table, Badge, Tabs, Tab, Nav, Alert, Pagination } from "react-bootstrap";
+import { Container, Row, Col, Card, Button, Table, Badge, Tabs, Tab, Nav, Alert, Pagination, Spinner } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 import {
   FiUsers,
@@ -22,6 +22,8 @@ import PostSection from "../Dashboard/postSection/PostSection.jsx";
 import API from "../../api/endpoint";
 import "../../assets/css/Dashboard.css";
 import { formatDate } from "../../utils/DateUtility";
+import CreateUserOrAdminModal from '../../components/modals/CreateUserOrAdminModal';
+import UsersTable from './UsersTable';
 
 const AccessControl = () => {
   const navigate = useNavigate();
@@ -37,6 +39,9 @@ const AccessControl = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [activeFilter, setActiveFilter] = useState("all");
   const [shouldShowInterimData, setShouldShowInterimData] = useState(true);
+
+  // Modal states
+  const [showCreateUserOrAdminModal, setShowCreateUserOrAdminModal] = useState(false);
 
   // Sample users data
   const [users, setUsers] = useState([
@@ -92,6 +97,13 @@ const AccessControl = () => {
     }
   ]);
 
+  const [showUsersList, setShowUsersList] = useState(false);
+  const [showAdminsList, setShowAdminsList] = useState(false);
+  const [isLoadingUsers, setIsLoadingUsers] = useState(false);
+  const [isLoadingAdmins, setIsLoadingAdmins] = useState(false);
+  const [usersLoadError, setUsersLoadError] = useState(null);
+  const [adminsLoadError, setAdminsLoadError] = useState(null);
+
   // Function to fetch posts data from API
   const fetchPostsData = async (page = 1, search = "", showLoader = true) => {
     // Preserve the search term even during API calls
@@ -109,7 +121,7 @@ const AccessControl = () => {
     setError(null);
     try {
       // API URL with status filter and search if provided
-      let apiUrl = `${API.BASE_URL}${API.ENDPOINTS.POSTS}?status=${activeFilter}`;
+      let apiUrl = `${API.ENDPOINTS.POSTS}?status=${activeFilter}`;
       
       // Add search parameter if provided
       if (search && search.trim()) {
@@ -120,11 +132,7 @@ const AccessControl = () => {
       console.log(`[ACCESS CONTROL] Fetching posts with status: ${activeFilter}`);
       console.log(`[ACCESS CONTROL] Request URL: ${apiUrl}`);
       
-      const response = await fetch(apiUrl, { headers: API.getHeaders() });
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      const data = await response.json();
+      const data = await API.get(apiUrl);
       console.log(`[ACCESS CONTROL] Response:`, data);
 
       // Format the posts for PostSection component with correct post_status and flagged properties
@@ -288,6 +296,107 @@ const AccessControl = () => {
     }, 500); // Wait half a second after typing stops
   };
 
+  // Handle user creation
+  const handleCreateUser = (userData) => {
+    console.log("Creating new user with data:", userData);
+    
+    // Map permission ID to role based on API values
+    // ID 1 = Admin = god_admin role
+    // ID 2 = Moderator = ground_zero role
+    const roleMap = {
+      "1": "god_admin",
+      "2": "ground_zero"
+    };
+    
+    // Create a new user object from the form data
+    const newUser = {
+      id: users.length + 1,
+      name: `${userData.first_name} ${userData.last_name}`,
+      email: userData.email,
+      role: roleMap[userData.permission] || "ground_zero",
+      location: userData.city,
+      status: "active",
+      lastActive: new Date().toISOString().split('T')[0],
+      accessLevel: userData.permission === "1" ? 5 : 1
+    };
+    
+    // Add the new user to the users array
+    setUsers([newUser, ...users]);
+    
+    // Close the modal
+    setShowCreateUserOrAdminModal(false);
+  };
+
+  // Function to fetch all users
+  const fetchAllUsers = async () => {
+    try {
+      setIsLoadingUsers(true);
+      setUsersLoadError(null);
+      setShowAdminsList(false); // Hide admin list when showing all users
+      
+      // In a real implementation, this would be an API call
+      // For now, we'll just use the existing sample data
+      console.log("Fetching all users");
+      
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // No need to set users since we already have sample data
+      // In a real implementation, you would update the users state here
+      
+      setShowUsersList(true);
+      setActiveTab("users");
+    } catch (error) {
+      console.error("Error fetching users:", error);
+      setUsersLoadError("Failed to load users. Please try again.");
+    } finally {
+      setIsLoadingUsers(false);
+    }
+  };
+  
+  // Function to fetch only admin users
+  const fetchAllAdmins = async () => {
+    try {
+      setIsLoadingAdmins(true);
+      setAdminsLoadError(null);
+      setShowUsersList(false); // Hide users list when showing admins
+      
+      // In a real implementation, this would be an API call to get only admin users
+      console.log("Fetching admin users");
+      
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Filter for admin users (in a real implementation, this would be server-side)
+      // const adminUsers = await API.getAdminUsers();
+      // setUsers(adminUsers);
+      
+      setShowAdminsList(true);
+      setActiveTab("users");
+    } catch (error) {
+      console.error("Error fetching admins:", error);
+      setAdminsLoadError("Failed to load admin users. Please try again.");
+    } finally {
+      setIsLoadingAdmins(false);
+    }
+  };
+  
+  // Function to handle "All Users" button click
+  const handleAllUsersClick = () => {
+    fetchAllUsers();
+  };
+  
+  // Function to handle "All Admins" button click
+  const handleAllAdminsClick = () => {
+    fetchAllAdmins();
+  };
+  
+  // Get only admin users
+  const getAdminUsers = () => {
+    // Filter for users with admin roles (god_admin in this case)
+    return users.filter(user => user.role === "god_admin");
+  };
+
   return (
     <Container fluid className="p-4" style={{
       background: "linear-gradient(to bottom, #f8fcf8 0%, #f8fcf8 100%)",
@@ -398,7 +507,11 @@ const AccessControl = () => {
                 <Button
                   variant={activeRole === "all" ? "dark" : "outline-dark"}
                   size="sm"
-                  onClick={() => setActiveRole("all")}
+                  onClick={() => {
+                    setActiveRole("all");
+                    setShowUsersList(false);
+                    setShowAdminsList(false);
+                  }}
                   className="d-flex align-items-center"
                 >
                   <FiUsers className="me-1" /> All
@@ -406,7 +519,11 @@ const AccessControl = () => {
                 <Button
                   variant={activeRole === "ground_zero" ? "dark" : "outline-dark"}
                   size="sm"
-                  onClick={() => setActiveRole("ground_zero")}
+                  onClick={() => {
+                    setActiveRole("ground_zero");
+                    setShowUsersList(false);
+                    setShowAdminsList(false);
+                  }}
                   className="d-flex align-items-center"
                 >
                   <FiMapPin className="me-1" /> Ground Zero Reporter
@@ -414,7 +531,11 @@ const AccessControl = () => {
                 <Button
                   variant={activeRole === "city_manager" ? "dark" : "outline-dark"}
                   size="sm"
-                  onClick={() => setActiveRole("city_manager")}
+                  onClick={() => {
+                    setActiveRole("city_manager");
+                    setShowUsersList(false);
+                    setShowAdminsList(false);
+                  }}
                   className="d-flex align-items-center"
                 >
                   <FiLayers className="me-1" /> City Manager
@@ -422,7 +543,11 @@ const AccessControl = () => {
                 <Button
                   variant={activeRole === "state_manager" ? "dark" : "outline-dark"}
                   size="sm"
-                  onClick={() => setActiveRole("state_manager")}
+                  onClick={() => {
+                    setActiveRole("state_manager");
+                    setShowUsersList(false);
+                    setShowAdminsList(false);
+                  }}
                   className="d-flex align-items-center"
                 >
                   <FiGlobe className="me-1" /> State Manager
@@ -430,7 +555,11 @@ const AccessControl = () => {
                 <Button
                   variant={activeRole === "national_manager" ? "dark" : "outline-dark"}
                   size="sm"
-                  onClick={() => setActiveRole("national_manager")}
+                  onClick={() => {
+                    setActiveRole("national_manager");
+                    setShowUsersList(false);
+                    setShowAdminsList(false);
+                  }}
                   className="d-flex align-items-center"
                   style={{
                     whiteSpace: "normal",
@@ -445,7 +574,11 @@ const AccessControl = () => {
                 <Button
                   variant={activeRole === "god_admin" ? "dark" : "outline-dark"}
                   size="sm"
-                  onClick={() => setActiveRole("god_admin")}
+                  onClick={() => {
+                    setActiveRole("god_admin");
+                    setShowUsersList(false);
+                    setShowAdminsList(false);
+                  }}
                   className="d-flex align-items-center"
                 >
                   <FiUser className="me-1" /> God Admin
@@ -464,216 +597,119 @@ const AccessControl = () => {
             </Col>
             <Col md={4} xs={12} className="d-flex flex-column justify-content-md-end align-items-md-end">
               <div className="d-flex gap-2 mb-2 w-100 justify-content-md-end">
-                {/* Commented out All Posts button
-                <Button
-                  variant="outline-dark"
-                  className="d-flex align-items-center flex-grow-1 flex-md-grow-0"
-                  size="sm"
-                  onClick={() => {
-                    // Reset to page 1 and set filter to "all"
-                    setActiveFilter("all");
-                    console.log("All Posts button clicked - fetching all posts");
-
-                    // Save any existing search term
-                    const savedSearchTerm = window.currentSearchTerm || searchTerm;
-                    
-                    // Clear any pending search timers
-                    if (window.accessControlSearchTimer) {
-                      clearTimeout(window.accessControlSearchTimer);
-                    }
-
-                    // Use the API helper for consistent behavior - this is a direct load
-                    // so we set the loading state directly
-                    setLoading(true);
-                    console.log(`[ACCESS CONTROL] Fetching all posts`);
-                    
-                    // Clear search if it's just a partial term (<3 chars)
-                    const finalSearchTerm = savedSearchTerm && savedSearchTerm.trim().length >= 3 
-                      ? savedSearchTerm 
-                      : "";
-                    
-                    // Build URL with search if present
-                    let apiUrl = `${API.BASE_URL}${API.ENDPOINTS.POSTS}?status=all`;
-                    if (finalSearchTerm) {
-                      apiUrl += `&search=${encodeURIComponent(finalSearchTerm)}`;
-                    }
-                    
-                    fetch(apiUrl, { headers: API.getHeaders() })
-                      .then(response => {
-                        if (!response.ok) {
-                          throw new Error(`HTTP error! status: ${response.status}`);
-                        }
-                        return response.json();
-                      })
-                      .then(data => {
-                        console.log(`[ACCESS CONTROL] Fetched ${data.count} posts`);
-
-                        // Format the posts using the same format as in fetchPostsData
-                        const formattedPosts = data.results.map(post => ({
-                          id: post.id.toString(),
-                          title: post.description || post.message || "No title",
-                          content: post.description || post.message || "No content",
-                          author: post.user?.name || post.created_by?.full_name || "Unknown",
-                          date: formatDate(post.date_created),
-                          date_created: post.date_created,
-                          flagged: post.post_status === "red_flag" || post.flagged || false,
-                          isDeleted: post.post_status === "rejected" || post.isDeleted || false,
-                          post_status: post.post_status || post.status,
-                          image: post.media && post.media.length ? API.getImageUrl(post.media[0].media) : null,
-                          authorImage: post.created_by?.picture ? API.getImageUrl(post.created_by.picture) : null
-                        }));
-
-                        setFormattedPosts(formattedPosts);
-
-                        // Set approved post IDs directly
-                        const approvedIds = data.results.map(post => post.id);
-                        setApprovedPostIds(approvedIds);
-
-                        // Restore the saved search term
-                        window.currentSearchTerm = savedSearchTerm;
-                        setSearchTerm(savedSearchTerm);
-
-                        setPostsData(data);
-                        setCurrentPostsPage(1);
-                        setTotalPages(Math.max(1, Math.ceil(data.count / 100)));
-                        setActiveTab("posts");
-                        setLoading(false);
-                      })
-                      .catch(error => {
-                        console.error("[ACCESS CONTROL] Error fetching posts:", error);
-                        setError(`Failed to fetch posts: ${error.message}`);
-                        setLoading(false);
-                      });
-                  }}
-                >
-                  <FiFileText className="me-1" /> All Posts
-                </Button>
-                */}
-                <Button
-                  variant="outline-dark"
-                  className="d-flex align-items-center flex-grow-1 flex-md-grow-0"
-                  size="sm"
-                >
-                  <FiUsers className="me-1" /> All Users
-                </Button>
-                <Button
-                  variant="outline-dark"
-                  className="d-flex align-items-center flex-grow-1 flex-md-grow-0"
-                  size="sm"
-                >
-                  <FiUserCheck className="me-1" /> All Admins
-                </Button>
+                {/* All Users button */}
+                {isLoadingUsers ? (
+                  <Button 
+                    variant="outline-dark" 
+                    className="d-flex align-items-center flex-grow-1 flex-md-grow-0"
+                    size="sm"
+                    disabled
+                  >
+                    <Spinner animation="border" size="sm" className="me-1" />
+                    <span>Loading...</span>
+                  </Button>
+                ) : (
+                  <Button
+                    variant={showUsersList ? "dark" : "outline-dark"}
+                    className="d-flex align-items-center flex-grow-1 flex-md-grow-0"
+                    size="sm"
+                    onClick={handleAllUsersClick}
+                    disabled={isLoadingAdmins}
+                  >
+                    <FiUsers className="me-1" /> All Users
+                  </Button>
+                )}
+                
+                {/* All Admins button */}
+                {isLoadingAdmins ? (
+                  <Button 
+                    variant="outline-dark" 
+                    className="d-flex align-items-center flex-grow-1 flex-md-grow-0"
+                    size="sm"
+                    disabled
+                  >
+                    <Spinner animation="border" size="sm" className="me-1" />
+                    <span>Loading...</span>
+                  </Button>
+                ) : (
+                  <Button
+                    variant={showAdminsList ? "dark" : "outline-dark"}
+                    className="d-flex align-items-center flex-grow-1 flex-md-grow-0"
+                    size="sm"
+                    onClick={handleAllAdminsClick}
+                    disabled={isLoadingUsers}
+                  >
+                    <FiUserCheck className="me-1" /> All Admins
+                  </Button>
+                )}
               </div>
               <Button
                 variant="dark"
                 className="d-flex align-items-center"
                 style={{ backgroundColor: "#000", borderColor: "#000" }}
+                onClick={() => setShowCreateUserOrAdminModal(true)}
               >
                 <FiUserPlus className="me-2" /> Add New User or Admin
               </Button>
             </Col>
           </Row>
 
-          {/* Users Table */}
-          <Card className="shadow-sm border-0">
-            <Card.Body>
-              <div className="table-responsive">
-                <Table hover className="table-bordered">
-                  <thead>
-                    <tr>
-                      <th className="border-end">Name</th>
-                      <th className="border-end">Email</th>
-                      <th className="border-end">Role</th>
-                      <th className="border-end">Location</th>
-                      <th className="border-end">Status</th>
-                      <th className="border-end">Last Active</th>
-                      <th>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredUsers.map(user => (
-                      <tr key={user.id}>
-                        <td className="border-end">{user.name}</td>
-                        <td className="border-end">{user.email}</td>
-                        <td className="border-end">
-                          <Badge
-                            bg={getRoleBadgeColor(user.role)}
-                            className={`d-flex align-items-center ${user.role === "national_manager" ? "gap-0" : "gap-1"} w-100`}
-                            style={{
-                              maxWidth: user.role === "national_manager" ? "150px" : "150px",
-                              whiteSpace: user.role === "national_manager" ? "normal" : "nowrap",
-                              height: user.role === "national_manager" ? "auto" : "",
-                              padding: user.role === "national_manager" ? "5px 8px" : "",
-                              lineHeight: user.role === "national_manager" ? "1" : "",
-                              fontSize: "11.2px"
-                            }}
-                          >
-                            {getRoleIcon(user.role)} {user.role === "national_manager" ? <span style={{ marginLeft: "2px" }}>{roleDisplayMap[user.role]}</span> : roleDisplayMap[user.role]}
-                          </Badge>
-                        </td>
-                        <td className="border-end">{user.location}</td>
-                        <td className="border-end">
-                          <Badge
-                            bg={user.status === "active" ? "success" : "secondary"}
-                            className="text-capitalize"
-                          >
-                            {user.status}
-                          </Badge>
-                        </td>
-                        <td className="border-end">{user.lastActive}</td>
-                        <td>
-                          <div className="d-flex gap-2">
-                            <Button
-                              variant="outline-dark"
-                              size="sm"
-                              title="View"
-                            >
-                              <FiEye />
-                            </Button>
-                            <Button
-                              variant="outline-primary"
-                              size="sm"
-                              title="Edit"
-                              disabled={user.role !== "god_admin"}
-                              style={{
-                                opacity: user.role !== "god_admin" ? 0.5 : 1,
-                                backgroundColor: user.role !== "god_admin" ? "#f5f5f5" : "",
-                                borderColor: user.role !== "god_admin" ? "#e0e0e0" : "",
-                                color: user.role !== "god_admin" ? "#9e9e9e" : ""
-                              }}
-                            >
-                              <FiEdit />
-                            </Button>
-                            <Button
-                              variant="outline-danger"
-                              size="sm"
-                              title={user.role === "god_admin" ? "Delete User/Admin" : "Delete (Restricted)"}
-                              disabled={user.role !== "god_admin"}
-                              style={{
-                                opacity: user.role !== "god_admin" ? 0.5 : 1,
-                                backgroundColor: user.role !== "god_admin" ? "#f5f5f5" : "",
-                                borderColor: user.role !== "god_admin" ? "#e0e0e0" : "",
-                                color: user.role !== "god_admin" ? "#9e9e9e" : ""
-                              }}
-                            >
-                              <FiTrash />
-                            </Button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                    {filteredUsers.length === 0 && (
-                      <tr>
-                        <td colSpan="7" className="text-center py-4">
-                          No users found matching your criteria
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </Table>
-              </div>
-            </Card.Body>
-          </Card>
+          {/* Users error message */}
+          {usersLoadError && (
+            <Alert variant="danger" className="mb-4">
+              {usersLoadError}
+            </Alert>
+          )}
+
+          {/* Admins error message */}
+          {adminsLoadError && (
+            <Alert variant="danger" className="mb-4">
+              {adminsLoadError}
+            </Alert>
+          )}
+
+          {/* Conditionally show the specific users table, admin users table, or the filtered users table */}
+          {showUsersList ? (
+            <Card className="shadow-sm border-0">
+              <Card.Body>
+                <UsersTable 
+                  users={users}
+                  setUsers={setUsers}
+                  getRoleBadgeColor={getRoleBadgeColor}
+                  getRoleIcon={getRoleIcon}
+                  roleDisplayMap={roleDisplayMap}
+                  title="All Users"
+                />
+              </Card.Body>
+            </Card>
+          ) : showAdminsList ? (
+            <Card className="shadow-sm border-0">
+              <Card.Body>
+                <UsersTable 
+                  users={getAdminUsers()}
+                  setUsers={setUsers}
+                  getRoleBadgeColor={getRoleBadgeColor}
+                  getRoleIcon={getRoleIcon}
+                  roleDisplayMap={roleDisplayMap}
+                  title="All Admins Only"
+                />
+              </Card.Body>
+            </Card>
+          ) : (
+            /* Original filtered users table */
+            <Card className="shadow-sm border-0">
+              <Card.Body>
+                <UsersTable 
+                  users={filteredUsers}
+                  setUsers={setUsers}
+                  getRoleBadgeColor={getRoleBadgeColor}
+                  getRoleIcon={getRoleIcon}
+                  roleDisplayMap={roleDisplayMap}
+                  title={activeRole === "all" ? "All Users" : `${roleDisplayMap[activeRole]} Users`}
+                />
+              </Card.Body>
+            </Card>
+          )}
         </>
       )}
 
@@ -950,6 +986,13 @@ const AccessControl = () => {
           </Col>
         </Row>
       )}
+
+      {/* User Creation Modal */}
+      <CreateUserOrAdminModal 
+        show={showCreateUserOrAdminModal}
+        onHide={() => setShowCreateUserOrAdminModal(false)}
+        handleCreateUser={handleCreateUser}
+      />
     </Container>
   );
 };

@@ -15,6 +15,84 @@ const API = {
     return path.startsWith('http') ? path : `${API.BASE_URL}${path}`;
   },
 
+  // Centralized fetch wrapper with authentication
+  fetchWithAuth: async (endpoint, options = {}) => {
+    // Construct full URL if a relative endpoint is provided
+    const url = endpoint.startsWith('http') ? endpoint : `${API.BASE_URL}${endpoint}`;
+    
+    // Ensure headers exist and include authentication
+    const headers = {
+      ...API.getHeaders(),
+      ...(options.headers || {})
+    };
+    
+    // If content type is not explicitly set and we're sending data, default to JSON
+    if (options.body && !headers['Content-Type'] && !(options.body instanceof FormData)) {
+      headers['Content-Type'] = 'application/json';
+      
+      // Convert body to JSON string if it's not already a string and not FormData
+      if (typeof options.body === 'object') {
+        options.body = JSON.stringify(options.body);
+      }
+    }
+    
+    try {
+      console.log(`[API] ${options.method || 'GET'} request to: ${url}`, options.body ? { body: options.body } : '');
+      
+      const response = await fetch(url, {
+        ...options,
+        headers
+      });
+      
+      // Parse response based on content type
+      let data;
+      const contentType = response.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        data = await response.json();
+      } else {
+        data = await response.text();
+      }
+      
+      if (!response.ok) {
+        console.error(`[API] Error response (${response.status}):`, data);
+        
+        // Handle 401 errors (unauthorized)
+        if (response.status === 401) {
+          console.error('[API] Authentication error. Token may be invalid or expired.');
+          // Here you could implement token refresh logic or redirect to login
+        }
+        
+        throw new Error(data.message || data.detail || `Request failed with status: ${response.status}`);
+      }
+      
+      return data;
+    } catch (error) {
+      console.error('[API] Request error:', error);
+      throw error;
+    }
+  },
+  
+  // HTTP method helpers
+  get: (endpoint, options = {}) => {
+    return API.fetchWithAuth(endpoint, { ...options, method: 'GET' });
+  },
+  
+  post: (endpoint, data, options = {}) => {
+    return API.fetchWithAuth(endpoint, { ...options, method: 'POST', body: data });
+  },
+  
+  put: (endpoint, data, options = {}) => {
+    return API.fetchWithAuth(endpoint, { ...options, method: 'PUT', body: data });
+  },
+  
+  patch: (endpoint, data, options = {}) => {
+    return API.fetchWithAuth(endpoint, { ...options, method: 'PATCH', body: data });
+  },
+  
+  delete: (endpoint, options = {}) => {
+    return API.fetchWithAuth(endpoint, { ...options, method: 'DELETE' });
+  },
+
   // Endpoints
   ENDPOINTS: {
     // Posts
@@ -44,15 +122,7 @@ const API = {
   // Fetch admin choices for a specific type
   getAdminChoices: async (type = 'post') => {
     try {
-      const response = await fetch(`${API.BASE_URL}${API.ENDPOINTS.ADMIN_CHOICES}?applicable_for=${type}`, {
-        headers: API.getHeaders()
-      });
-      
-      if (!response.ok) {
-        throw new Error(`Failed to fetch admin choices: ${response.status}`);
-      }
-      
-      return await response.json();
+      return await API.get(`${API.ENDPOINTS.ADMIN_CHOICES}?applicable_for=${type}`);
     } catch (error) {
       console.error('Error fetching admin choices:', error);
       return [];
@@ -62,7 +132,7 @@ const API = {
   // Update post status (approve, reject, flag)
   updatePostStatus: async (postId, action, reasonId, remarks = "") => {
     try {
-      const url = `${API.BASE_URL}${API.ENDPOINTS.POST_STATUS_UPDATE(postId)}`;
+      const url = API.ENDPOINTS.POST_STATUS_UPDATE(postId);
       
       // Create the request body
       const body = {
@@ -75,33 +145,9 @@ const API = {
         body.remarks = remarks;
       }
 
-      console.log(`[API] Updating post ${postId} status with action: ${action}`, { 
-        url, 
-        requestBody: body,
-        headers: {
-          ...API.getHeaders(),
-          'Content-Type': 'application/json'
-        }
-      });
+      console.log(`[API] Updating post ${postId} status with action: ${action}`);
       
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: {
-          ...API.getHeaders(),
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(body)
-      });
-      
-      const data = await response.json();
-      
-      if (!response.ok) {
-        console.error(`[API] Error response (${response.status}):`, data);
-        throw new Error(data.message || `Failed to update post status: ${response.status}`);
-      }
-      
-      console.log(`[API] Success response for ${action} on post ${postId}:`, data);
-      return data;
+      return await API.post(url, body);
     } catch (error) {
       console.error('[API] Error updating post status:', error);
       throw error;

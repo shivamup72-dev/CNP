@@ -39,13 +39,15 @@ const PostTable = ({
         verticalAlign: "middle",
         borderRight: "1px solid #e0e0e0",
         borderBottom: "1px solid #e0e0e0",
-        padding: "0.4rem 0.5rem"
+        padding: "0.4rem 0.5rem",
+        fontSize: "0.85rem"
     };
 
     const lastCellStyle = {
         verticalAlign: "middle",
         borderBottom: "1px solid #e0e0e0",
-        padding: "0.4rem"
+        padding: "0.4rem",
+        fontSize: "0.85rem"
     };
 
     return (

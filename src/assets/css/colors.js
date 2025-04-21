@@ -8,7 +8,6 @@ const colors = {
   backgroundColor: "#FFF8E1",
   
   /* Bootstrap-like Colors */
-  // success: "#28a745",
   danger: "#dc3545",
   warning: "#ffc107", 
   info: "#0275d8",
