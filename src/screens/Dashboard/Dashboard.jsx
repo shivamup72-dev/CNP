@@ -96,7 +96,8 @@ const Dashboard = () => {
         "approved": "approved",
         "review": "pending",
         "flagged": "red_flag",
-        "deleted": "rejected"
+        "deleted": "rejected",
+        "reposted": "all" // For reposted, we'll fetch all and filter client-side
       };
 
       const status = statusMap[activeFilter] || "all";
@@ -149,6 +150,33 @@ const Dashboard = () => {
         authorImage: API.getImageUrl(p.created_by.picture),
         isApproved: p.post_status === "approved"
       }));
+
+      // Special handling for reposted filter since the API doesn't have a dedicated filter for it
+      if (activeFilter === "reposted") {
+        console.log(`[DASHBOARD] Special handling for reposted posts`);
+        
+        // Filter the posts client-side to find reposted ones
+        const repostedPosts = formattedPosts.filter(p => 
+          p.title?.startsWith("[Repost]") || 
+          p.reposted_from || 
+          p.isReposted
+        );
+        
+        console.log(`[DASHBOARD] Found ${repostedPosts.length} reposted posts client-side`);
+        
+        if (repostedPosts.length > 0) {
+          // Use the reposted posts we found
+          setPosts(repostedPosts);
+          setError(null);
+          return; // Return early since we've handled the posts
+        } else {
+          console.log("[DASHBOARD] No reposted posts found");
+          // Empty array is fine, just show no posts
+          setPosts([]);
+          setError(null);
+          return;
+        }
+      }
 
       // Special handling for flagged filter since API might not return correct data
       if (activeFilter === "flagged") {

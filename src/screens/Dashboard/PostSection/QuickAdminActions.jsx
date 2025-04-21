@@ -52,7 +52,7 @@ const QuickAdminActions = () => {
               onMouseEnter={() => setHoveredButton("audit")}
               onMouseLeave={() => setHoveredButton(null)}
             >
-              <FaClipboardCheck style={{ color: "#28a745", marginRight: "8px" }} />
+              <FaClipboardCheck style={{ color: "var(--bs-success)", marginRight: "8px" }} />
               <span className="d-none d-sm-inline">Content Audit</span>
               <span className="d-inline d-sm-none">Audit</span>
             </BootstrapButton>

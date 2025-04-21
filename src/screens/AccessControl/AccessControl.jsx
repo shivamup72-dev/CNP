@@ -19,6 +19,7 @@ import {
   FiImage
 } from "react-icons/fi";
 import PostSection from "../Dashboard/postSection/PostSection.jsx";
+import API from "../../api/endpoint";
 import "../../assets/css/Dashboard.css";
 import { formatDate } from "../../utils/DateUtility";
 
@@ -35,6 +36,7 @@ const AccessControl = () => {
   const [formattedPosts, setFormattedPosts] = useState([]);
   const [totalPages, setTotalPages] = useState(1);
   const [activeFilter, setActiveFilter] = useState("all");
+  const [shouldShowInterimData, setShouldShowInterimData] = useState(true);
 
   // Sample users data
   const [users, setUsers] = useState([
@@ -92,36 +94,40 @@ const AccessControl = () => {
 
   // Function to fetch posts data from API
   const fetchPostsData = async (page = 1, search = "", showLoader = true) => {
-    if (showLoader) {
-      setLoading(true);
+    // Preserve the search term even during API calls
+    if (search && search.trim()) {
+      window.currentSearchTerm = search;
     }
+    
+    // Only show loading if it's a deliberate loader request or explicit search
+    if (showLoader || window.isDeliberateSearch) {
+      setLoading(true);
+      // Hide interim data while loading new data
+      setShouldShowInterimData(false);
+    }
+    
     setError(null);
     try {
-      // Add Authorization header with the token
-      const headers = {
-        'Authorization': 'Token 7b257e1452f1115b0c70f80a1d54ccd8615aa52c'
-      };
-
       // API URL with status filter and search if provided
-      let apiUrl = `https://stage.suniyenetajee.com/api/v1/web/posts?status=${activeFilter}`;
+      let apiUrl = `${API.BASE_URL}${API.ENDPOINTS.POSTS}?status=${activeFilter}`;
       
       // Add search parameter if provided
-      if (search) {
+      if (search && search.trim()) {
         apiUrl += `&search=${encodeURIComponent(search)}`;
+        console.log(`[ACCESS CONTROL] Searching with term: "${search}"`);
       }
 
-      console.log(`[GET POST BY STATUS API] Fetching posts with status: ${activeFilter}`);
-      console.log(`[GET POST BY STATUS API] Request URL: ${apiUrl}`);
-      console.log(`[GET POST BY STATUS API] Request Headers:`, headers);
-
-      const response = await fetch(apiUrl, { headers });
+      console.log(`[ACCESS CONTROL] Fetching posts with status: ${activeFilter}`);
+      console.log(`[ACCESS CONTROL] Request URL: ${apiUrl}`);
+      
+      const response = await fetch(apiUrl, { headers: API.getHeaders() });
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       const data = await response.json();
-      console.log(`[GET POST BY STATUS API] Response:`, data);
+      console.log(`[ACCESS CONTROL] Response:`, data);
 
-      // Format the posts for PostSection component
+      // Format the posts for PostSection component with correct post_status and flagged properties
       const formattedPosts = data.results.map(post => ({
         id: post.id.toString(),
         title: post.description || post.message || "No title",
@@ -129,9 +135,11 @@ const AccessControl = () => {
         author: post.user?.name || post.created_by?.full_name || "Unknown",
         date: formatDate(post.date_created),
         date_created: post.date_created,
-        flagged: post.flagged || false,
-        post_status: post.status,
-        image: post.media && post.media.length ? API.getImageUrl(post.media[0].media) : post.image || null
+        flagged: post.post_status === "red_flag" || post.flagged || false,
+        isDeleted: post.post_status === "rejected" || post.isDeleted || false,
+        post_status: post.post_status || post.status,
+        image: post.media && post.media.length ? API.getImageUrl(post.media[0].media) : null,
+        authorImage: post.created_by?.picture ? API.getImageUrl(post.created_by.picture) : null
       }));
 
       setFormattedPosts(formattedPosts);
@@ -144,8 +152,11 @@ const AccessControl = () => {
       setCurrentPostsPage(page);
       setTotalPages(Math.max(1, Math.ceil(data.count / 100)));
       setActiveTab("posts");
+      
+      // Now that we have data, allow it to be shown
+      setShouldShowInterimData(true);
     } catch (e) {
-      console.error("Error fetching posts:", e);
+      console.error("[ACCESS CONTROL] Error fetching posts:", e);
       // Handle 404 errors specially
       if (e.message.includes("404")) {
         setError("No data available for this page. There aren't enough posts to fill this many pages.");
@@ -153,8 +164,16 @@ const AccessControl = () => {
         setError(`Failed to fetch posts: ${e.message}`);
       }
     } finally {
+      // Reset the deliberate search flag
+      window.isDeliberateSearch = false;
+      
       if (showLoader) {
         setLoading(false);
+      } else {
+        // Add a small delay to make sure the UI doesn't flicker
+        setTimeout(() => {
+          setLoading(false);
+        }, 300);
       }
     }
   };
@@ -225,8 +244,15 @@ const AccessControl = () => {
 
   // Handle filter change for post review component
   const handleFilterChange = (filter) => {
-    console.log("Access Control: Changing filter to:", filter);
+    console.log(`[ACCESS CONTROL] Changing filter to: ${filter}`);
     setActiveFilter(filter);
+    
+    // Log additional info for debugging
+    if (filter === "flagged") {
+      console.log(`[ACCESS CONTROL] Changing to flagged posts filter`);
+    } else if (filter === "deleted") {
+      console.log(`[ACCESS CONTROL] Changing to deleted posts filter`);
+    }
     
     // Use the fetchPostsData function directly with the current search term
     fetchPostsData(1, searchTerm);
@@ -240,10 +266,26 @@ const AccessControl = () => {
 
   // Search posts function to handle search term updates
   const searchPosts = (term, filter) => {
-    console.log("Access Control: Searching posts with term:", term);
+    console.log("Access Control: Search term received:", term);
     
-    // Fetch posts with the search term but don't show loader
-    fetchPostsData(1, term, false);
+    // Always store the current search term to preserve it
+    window.currentSearchTerm = term;
+    
+    // Clear any existing timers to prevent multiple API calls
+    if (window.accessControlSearchTimer) {
+      clearTimeout(window.accessControlSearchTimer);
+    }
+    
+    // Set a timer to wait until user stops typing
+    window.accessControlSearchTimer = setTimeout(() => {
+      console.log(`Access Control: User finished typing "${term}", now searching...`);
+      
+      // Set a flag to indicate we're intentionally searching
+      window.isDeliberateSearch = true;
+      
+      // Now trigger the API call
+      fetchPostsData(1, term, false);
+    }, 500); // Wait half a second after typing stops
   };
 
   return (
@@ -305,26 +347,40 @@ const AccessControl = () => {
             <Card.Body className="p-0">
               {loading && (
                 <div className="text-center py-5">
-                  {/* Loading spinner removed as requested */}
+                  <p>Loading posts...</p>
                 </div>
               )}
 
-              {!loading && postsData && formattedPosts && (
-                <PostSection
-                  posts={formattedPosts}
-                  setPosts={handlePostsUpdate}
-                  currentPage={currentPostsPage}
-                  totalPages={totalPages}
-                  onPageChange={handlePageChange}
-                  totalPosts={postsData.count}
-                  approvedPosts={approvedPostIds}
-                  setApprovedPosts={setApprovedPostIds}
-                  activeFilter={activeFilter}
-                  onFilterChange={handleFilterChange}
-                  inDashboard={true}
-                  error={error}
-                  searchPosts={searchPosts}
-                />
+              {!loading && postsData && formattedPosts && shouldShowInterimData && (
+                <div className="access-control-post-section">
+                  <style>
+                    {`
+                      .access-control-post-section .mb-3.px-2 {
+                        margin-top: 15px !important;
+                      }
+                      .access-control-post-section .mb-3.px-2 input:focus {
+                        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+                        border-color: #86b7fe;
+                        outline: 0;
+                      }
+                    `}
+                  </style>
+                  <PostSection
+                    posts={formattedPosts}
+                    setPosts={handlePostsUpdate}
+                    currentPage={currentPostsPage}
+                    totalPages={totalPages}
+                    onPageChange={handlePageChange}
+                    totalPosts={postsData.count}
+                    approvedPosts={approvedPostIds}
+                    setApprovedPosts={setApprovedPostIds}
+                    activeFilter={activeFilter}
+                    onFilterChange={handleFilterChange}
+                    inDashboard={true}
+                    error={error}
+                    searchPosts={searchPosts}
+                  />
+                </div>
               )}
             </Card.Body>
           </Card>
@@ -408,6 +464,7 @@ const AccessControl = () => {
             </Col>
             <Col md={4} xs={12} className="d-flex flex-column justify-content-md-end align-items-md-end">
               <div className="d-flex gap-2 mb-2 w-100 justify-content-md-end">
+                {/* Commented out All Posts button
                 <Button
                   variant="outline-dark"
                   className="d-flex align-items-center flex-grow-1 flex-md-grow-0"
@@ -417,12 +474,31 @@ const AccessControl = () => {
                     setActiveFilter("all");
                     console.log("All Posts button clicked - fetching all posts");
 
-                    // Use the simplified API call
-                    const headers = {
-                      'Authorization': 'Token 7b257e1452f1115b0c70f80a1d54ccd8615aa52c'
-                    };
+                    // Save any existing search term
+                    const savedSearchTerm = window.currentSearchTerm || searchTerm;
+                    
+                    // Clear any pending search timers
+                    if (window.accessControlSearchTimer) {
+                      clearTimeout(window.accessControlSearchTimer);
+                    }
 
-                    fetch(`https://stage.suniyenetajee.com/api/v1/web/posts?status=all`, { headers })
+                    // Use the API helper for consistent behavior - this is a direct load
+                    // so we set the loading state directly
+                    setLoading(true);
+                    console.log(`[ACCESS CONTROL] Fetching all posts`);
+                    
+                    // Clear search if it's just a partial term (<3 chars)
+                    const finalSearchTerm = savedSearchTerm && savedSearchTerm.trim().length >= 3 
+                      ? savedSearchTerm 
+                      : "";
+                    
+                    // Build URL with search if present
+                    let apiUrl = `${API.BASE_URL}${API.ENDPOINTS.POSTS}?status=all`;
+                    if (finalSearchTerm) {
+                      apiUrl += `&search=${encodeURIComponent(finalSearchTerm)}`;
+                    }
+                    
+                    fetch(apiUrl, { headers: API.getHeaders() })
                       .then(response => {
                         if (!response.ok) {
                           throw new Error(`HTTP error! status: ${response.status}`);
@@ -430,9 +506,9 @@ const AccessControl = () => {
                         return response.json();
                       })
                       .then(data => {
-                        console.log(`Fetched ${data.count} posts`);
+                        console.log(`[ACCESS CONTROL] Fetched ${data.count} posts`);
 
-                        // Format the posts
+                        // Format the posts using the same format as in fetchPostsData
                         const formattedPosts = data.results.map(post => ({
                           id: post.id.toString(),
                           title: post.description || post.message || "No title",
@@ -440,9 +516,11 @@ const AccessControl = () => {
                           author: post.user?.name || post.created_by?.full_name || "Unknown",
                           date: formatDate(post.date_created),
                           date_created: post.date_created,
-                          flagged: post.flagged || false,
-                          post_status: post.status,
-                          image: post.media && post.media.length ? API.getImageUrl(post.media[0].media) : post.image || null
+                          flagged: post.post_status === "red_flag" || post.flagged || false,
+                          isDeleted: post.post_status === "rejected" || post.isDeleted || false,
+                          post_status: post.post_status || post.status,
+                          image: post.media && post.media.length ? API.getImageUrl(post.media[0].media) : null,
+                          authorImage: post.created_by?.picture ? API.getImageUrl(post.created_by.picture) : null
                         }));
 
                         setFormattedPosts(formattedPosts);
@@ -451,18 +529,26 @@ const AccessControl = () => {
                         const approvedIds = data.results.map(post => post.id);
                         setApprovedPostIds(approvedIds);
 
+                        // Restore the saved search term
+                        window.currentSearchTerm = savedSearchTerm;
+                        setSearchTerm(savedSearchTerm);
+
                         setPostsData(data);
                         setCurrentPostsPage(1);
                         setTotalPages(Math.max(1, Math.ceil(data.count / 100)));
                         setActiveTab("posts");
+                        setLoading(false);
                       })
                       .catch(error => {
-                        console.error("Error fetching posts:", error);
+                        console.error("[ACCESS CONTROL] Error fetching posts:", error);
+                        setError(`Failed to fetch posts: ${error.message}`);
+                        setLoading(false);
                       });
                   }}
                 >
                   <FiFileText className="me-1" /> All Posts
                 </Button>
+                */}
                 <Button
                   variant="outline-dark"
                   className="d-flex align-items-center flex-grow-1 flex-md-grow-0"

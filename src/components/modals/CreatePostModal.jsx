@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Modal, Button } from 'react-bootstrap';
+import { Form } from 'react-bootstrap';
 
 const CreatePostModal = ({
   show = false,
@@ -8,8 +9,46 @@ const CreatePostModal = ({
   handleNewPostChange = () => { },
   handleImageUpload = () => { },
   handleCreatePost = () => { },
-  validateForm = () => true,
-  formErrors = {}
+  validateForm = () => {
+    let valid = true;
+    const errors = {};
+
+    if (!newPost.title?.trim()) {
+      errors.title = "Title is required";
+      valid = false;
+    }
+
+    if (!newPost.content?.trim()) {
+      errors.content = "Content is required";
+      valid = false;
+    }
+
+    if (!newPost.author?.trim()) {
+      errors.author = "Author is required";
+      valid = false;
+    }
+
+    if (!newPost.email?.trim()) {
+      errors.email = "Email is required";
+      valid = false;
+    } else {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(newPost.email)) {
+        errors.email = "Please enter a valid email address";
+        valid = false;
+      }
+    }
+
+    if (!newPost.category) {
+      errors.category = "Category is required";
+      valid = false;
+    }
+
+    setFormErrors(errors);
+    return valid;
+  },
+  formErrors = {},
+  setFormErrors = () => { }
 }) => {
   const [isButtonActive, setIsButtonActive] = useState(false);
 
@@ -24,20 +63,34 @@ const CreatePostModal = ({
     setTimeout(() => setIsButtonActive(false), 300);
   };
 
-  const renderInput = (label, name, type = 'text') => (
-    <div className="mb-2">
-      <label className="form-label small mb-1">{label}</label>
-      <input
-        type={type}
-        name={name}
-        value={newPost[name] || ""}
-        onChange={handleNewPostChange}
-        className={`form-control form-control-sm ${formErrors[name] ? 'is-invalid' : ''}`}
-        style={{ height: "35px" }}
-      />
-      {formErrors[name] && <div className="invalid-feedback small">{formErrors[name]}</div>}
-    </div>
-  );
+  const renderInput = ({
+    controlId, 
+    label, 
+    type = "text", 
+    placeholder, 
+    as, 
+    rows, 
+    property, 
+    value
+  }) => {
+    return (
+      <Form.Group controlId={controlId}>
+        <Form.Label>{label}</Form.Label>
+        <Form.Control
+          type={type}
+          placeholder={placeholder}
+          as={as}
+          rows={rows}
+          onChange={(e) => handleNewPostChange(e)}
+          value={newPost[property] || value || ""}
+          isInvalid={!!formErrors[property]}
+        />
+        <Form.Control.Feedback type="invalid">
+          {formErrors[property]}
+        </Form.Control.Feedback>
+      </Form.Group>
+    );
+  };
 
   if (!show) return null;
 
@@ -59,7 +112,15 @@ const CreatePostModal = ({
       </Modal.Header>
 
       <Modal.Body style={{ padding: '0.8rem' }}>
-        {renderInput("Title", "title")}
+        {renderInput({
+          controlId: "title",
+          label: "Title",
+          type: "text",
+          placeholder: "Enter title",
+          as: "input",
+          rows: 1,
+          property: "title"
+        })}
         <div className="mb-2">
           <label className="form-label small mb-1">Content</label>
           <textarea
@@ -73,7 +134,15 @@ const CreatePostModal = ({
         </div>
 
         <div className="row mb-2">
-          <div className="col-6">{renderInput("Author", "author")}</div>
+          <div className="col-6">{renderInput({
+            controlId: "author",
+            label: "Author",
+            type: "text",
+            placeholder: "Enter author",
+            as: "input",
+            rows: 1,
+            property: "author"
+          })}</div>
           <div className="col-6">
             <label className="form-label small mb-1">Category</label>
             <select
@@ -88,6 +157,18 @@ const CreatePostModal = ({
             </select>
             {formErrors.category && <div className="invalid-feedback small">{formErrors.category}</div>}
           </div>
+        </div>
+
+        <div className="mb-3">
+          {renderInput({
+            controlId: "email",
+            label: "Email",
+            type: "email",
+            placeholder: "Enter email",
+            as: "input",
+            rows: 1,
+            property: "email"
+          })}
         </div>
 
         <div className="mb-2">

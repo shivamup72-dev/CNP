@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import "../../../assets/css/Dashboard.css";
 import { Container, Row, Col, InputGroup, Form } from "react-bootstrap";
 import { FaSearch } from "react-icons/fa";
@@ -63,8 +63,20 @@ const PostSection = ({
     category: '',
     image: '',
     imageFile: null,
-    imagePreview: ''
+    imagePreview: '',
+    email: ''
   });
+
+  // Repost states
+  const [repostingPostId, setRepostingPostId] = useState(null);
+
+  // Keep track of whether this is the first render
+  useEffect(() => {
+    // Set search term from stored value if available
+    if (window.currentSearchTerm) {
+      setSearchTerm(window.currentSearchTerm);
+    }
+  }, []);
 
   // Post action handlers
   const handleApprovePost = async (postId) => {
@@ -90,6 +102,62 @@ const PostSection = ({
       // Clear the approving state after a short delay for UI feedback
       setTimeout(() => {
         setApprovingPostId(null);
+      }, 500);
+    }
+  };
+
+  // Repost a post - Creates a copy of an approved post
+  const handleRepost = async (postId) => {
+    try {
+      setRepostingPostId(postId);
+      
+      // Find the original post
+      const originalPost = posts.find(post => post.id === postId);
+      if (!originalPost) {
+        console.error("Post not found for reposting:", postId);
+        return;
+      }
+      
+      // Create a new post based on the original
+      const repostedPost = {
+        id: Date.now().toString(), // Generate a new ID
+        title: `[Repost] ${originalPost.title}`,
+        content: originalPost.content,
+        author: originalPost.author,
+        category: originalPost.category || "",
+        image: originalPost.image || null,
+        date: formatDateForAPI(new Date()),
+        post_status: "pending", // Start as pending for review
+        reposted_from: postId, // Reference to original post
+      };
+      
+      console.log("Creating repost:", repostedPost);
+      
+      // Here you would typically call an API to create the repost
+      // For now, we'll just update the local state
+      // API.createPost(repostedPost).then(...)
+      
+      // Mark the original post as reposted
+      setPosts(posts.map(post => {
+        if (post.id === postId) {
+          return { ...post, isReposted: true };
+        }
+        return post;
+      }));
+      
+      // Add the new post to the beginning of the posts array
+      setPosts(prevPosts => [repostedPost, ...prevPosts]);
+      
+      // Show success message or notification
+      console.log("Post successfully reposted");
+      
+    } catch (error) {
+      console.error("Error reposting post:", error);
+      // Optionally show an error notification here
+    } finally {
+      // Clear the reposting state after a short delay for UI feedback
+      setTimeout(() => {
+        setRepostingPostId(null);
       }, 500);
     }
   };
@@ -232,6 +300,15 @@ const PostSection = ({
     if (!newPost.content.trim()) errors.content = "Content is required";
     if (!newPost.author.trim()) errors.author = "Author name is required";
     if (!newPost.category) errors.category = "Category is required";
+    
+    // Email validation
+    if (newPost.email) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(newPost.email.trim())) {
+        errors.email = "Please enter a valid email address";
+      }
+    }
+    
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -254,7 +331,7 @@ const PostSection = ({
       setLoading(false);
       setNewPost({
         title: '', content: '', author: '', category: '',
-        image: '', imageFile: null, imagePreview: ''
+        image: '', imageFile: null, imagePreview: '', email: ''
       });
       setShowNewPostModal(false);
     }, 500);
@@ -312,22 +389,32 @@ const PostSection = ({
 
   // Search function
   const handleSearch = (term) => {
+    // Always update local state to keep the input field in sync
     setSearchTerm(term);
-    // Set searching state if term is not empty
-    if (term.trim()) {
+    
+    // Store the current search term to preserve it across renders
+    window.currentSearchTerm = term;
+    
+    // Only show the searching indicator if we have input
+    if (term && term.trim()) {
       setIsSearching(true);
+    } else {
+      setIsSearching(false);
     }
     
-    // Reset to page 1 when searching
-    if (onPageChange) {
+    // Reset to page 1 when searching, but only if we have a term
+    if (onPageChange && term && term.trim()) {
       onPageChange(1);
     }
     
-    // Call the parent's search function if provided
+    // If we have a parent search function, just pass the term along
+    // The parent will handle debouncing and deciding when to search
     if (searchPosts) {
       searchPosts(term, activeFilter);
-      
-      // Clear the searching state after a short delay
+    }
+    
+    // Clear searching state after a brief moment for UI feedback
+    if (term && term.trim()) {
       setTimeout(() => {
         setIsSearching(false);
       }, 300);
@@ -369,6 +456,20 @@ const PostSection = ({
         break;
       case "approved": 
         result = posts.filter(post => post.post_status === "approved");
+        break;
+      case "reposted":
+        result = posts.filter(post => post.title?.startsWith("[Repost]") || post.reposted_from || post.isReposted);
+        console.log(`[FILTERED POSTS] Found ${result.length} reposted posts`);
+        if (result.length > 0) {
+          console.log('[FILTERED POSTS] Sample reposted post:', {
+            id: result[0].id,
+            title: result[0].title,
+            reposted_from: result[0].reposted_from,
+            isReposted: result[0].isReposted
+          });
+        } else {
+          console.log('[FILTERED POSTS] No reposted posts found in current posts array');
+        }
         break;
       case "flagged": 
         result = posts.filter(post => post.flagged || post.post_status === "flagged" || post.post_status === "red_flag");
@@ -415,16 +516,17 @@ const PostSection = ({
         {/* Search bar when in dashboard mode */}
         {inDashboard && (
           <div className="mb-3 px-2">
-            <InputGroup>
-              <InputGroup.Text id="search-addon">
-                <FaSearch />
+            <InputGroup style={{ maxWidth: '500px', margin: '20px auto 10px' }}>
+              <InputGroup.Text id="search-addon" style={{ background: '#f8f9fa', border: '1px solid #ced4da', borderRight: 'none' }}>
+                <FaSearch style={{ color: '#6c757d' }} />
               </InputGroup.Text>
               <Form.Control
                 placeholder="Search posts..."
                 aria-label="Search"
                 aria-describedby="search-addon"
-                value={searchTerm}
+                value={window.currentSearchTerm || searchTerm} 
                 onChange={(e) => handleSearch(e.target.value)}
+                style={{ border: '1px solid #ced4da', borderLeft: 'none', boxShadow: 'none' }}
               />
             </InputGroup>
           </div>
@@ -445,11 +547,13 @@ const PostSection = ({
               handleFilterButtonClick={handleFilterButtonClick}
               handleApprovePost={handleApprovePost}
               handleFlagButtonClick={handleFlagButtonClick}
+              handleRepost={handleRepost}
               setSelectedPost={setSelectedPost}
               setShowDeleteModal={setShowDeleteModal}
               setShowPostDetailModal={setShowPostDetailModal}
               approvingPostId={approvingPostId}
               flaggingPostId={flaggingPostId}
+              repostingPostId={repostingPostId}
               getCurrentFilteredPosts={() => filteredPosts()}
               filteredPosts={filteredPosts}
               getUserAvatar={getUserAvatar}

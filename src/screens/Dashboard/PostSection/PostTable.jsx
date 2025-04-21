@@ -1,6 +1,6 @@
 import React from "react";
 import { Table, Spinner } from "react-bootstrap";
-import { FaCheck } from "react-icons/fa";
+import { FaCheck, FaShareSquare, FaFlag } from "react-icons/fa";
 import { FiTrash, FiFlag } from "react-icons/fi";
 import Button from "../../../components/common/BootstrapButton";
 import { formatDate } from "../../../utils/DateUtility";
@@ -13,9 +13,11 @@ const PostTable = ({
     getUserAvatar,
     handleApprovePost,
     handleFlagButtonClick,
+    handleRepost,
     setShowDeleteModal,
     approvingPostId,
     flaggingPostId,
+    repostingPostId,
     error = null,
     isSearching = false,
     activeFilter = "all"
@@ -183,7 +185,7 @@ const PostTable = ({
                                             {post.post_status === "approved" ? (
                                                 <span className="badge bg-success">Approved</span>
                                             ) : post.post_status === "flagged" || post.flagged ? (
-                                                <span className="badge bg-danger">Flagged</span>
+                                                <span className="badge" style={{ backgroundColor: "#fd7e14" }}>Flagged</span>
                                             ) : post.post_status === "rejected" || post.isDeleted ? (
                                                 <span className="badge bg-danger">Deleted</span>
                                             ) : (
@@ -205,12 +207,41 @@ const PostTable = ({
                                                     <span>...</span>
                                                 ) : (
                                                     <FaCheck style={{
-                                                        color: post.post_status === "approved" ? "#28a745" : "#6c757d"
+                                                        color: post.post_status === "approved" ? "var(--bs-success)" : "#6c757d"
                                                     }} />
                                                 )}
                                             </Button>
                                             <Button
-                                                variant={post.flagged ? "success" : "light"}
+                                                variant="light"
+                                                size="sm"
+                                                className="d-flex justify-content-center align-items-center"
+                                                style={{ 
+                                                    width: "32px", 
+                                                    height: "32px", 
+                                                    padding: "0",
+                                                    opacity: post.post_status !== "approved" ? "0.5" : "1",
+                                                    border: "none",
+                                                    boxShadow: "none"
+                                                }}
+                                                onClick={() => {
+                                                    handleRepost(post.id);
+                                                    // Mark as reposted immediately for visual feedback
+                                                    post.isReposted = true;
+                                                }}
+                                                disabled={repostingPostId === post.id || post.post_status !== "approved"}
+                                                title={post.isReposted ? "Repost Again" : "Repost"}
+                                            >
+                                                {repostingPostId === post.id ? (
+                                                    <span>...</span>
+                                                ) : (
+                                                    <FaShareSquare style={{
+                                                        color: post.post_status !== "approved" ? "#adb5bd" : 
+                                                               post.isReposted ? "var(--bs-success)" : "#0d6efd"
+                                                    }} />
+                                                )}
+                                            </Button>
+                                            <Button
+                                                variant="light"
                                                 size="sm"
                                                 className="d-flex justify-content-center align-items-center"
                                                 style={{ width: "32px", height: "32px", padding: "0" }}
@@ -219,10 +250,16 @@ const PostTable = ({
                                             >
                                                 {flaggingPostId === post.id ? (
                                                     <span>...</span>
+                                                ) : post.flagged ? (
+                                                    <FaFlag
+                                                        style={{
+                                                            color: "#fd7e14"
+                                                        }}
+                                                    />
                                                 ) : (
                                                     <FiFlag
                                                         style={{
-                                                            color: post.flagged ? "white" : "#6c757d",
+                                                            color: "#6c757d"
                                                         }}
                                                     />
                                                 )}

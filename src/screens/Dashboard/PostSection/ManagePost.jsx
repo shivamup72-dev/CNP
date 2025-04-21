@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import "../../../assets/css/Dashboard.css";
 import { Card } from "react-bootstrap";
-import { FaCheck, FaListUl } from "react-icons/fa";
+import { FaCheck, FaListUl, FaShareSquare } from "react-icons/fa";
 import { FiFlag } from "react-icons/fi";
 import PostTable from "./PostTable";
 import CustomPagination from "../../../components/common/CustomPagination";
@@ -42,11 +42,13 @@ const ManagePost = ({
   handleFilterButtonClick,
   handleApprovePost,
   handleFlagButtonClick,
+  handleRepost,
   setSelectedPost,
   setShowDeleteModal,
   setShowPostDetailModal,
   approvingPostId,
   flaggingPostId,
+  repostingPostId,
   getCurrentFilteredPosts,
   filteredPosts,
   getUserAvatar,
@@ -72,7 +74,8 @@ const ManagePost = ({
       all: "Manage Posts",
       review: "Under Review Posts",
       flagged: "Flagged Posts",
-      approved: "Approved Posts"
+      approved: "Approved Posts",
+      reposted: "Reposted Posts"
     };
     return titles[activeFilter] || "Manage Posts";
   };
@@ -107,9 +110,9 @@ const ManagePost = ({
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  backgroundColor: selectedButton === 'New' ? "#28a745" : "#fff",
-                  color: selectedButton === 'New' ? "#fff" : "#28a745",
-                  borderColor: "#28a745"
+                  backgroundColor: selectedButton === 'New' ? "var(--bs-success)" : "#fff",
+                  color: selectedButton === 'New' ? "#fff" : "var(--bs-success)",
+                  borderColor: "var(--bs-success)"
                 }}
                 onClick={() => handleButtonClick('New')}
               >
@@ -125,9 +128,9 @@ const ManagePost = ({
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  backgroundColor: selectedButton === 'Old' ? "#28a745" : "#fff",
-                  color: selectedButton === 'Old' ? "#fff" : "#28a745",
-                  borderColor: "#28a745"
+                  backgroundColor: selectedButton === 'Old' ? "var(--bs-success)" : "#fff",
+                  color: selectedButton === 'Old' ? "#fff" : "var(--bs-success)",
+                  borderColor: "var(--bs-success)"
                 }}
                 onClick={() => handleButtonClick('Old')}
               >
@@ -167,15 +170,6 @@ const ManagePost = ({
                 <FaCheck style={{ marginRight: "4px" }} />
                 Approved
               </Button>
-              <Button
-                variant={activeFilter === "flagged" ? "dark" : "outline-dark"}
-                size="sm"
-                className="filter-btn"
-                onClick={() => handleFilterButtonClick("flagged")}
-              >
-                <FiFlag style={{ marginRight: "4px" }} />
-                Flagged Posts
-              </Button>
             </div>
             <div className="text-muted small">
               Showing {filteredPosts().length} of {totalPosts} posts
@@ -192,9 +186,11 @@ const ManagePost = ({
               getUserAvatar={getUserAvatar}
               handleApprovePost={handleApprovePost}
               handleFlagButtonClick={handleFlagButtonClick}
+              handleRepost={handleRepost}
               setShowDeleteModal={setShowDeleteModal}
               approvingPostId={approvingPostId}
               flaggingPostId={flaggingPostId}
+              repostingPostId={repostingPostId}
               error={error}
               isSearching={isSearching || localIsSearching}
               activeFilter={activeFilter}

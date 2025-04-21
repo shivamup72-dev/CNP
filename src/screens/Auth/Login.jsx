@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Container, Card, Button, Row, Col } from "react-bootstrap";
+import { Container, Card, Button, Row, Col, Form } from "react-bootstrap";
 import colors from "../../assets/css/colors.js";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 
@@ -11,12 +11,29 @@ const Login = () => {
   const [error, setError] = useState("");
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
   const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
 
   // Track window resize for responsive adjustments
   useEffect(() => {
     const handleResize = () => setWindowWidth(window.innerWidth);
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  // Load saved credentials on mount
+  useEffect(() => {
+    const savedCredentials = localStorage.getItem("savedCredentials");
+    if (savedCredentials) {
+      try {
+        const { savedEmail, savedPassword } = JSON.parse(savedCredentials);
+        setEmail(savedEmail || "");
+        setPassword(savedPassword || "");
+        setRememberMe(true);
+      } catch (error) {
+        console.error("Error parsing saved credentials:", error);
+        localStorage.removeItem("savedCredentials");
+      }
+    }
   }, []);
 
   // Clear authentication on login page load to ensure a clean state
@@ -55,6 +72,9 @@ const Login = () => {
       },
       link: {
         fontSize: isMobile ? "0.85rem" : "0.9rem",
+      },
+      checkbox: {
+        fontSize: isMobile ? "0.85rem" : "0.9rem",
       }
     };
   };
@@ -76,6 +96,18 @@ const Login = () => {
       console.log("Setting auth token in localStorage");
       localStorage.setItem("auth", "true");
       console.log("Auth token set:", localStorage.getItem("auth"));
+
+      // Save credentials if remember me is checked
+      if (rememberMe) {
+        localStorage.setItem("savedCredentials", JSON.stringify({
+          savedEmail: email,
+          savedPassword: password
+        }));
+        console.log("Credentials saved to localStorage");
+      } else {
+        // Remove saved credentials if remember me is not checked
+        localStorage.removeItem("savedCredentials");
+      }
 
       console.log("Navigating to dashboard...");
       navigate("/dashboard");
@@ -99,6 +131,17 @@ const Login = () => {
       if (response.ok) {
         localStorage.setItem("auth", "true");
         localStorage.setItem("token", data.token);
+        
+        // Save credentials if remember me is checked
+        if (rememberMe) {
+          localStorage.setItem("savedCredentials", JSON.stringify({
+            savedEmail: email,
+            savedPassword: password
+          }));
+        } else {
+          localStorage.removeItem("savedCredentials");
+        }
+        
         navigate("/dashboard");
       } else {
         setError(data.message || "Invalid credentials. Please try again.");
@@ -202,17 +245,27 @@ const Login = () => {
               </div>
             </div>
 
-            <div
-              style={{
-                textAlign: "right",
-                marginBottom: "1rem",
-                fontSize: responsiveStyles.link.fontSize,
-                cursor: "pointer",
-                color: colors.btncolor
-              }}
-              onClick={() => navigate("/forgot-password")}
-            >
-              Forgot Password?
+            <div className="d-flex justify-content-between align-items-center mb-3">
+              <Form.Check
+                type="checkbox"
+                id="remember-me"
+                label="Remember me"
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
+                style={{
+                  fontSize: responsiveStyles.checkbox.fontSize,
+                }}
+              />
+              <div
+                style={{
+                  fontSize: responsiveStyles.link.fontSize,
+                  cursor: "pointer",
+                  color: colors.btncolor
+                }}
+                onClick={() => navigate("/forgot-password")}
+              >
+                Forgot Password?
+              </div>
             </div>
 
             <Button
