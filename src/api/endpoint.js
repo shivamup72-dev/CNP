@@ -5,9 +5,13 @@ const API = {
 
   // Auth headers
   AUTH_TOKEN: '7b257e1452f1115b0c70f80a1d54ccd8615aa52c',
-  getHeaders: () => ({
-    'Authorization': `Token ${API.AUTH_TOKEN}`
-  }),
+  getHeaders: () => {
+    // Get token from localStorage if available, otherwise use the default token
+    const token = localStorage.getItem('api_token') || API.AUTH_TOKEN;
+    return {
+      'Authorization': `Token ${token}`
+    };
+  },
 
   // Image URL helper
   getImageUrl: (path) => {
@@ -102,6 +106,7 @@ const API = {
     POST_FLAG: (id) => `/web/posts/${id}/flag`,
     POST_DELETE: (id) => `/web/posts/${id}/delete`,
     POST_STATUS_UPDATE: (id) => `/api/v1/web/post-status-update/${id}/`,
+    POST_REPOST: (id) => `/api/v1/web/repost/${id}/`,
 
     // Users
     USERS: '/web/users',
@@ -150,6 +155,20 @@ const API = {
       return await API.post(url, body);
     } catch (error) {
       console.error('[API] Error updating post status:', error);
+      throw error;
+    }
+  },
+
+  // Repost a post
+  repostPost: async (postId) => {
+    try {
+      const url = API.ENDPOINTS.POST_REPOST(postId);
+      
+      console.log(`[API] Reposting post ${postId}`);
+      
+      return await API.post(url);
+    } catch (error) {
+      console.error('[API] Error reposting post:', error);
       throw error;
     }
   }

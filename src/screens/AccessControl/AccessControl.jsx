@@ -94,6 +94,77 @@ const AccessControl = () => {
       status: "active",
       lastActive: "2023-06-05",
       accessLevel: 5
+    },
+    // Regular users without specific roles
+    {
+      id: 6,
+      name: "Rahul Mehta",
+      email: "rahul@example.com",
+      role: "",
+      location: "Pune",
+      status: "active",
+      lastActive: "2023-06-10",
+      accessLevel: 0
+    },
+    {
+      id: 7,
+      name: "Sneha Joshi",
+      email: "sneha@example.com",
+      role: "",
+      location: "Hyderabad",
+      status: "active",
+      lastActive: "2023-06-12",
+      accessLevel: 0
+    },
+    {
+      id: 8,
+      name: "Arjun Nair",
+      email: "arjun@example.com",
+      role: "",
+      location: "Kochi",
+      status: "active",
+      lastActive: "2023-06-15",
+      accessLevel: 0
+    },
+    {
+      id: 9,
+      name: "Meera Reddy",
+      email: "meera@example.com",
+      role: "",
+      location: "Chennai",
+      status: "active",
+      lastActive: "2023-06-18",
+      accessLevel: 0
+    },
+    {
+      id: 10,
+      name: "Karan Malhotra",
+      email: "karan@example.com",
+      role: "",
+      location: "Delhi",
+      status: "active",
+      lastActive: "2023-06-20",
+      accessLevel: 0
+    },
+    {
+      id: 11,
+      name: "Pooja Verma",
+      email: "pooja@example.com",
+      role: "",
+      location: "Jaipur",
+      status: "active",
+      lastActive: "2023-06-22",
+      accessLevel: 0
+    },
+    {
+      id: 12,
+      name: "Sanjay Gupta",
+      email: "sanjay@example.com",
+      role: "",
+      location: "Kolkata",
+      status: "active",
+      lastActive: "2023-06-25",
+      accessLevel: 0
     }
   ]);
 
@@ -217,6 +288,8 @@ const AccessControl = () => {
 
   // Role badge color mapping
   const getRoleBadgeColor = (role) => {
+    if (!role) return "light"; // Light gray for regular users without roles
+    
     switch (role) {
       case "ground_zero": return "secondary";
       case "city_manager": return "info";
@@ -232,6 +305,8 @@ const AccessControl = () => {
     const iconStyle = {
     };
 
+    if (!role) return <span style={iconStyle}><FiUser /></span>; // Default user icon for regular users
+    
     switch (role) {
       case "ground_zero": return <span style={iconStyle}><FiMapPin /></span>;
       case "city_manager": return <span style={iconStyle}><FiLayers /></span>;
@@ -336,7 +411,7 @@ const AccessControl = () => {
       
       // In a real implementation, this would be an API call
       // For now, we'll just use the existing sample data
-      console.log("Fetching all users");
+      console.log("Fetching regular users only (no roles)");
       
       // Simulate API delay
       await new Promise(resolve => setTimeout(resolve, 500));
@@ -362,7 +437,7 @@ const AccessControl = () => {
       setShowUsersList(false); // Hide users list when showing admins
       
       // In a real implementation, this would be an API call to get only admin users
-      console.log("Fetching admin users");
+      console.log("Fetching admin users and users with roles");
       
       // Simulate API delay
       await new Promise(resolve => setTimeout(resolve, 500));
@@ -391,10 +466,16 @@ const AccessControl = () => {
     fetchAllAdmins();
   };
   
-  // Get only admin users
+  // Get only regular users (without roles)
+  const getRegularUsers = () => {
+    // Filter for users without roles
+    return users.filter(user => !user.role);
+  };
+  
+  // Get only admin users and users with roles
   const getAdminUsers = () => {
-    // Filter for users with admin roles (god_admin in this case)
-    return users.filter(user => user.role === "god_admin");
+    // Filter for users with roles (any role, not just god_admin)
+    return users.filter(user => user.role);
   };
 
   return (
@@ -514,7 +595,7 @@ const AccessControl = () => {
                   }}
                   className="d-flex align-items-center"
                 >
-                  <FiUsers className="me-1" /> All
+                  <FiUsers className="me-1" /> All (Users + Admins)
                 </Button>
                 <Button
                   variant={activeRole === "ground_zero" ? "dark" : "outline-dark"}
@@ -526,7 +607,7 @@ const AccessControl = () => {
                   }}
                   className="d-flex align-items-center"
                 >
-                  <FiMapPin className="me-1" /> Ground Zero Reporter
+                  <FiMapPin className="me-1" /> Ground Zero Reporter (Zila/District)
                 </Button>
                 <Button
                   variant={activeRole === "city_manager" ? "dark" : "outline-dark"}
@@ -673,7 +754,7 @@ const AccessControl = () => {
             <Card className="shadow-sm border-0">
               <Card.Body>
                 <UsersTable 
-                  users={users}
+                  users={getRegularUsers()}
                   setUsers={setUsers}
                   getRoleBadgeColor={getRoleBadgeColor}
                   getRoleIcon={getRoleIcon}
@@ -691,7 +772,7 @@ const AccessControl = () => {
                   getRoleBadgeColor={getRoleBadgeColor}
                   getRoleIcon={getRoleIcon}
                   roleDisplayMap={roleDisplayMap}
-                  title="All Admins Only"
+                  title="All Admins"
                 />
               </Card.Body>
             </Card>

@@ -44,7 +44,7 @@ const ManagePost = ({
   handleFlagButtonClick,
   handleRepost,
   setSelectedPost,
-  setShowDeleteModal,
+  handleDeleteButtonClick,
   setShowPostDetailModal,
   approvingPostId,
   flaggingPostId,
@@ -187,7 +187,7 @@ const ManagePost = ({
               handleApprovePost={handleApprovePost}
               handleFlagButtonClick={handleFlagButtonClick}
               handleRepost={handleRepost}
-              setShowDeleteModal={setShowDeleteModal}
+              handleDeleteButtonClick={handleDeleteButtonClick}
               approvingPostId={approvingPostId}
               flaggingPostId={flaggingPostId}
               repostingPostId={repostingPostId}

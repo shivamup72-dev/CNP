@@ -1,6 +1,6 @@
 import React from "react";
 import { Table, Spinner } from "react-bootstrap";
-import { FaCheck, FaShareSquare, FaFlag } from "react-icons/fa";
+import { FaCheck, FaShareSquare, FaFlag, FaTrashRestore } from "react-icons/fa";
 import { FiTrash, FiFlag } from "react-icons/fi";
 import Button from "../../../components/common/BootstrapButton";
 import { formatDate } from "../../../utils/DateUtility";
@@ -14,7 +14,7 @@ const PostTable = ({
     handleApprovePost,
     handleFlagButtonClick,
     handleRepost,
-    setShowDeleteModal,
+    handleDeleteButtonClick,
     approvingPostId,
     flaggingPostId,
     repostingPostId,
@@ -204,6 +204,7 @@ const PostTable = ({
                                                 style={{ width: "32px", height: "32px", padding: "0" }}
                                                 onClick={() => handleApprovePost(post.id)}
                                                 disabled={approvingPostId === post.id || post.post_status === "approved"}
+                                                title={post.post_status === "approved" ? "Already Approved" : "Approve Post"}
                                             >
                                                 {approvingPostId === post.id ? (
                                                     <span>...</span>
@@ -231,7 +232,7 @@ const PostTable = ({
                                                     post.isReposted = true;
                                                 }}
                                                 disabled={repostingPostId === post.id || post.post_status !== "approved"}
-                                                title={post.isReposted ? "Repost Again" : "Repost"}
+                                                title={post.isReposted ? "Repost Again" : post.post_status !== "approved" ? "Only Approved Posts Can Be Reposted" : "Repost Post"}
                                             >
                                                 {repostingPostId === post.id ? (
                                                     <span>...</span>
@@ -249,6 +250,7 @@ const PostTable = ({
                                                 style={{ width: "32px", height: "32px", padding: "0" }}
                                                 onClick={() => handleFlagButtonClick(post)}
                                                 disabled={flaggingPostId === post.id}
+                                                title={post.flagged ? "Unflag Post" : "Flag Post"}
                                             >
                                                 {flaggingPostId === post.id ? (
                                                     <span>...</span>
@@ -267,16 +269,18 @@ const PostTable = ({
                                                 )}
                                             </Button>
                                             <Button
-                                                variant="danger"
+                                                variant={post.isDeleted || post.post_status === "rejected" ? "success" : "danger"}
                                                 size="sm"
                                                 className="d-flex justify-content-center align-items-center"
                                                 style={{ width: "32px", height: "32px", padding: "0" }}
-                                                onClick={() => {
-                                                    setSelectedPost(post);
-                                                    setShowDeleteModal(true);
-                                                }}
+                                                onClick={() => handleDeleteButtonClick(post)}
+                                                title={post.isDeleted || post.post_status === "rejected" ? "Restore Post" : "Delete Post"}
                                             >
-                                                <FiTrash />
+                                                {post.isDeleted || post.post_status === "rejected" ? (
+                                                    <FaTrashRestore />
+                                                ) : (
+                                                    <FiTrash />
+                                                )}
                                             </Button>
                                         </div>
                                     </td>

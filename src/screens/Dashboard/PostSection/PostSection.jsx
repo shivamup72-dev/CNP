@@ -7,6 +7,7 @@ import DeleteModal from '../../../components/modals/DeleteModal';
 import FlagModal from '../../../components/modals/FlagModal';
 import PostDetailModal from '../../../components/modals/PostDetailModal';
 import CreatePostModal from '../../../components/modals/CreatePostModal';
+import RestorePostModal from '../../../components/modals/RestorePostModal';
 import ManagePost from './ManagePost';
 import FilterAndModeration from './FilterAndModeration';
 import QuickAdminActions from './QuickAdminActions';
@@ -37,6 +38,7 @@ const PostSection = ({
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showPostDetailModal, setShowPostDetailModal] = useState(false);
   const [showNewPostModal, setShowNewPostModal] = useState(false);
+  const [showRestoreModal, setShowRestoreModal] = useState(false);
 
   // Post data states
   const [selectedPost, setSelectedPost] = useState(null);
@@ -111,33 +113,14 @@ const PostSection = ({
     try {
       setRepostingPostId(postId);
       
-      // Find the original post
-      const originalPost = posts.find(post => post.id === postId);
-      if (!originalPost) {
-        console.error("Post not found for reposting:", postId);
-        return;
-      }
+      console.log(`[REPOST] Attempting to repost post ID: ${postId}`);
       
-      // Create a new post based on the original
-      const repostedPost = {
-        id: Date.now().toString(), // Generate a new ID
-        title: `[Repost] ${originalPost.title}`,
-        content: originalPost.content,
-        author: originalPost.author,
-        category: originalPost.category || "",
-        image: originalPost.image || null,
-        date: formatDateForAPI(new Date()),
-        post_status: "pending", // Start as pending for review
-        reposted_from: postId, // Reference to original post
-      };
+      // Call the API to repost the post
+      const response = await API.repostPost(postId);
       
-      console.log("Creating repost:", repostedPost);
+      console.log("[REPOST] Success response:", response);
       
-      // Here you would typically call an API to create the repost
-      // For now, we'll just update the local state
-      // API.createPost(repostedPost).then(...)
-      
-      // Mark the original post as reposted
+      // Mark the original post as reposted in the UI
       setPosts(posts.map(post => {
         if (post.id === postId) {
           return { ...post, isReposted: true };
@@ -145,14 +128,11 @@ const PostSection = ({
         return post;
       }));
       
-      // Add the new post to the beginning of the posts array
-      setPosts(prevPosts => [repostedPost, ...prevPosts]);
-      
       // Show success message or notification
-      console.log("Post successfully reposted");
+      console.log("Post successfully reposted:", response.message);
       
     } catch (error) {
-      console.error("Error reposting post:", error);
+      console.error("[REPOST] Error reposting post:", error);
       // Optionally show an error notification here
     } finally {
       // Clear the reposting state after a short delay for UI feedback
@@ -510,6 +490,61 @@ const PostSection = ({
     return result;
   };
 
+  // Handle delete button click
+  const handleDeleteButtonClick = (post) => {
+    setSelectedPost(post);
+    
+    // If post is already deleted, show restore modal instead
+    if (post.isDeleted || post.post_status === "rejected") {
+      setShowRestoreModal(true);
+    } else {
+      // Otherwise show the normal delete modal
+      setShowDeleteModal(true);
+    }
+  };
+
+  // Restore a deleted post
+  const handleRestorePost = async () => {
+    if (!selectedPost) return;
+    
+    try {
+      console.log(`[RESTORE] Attempting to restore post ID: ${selectedPost.id}`);
+      
+      // Call the API to approve the post (reverses the deletion)
+      const response = await API.updatePostStatus(
+        selectedPost.id,
+        "approve", // Use approve action to restore the post
+        1, // Default reason ID for approval
+        "" // No remarks needed for restoration
+      );
+      
+      console.log(`[RESTORE] Success! API response:`, response);
+      
+      // Update the local state
+      setPosts(posts.map(p => p.id === selectedPost.id ?
+        { 
+          ...p, 
+          isDeleted: false, 
+          post_status: "approved", // Mark as approved
+          deleteComment: null, 
+          deleteReason: null,
+          deleteReasonId: null,
+          deleteReasonData: null
+        } : p));
+      
+      // Show success message or notification
+      console.log("Post successfully restored");
+        
+    } catch (error) {
+      console.error("[RESTORE] Error restoring post:", error);
+      // Optionally show an error notification here
+    } finally {
+      // Reset the UI state
+      setShowRestoreModal(false);
+      setSelectedPost(null);
+    }
+  };
+
   return (
     <div>
       <Container fluid className="p-0">
@@ -549,7 +584,7 @@ const PostSection = ({
               handleFlagButtonClick={handleFlagButtonClick}
               handleRepost={handleRepost}
               setSelectedPost={setSelectedPost}
-              setShowDeleteModal={setShowDeleteModal}
+              handleDeleteButtonClick={handleDeleteButtonClick}
               setShowPostDetailModal={setShowPostDetailModal}
               approvingPostId={approvingPostId}
               flaggingPostId={flaggingPostId}
@@ -653,6 +688,13 @@ const PostSection = ({
             }
           }}
           canConfirmAction={canConfirmAction}
+        />
+
+        <RestorePostModal
+          show={showRestoreModal}
+          onHide={() => setShowRestoreModal(false)}
+          selectedPost={selectedPost}
+          onConfirmRestore={handleRestorePost}
         />
 
         <PostDetailModal

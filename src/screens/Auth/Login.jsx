@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Container, Card, Button, Row, Col, Form } from "react-bootstrap";
 import colors from "../../assets/css/colors.js";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
+import { formatName } from "../../utils/Utility.js";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -93,28 +94,7 @@ const Login = () => {
     }
 
     try {
-      console.log("Setting auth token in localStorage");
-      localStorage.setItem("auth", "true");
-      console.log("Auth token set:", localStorage.getItem("auth"));
-
-      // Save credentials if remember me is checked
-      if (rememberMe) {
-        localStorage.setItem("savedCredentials", JSON.stringify({
-          savedEmail: email,
-          savedPassword: password
-        }));
-        console.log("Credentials saved to localStorage");
-      } else {
-        // Remove saved credentials if remember me is not checked
-        localStorage.removeItem("savedCredentials");
-      }
-
-      console.log("Navigating to dashboard...");
-      navigate("/dashboard");
-      console.log("Navigation to dashboard initiated");
-
-      // Uncomment the API code below when backend is ready
-      /*
+      // Make the API call to the login endpoint
       const response = await fetch("https://stage.suniyenetajee.com/api/v1/web/login/", {
         method: "POST",
         headers: {
@@ -129,8 +109,29 @@ const Login = () => {
       console.log('Login API Response Data:', data);
 
       if (response.ok) {
+        // Store authentication token
         localStorage.setItem("auth", "true");
-        localStorage.setItem("token", data.token);
+        localStorage.setItem("token", data.key);
+        
+        // Save API token in the endpoint.js
+        if (data.key) {
+          console.log("Setting AUTH_TOKEN in API service:", data.key);
+          // Note: In a real app, you'd update this through a context provider or Redux
+          // This is just a temporary solution for this example
+          localStorage.setItem("api_token", data.key);
+        }
+        
+        // Parse and store user data
+        const userData = {
+          name: formatName(data.basic?.name || ""),
+          email: data.basic?.email || "",
+          role: determineUserRole(data.permissions),
+          isGodAdmin: false  // Will be set in determineUserRole
+        };
+        
+        // Store user data in localStorage
+        localStorage.setItem("userData", JSON.stringify(userData));
+        console.log("User data stored:", userData);
         
         // Save credentials if remember me is checked
         if (rememberMe) {
@@ -138,19 +139,39 @@ const Login = () => {
             savedEmail: email,
             savedPassword: password
           }));
+          console.log("Credentials saved to localStorage");
         } else {
+          // Remove saved credentials if remember me is not checked
           localStorage.removeItem("savedCredentials");
         }
         
+        // Navigate to dashboard
+        console.log("Navigating to dashboard...");
         navigate("/dashboard");
       } else {
-        setError(data.message || "Invalid credentials. Please try again.");
+        setError(data.message || data.non_field_errors?.[0] || "Invalid credentials. Please try again.");
       }
-      */
     } catch (error) {
       console.error('Login error:', error);
       setError("Something went wrong. Please try again later.");
     }
+  };
+
+  // Helper function to determine user role based on permissions
+  const determineUserRole = (permissions) => {
+    if (!permissions || permissions.length === 0) {
+      return "Role not defined";
+    }
+
+    // Check if user has full access to all modules
+    const hasFullAccess = permissions.every(module => 
+      module.sub_modules.some(subModule => 
+        subModule.name === "Full" && subModule.is_allowed === true
+      )
+    );
+
+    // Return the appropriate role
+    return hasFullAccess ? "God Admin" : "Role not defined";
   };
 
   return (

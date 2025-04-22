@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { Table, Badge, Button, Form, InputGroup, Row, Col } from 'react-bootstrap';
-import { FiEye, FiEdit, FiTrash, FiSearch } from 'react-icons/fi';
+import { Table, Badge, Button, Form, InputGroup, Row, Col, Spinner } from 'react-bootstrap';
+import { FiEye, FiEdit, FiTrash, FiSearch, FiUser, FiFlag } from 'react-icons/fi';
+import { FaCheck, FaShareSquare, FaFlag } from 'react-icons/fa';
 
 const UsersTable = ({ 
   users, 
@@ -13,6 +14,9 @@ const UsersTable = ({
   const [searchTerm, setSearchTerm] = useState('');
   const [sortField, setSortField] = useState('name');
   const [sortDirection, setSortDirection] = useState('asc');
+  const [approvingUserId, setApprovingUserId] = useState(null);
+  const [repostingUserId, setRepostingUserId] = useState(null);
+  const [flaggingUserId, setFlaggingUserId] = useState(null);
   
   // Common table cell style for consistency
   const tableCellStyle = {
@@ -79,6 +83,71 @@ const UsersTable = ({
   const renderSortIndicator = (field) => {
     if (sortField !== field) return null;
     return <span className="ms-1">{sortDirection === 'asc' ? '↑' : '↓'}</span>;
+  };
+  
+  // Render role badge with proper handling for empty roles
+  const renderRoleBadge = (user) => {
+    // If user has no role, render as regular user
+    if (!user.role) {
+      return (
+        <div className="text-muted d-flex align-items-center gap-1" style={{ fontSize: "11.2px" }}>
+          <FiUser /> Regular User
+        </div>
+      );
+    }
+    
+    // Otherwise render the badge as before
+    return (
+      <Badge
+        bg={getRoleBadgeColor(user.role)}
+        className={`d-flex align-items-center ${user.role === "national_manager" ? "gap-0" : "gap-1"} w-100`}
+        style={{
+          maxWidth: user.role === "national_manager" ? "150px" : "150px",
+          whiteSpace: user.role === "national_manager" ? "normal" : "nowrap",
+          height: user.role === "national_manager" ? "auto" : "",
+          padding: user.role === "national_manager" ? "5px 8px" : "",
+          lineHeight: user.role === "national_manager" ? "1" : "",
+          fontSize: "11.2px"
+        }}
+      >
+        {getRoleIcon(user.role)} {user.role === "national_manager" ? (
+          <span style={{ marginLeft: "2px" }}>{roleDisplayMap[user.role]}</span>
+        ) : roleDisplayMap[user.role]}
+      </Badge>
+    );
+  };
+  
+  // Handle approve action
+  const handleApproveUser = (userId) => {
+    setApprovingUserId(userId);
+    setTimeout(() => {
+      setUsers(prev => prev.map(user => 
+        user.id === userId ? {...user, status: 'approved'} : user
+      ));
+      setApprovingUserId(null);
+    }, 500);
+  };
+
+  // Handle repost action
+  const handleRepost = (userId) => {
+    setRepostingUserId(userId);
+    setTimeout(() => {
+      setUsers(prev => prev.map(user => 
+        user.id === userId ? {...user, isReposted: true} : user
+      ));
+      setRepostingUserId(null);
+    }, 500);
+  };
+
+  // Handle flag action
+  const handleFlag = (userId) => {
+    setFlaggingUserId(userId);
+    setTimeout(() => {
+      setUsers(prev => prev.map(user => 
+        user.id === userId ? {...user, flagged: !user.flagged} : user
+      ));
+      setFlaggingUserId(null);
+    }, 500);
   };
   
   return (
@@ -162,22 +231,7 @@ const UsersTable = ({
                   <td style={tableCellStyle}>{user.name}</td>
                   <td style={tableCellStyle}>{user.email}</td>
                   <td style={tableCellStyle}>
-                    <Badge
-                      bg={getRoleBadgeColor(user.role)}
-                      className={`d-flex align-items-center ${user.role === "national_manager" ? "gap-0" : "gap-1"} w-100`}
-                      style={{
-                        maxWidth: user.role === "national_manager" ? "150px" : "150px",
-                        whiteSpace: user.role === "national_manager" ? "normal" : "nowrap",
-                        height: user.role === "national_manager" ? "auto" : "",
-                        padding: user.role === "national_manager" ? "5px 8px" : "",
-                        lineHeight: user.role === "national_manager" ? "1" : "",
-                        fontSize: "11.2px"
-                      }}
-                    >
-                      {getRoleIcon(user.role)} {user.role === "national_manager" ? (
-                        <span style={{ marginLeft: "2px" }}>{roleDisplayMap[user.role]}</span>
-                      ) : roleDisplayMap[user.role]}
-                    </Badge>
+                    {renderRoleBadge(user)}
                   </td>
                   <td style={tableCellStyle}>{user.location}</td>
                   <td style={tableCellStyle}>
@@ -191,45 +245,87 @@ const UsersTable = ({
                   <td style={tableCellStyle}>{user.lastActive}</td>
                   <td style={lastCellStyle}>
                     <div className="d-flex gap-2 justify-content-center">
-                      <Button
-                        variant="light"
-                        size="sm"
-                        className="d-flex justify-content-center align-items-center"
-                        style={{ width: "32px", height: "32px", padding: "0" }}
-                        title="View User Details"
-                      >
-                        <FiEye />
-                      </Button>
-                      <Button
-                        variant="light"
-                        size="sm"
-                        className="d-flex justify-content-center align-items-center"
-                        style={{ 
-                          width: "32px", 
-                          height: "32px", 
-                          padding: "0",
-                          opacity: user.role !== "god_admin" ? 0.5 : 1 
-                        }}
-                        disabled={user.role !== "god_admin"}
-                        title="Edit User"
-                      >
-                        <FiEdit style={{ color: "#0d6efd" }} />
-                      </Button>
-                      <Button
-                        variant="light"
-                        size="sm"
-                        className="d-flex justify-content-center align-items-center"
-                        style={{ 
-                          width: "32px", 
-                          height: "32px", 
-                          padding: "0",
-                          opacity: user.role !== "god_admin" ? 0.5 : 1 
-                        }}
-                        disabled={user.role !== "god_admin"}
-                        title="Delete User"
-                      >
-                        <FiTrash style={{ color: "#dc3545" }} />
-                      </Button>
+                      {user.role ? (
+                        <>
+                          {/* Approve Button */}
+                          <Button
+                            variant="light"
+                            size="sm"
+                            className="d-flex justify-content-center align-items-center"
+                            style={{ width: "32px", height: "32px", padding: "0" }}
+                            onClick={() => handleApproveUser(user.id)}
+                            disabled={approvingUserId === user.id || user.status === "approved"}
+                            title="Approve User"
+                          >
+                            {approvingUserId === user.id ? (
+                              <span>...</span>
+                            ) : (
+                              <FaCheck style={{
+                                color: user.status === "approved" ? "var(--bs-success)" : "#6c757d"
+                              }} />
+                            )}
+                          </Button>
+
+                          {/* Repost Button */}
+                          <Button
+                            variant="light"
+                            size="sm"
+                            className="d-flex justify-content-center align-items-center"
+                            style={{ 
+                              width: "32px", 
+                              height: "32px", 
+                              padding: "0",
+                              opacity: user.status !== "active" ? "0.5" : "1",
+                              border: "none",
+                              boxShadow: "none"
+                            }}
+                            onClick={() => handleRepost(user.id)}
+                            disabled={repostingUserId === user.id || user.status !== "active"}
+                            title={user.isReposted ? "Repost Again" : "Repost User"}
+                          >
+                            {repostingUserId === user.id ? (
+                              <span>...</span>
+                            ) : (
+                              <FaShareSquare style={{
+                                color: user.status !== "active" ? "#adb5bd" : 
+                                      user.isReposted ? "var(--bs-success)" : "#0d6efd"
+                              }} />
+                            )}
+                          </Button>
+
+                          {/* Flag Button */}
+                          <Button
+                            variant="light"
+                            size="sm"
+                            className="d-flex justify-content-center align-items-center"
+                            style={{ width: "32px", height: "32px", padding: "0" }}
+                            onClick={() => handleFlag(user.id)}
+                            disabled={flaggingUserId === user.id}
+                            title={user.flagged ? "Unflag User" : "Flag User"}
+                          >
+                            {flaggingUserId === user.id ? (
+                              <span>...</span>
+                            ) : user.flagged ? (
+                              <FaFlag style={{ color: "#fd7e14" }} />
+                            ) : (
+                              <FiFlag style={{ color: "#6c757d" }} />
+                            )}
+                          </Button>
+
+                          {/* Delete Button */}
+                          <Button
+                            variant="danger"
+                            size="sm"
+                            className="d-flex justify-content-center align-items-center"
+                            style={{ width: "32px", height: "32px", padding: "0" }}
+                            title="Delete User"
+                          >
+                            <FiTrash />
+                          </Button>
+                        </>
+                      ) : (
+                        <span className="text-muted" style={{ fontSize: "0.8rem" }}>No actions available</span>
+                      )}
                     </div>
                   </td>
                 </tr>

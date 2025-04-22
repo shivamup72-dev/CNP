@@ -15,6 +15,7 @@ import CreatePostModal from "../../components/modals/CreatePostModal";
 import API from "../../api/endpoint";
 import "../../assets/css/Dashboard.css";
 import { formatDate } from '../../utils/DateUtility';
+import { formatName } from '../../utils/Utility';
 
 
 const Dashboard = () => {
@@ -36,6 +37,13 @@ const Dashboard = () => {
   });
   const [ordering, setOrdering] = useState("newest"); // Default to newest
   const [searchTerm, setSearchTerm] = useState(""); // Add search term state
+  
+  // User data state
+  const [userData, setUserData] = useState({
+    name: "",
+    role: "Role not defined",
+    isGodAdmin: false
+  });
 
   const [modalState, setModalState] = useState({
     flag: { show: false, reason: "Hate speech or discrimination", comment: "" },
@@ -43,6 +51,62 @@ const Dashboard = () => {
     postDetail: { show: false, isEditMode: false },
     newPost: { show: false }
   });
+
+  // Get user data from localStorage on mount
+  useEffect(() => {
+    try {
+      // Try to get user data from localStorage
+      const storedUserData = localStorage.getItem('userData');
+      
+      if (storedUserData) {
+        const parsedUserData = JSON.parse(storedUserData);
+        
+        // Ensure name is properly capitalized
+        if (parsedUserData.name) {
+          parsedUserData.name = formatName(parsedUserData.name);
+        }
+        
+        setUserData(parsedUserData);
+        console.log('[DASHBOARD] Loaded user data from localStorage:', parsedUserData);
+      } else {
+        // If no stored user data, use default values
+        console.log('[DASHBOARD] No stored user data found, using defaults');
+      }
+    } catch (error) {
+      console.error('[DASHBOARD] Error loading user data:', error);
+    }
+  }, []);
+
+  // Determine user role based on permissions
+  const determineUserRole = (permissions) => {
+    if (!permissions || permissions.length === 0) {
+      return "Role not defined";
+    }
+
+    // Check if all permissions have "Full" access
+    const hasFullAccess = permissions.every(module => 
+      module.sub_modules.some(subModule => 
+        subModule.name === "Full" && subModule.is_allowed === true
+      )
+    );
+
+    return hasFullAccess ? "God Admin" : "Role not defined";
+  };
+
+  // Parse login response data to get user info
+  const parseLoginResponseData = (data) => {
+    if (!data) return null;
+
+    const name = data.basic?.name || "";
+    const role = determineUserRole(data.permissions);
+    const isGodAdmin = role === "God Admin";
+
+    // Store data in localStorage for persistence
+    const userData = { name, role, isGodAdmin };
+    localStorage.setItem('userData', JSON.stringify(userData));
+    
+    return userData;
+  };
 
   const updateModalState = useCallback((type, show, post = null) => {
     if (post) setSelectedPost(post);
@@ -346,7 +410,7 @@ const Dashboard = () => {
       </div>
 
       <p className="mb-4" style={{ fontSize: "12px" }}>
-        Welcome, <strong>Shri Venkateshwara</strong> (Reporter) - Delhi
+        Welcome, <strong>{formatName(userData.name) || "User"}</strong> ({userData.role || "Role not defined"})
       </p>
 
       <StatsCards customStats={statsCardsData} />
