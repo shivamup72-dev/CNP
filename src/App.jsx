@@ -1,5 +1,6 @@
 import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { Toaster } from "react-hot-toast";
 import Login from "./screens/Auth/Login";
 import ForgotPassword from "./screens/Auth/ForgotPassword";
 import Dashboard from "./screens/Dashboard/Dashboard";
@@ -11,6 +12,13 @@ import ProtectedLayout from "./auth/ProtectedLayout";
 const App = () => {
   return (
     <Router>
+      {/* Toast container for notifications */}
+      <Toaster
+        position="top-right"
+        toastOptions={{
+          duration: 3000,
+        }}
+      />
       <Routes>
         {/* Public routes */}
         <Route path="/" element={<Login />} />

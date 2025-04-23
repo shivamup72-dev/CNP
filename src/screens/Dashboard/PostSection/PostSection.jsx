@@ -13,6 +13,7 @@ import FilterAndModeration from './FilterAndModeration';
 import QuickAdminActions from './QuickAdminActions';
 import { formatDateForAPI } from "../../../utils/DateUtility";
 import API from '../../../api/endpoint';
+import { showSuccessToast, showErrorToast } from "../../../components/common/Toast.jsx";
 
 const PostSection = ({
   inDashboard = false,
@@ -97,9 +98,12 @@ const PostSection = ({
       if (setApprovedPosts) {
         setApprovedPosts(prev => [...prev, postId]);
       }
+      
+      // Show success toast
+      showSuccessToast("Post approved successfully!");
     } catch (error) {
       console.error("Error approving post:", error);
-      // Optionally show an error notification here
+      showErrorToast("Failed to approve post. Please try again.");
     } finally {
       // Clear the approving state after a short delay for UI feedback
       setTimeout(() => {
@@ -128,12 +132,15 @@ const PostSection = ({
         return post;
       }));
       
+      // Show success toast
+      showSuccessToast("Post reposted successfully!");
+      
       // Show success message or notification
       console.log("Post successfully reposted:", response.message);
       
     } catch (error) {
       console.error("[REPOST] Error reposting post:", error);
-      // Optionally show an error notification here
+      showErrorToast("Failed to repost. Please try again.");
     } finally {
       // Clear the reposting state after a short delay for UI feedback
       setTimeout(() => {
@@ -353,9 +360,81 @@ const PostSection = ({
       }
     }
     
+    if (filter === "reposted") {
+      console.log(`[POST SECTION] Reposted posts button clicked, fetching from API`);
+      
+      // Fetch reposted posts from the API directly without changing filter
+      fetchRepostedPosts();
+      return; // Stop here to prevent triggering onFilterChange
+    }
+    
     console.log(`[POST SECTION] Filter button clicked: ${filter}, calling onFilterChange`);
     if (onFilterChange && typeof onFilterChange === 'function') {
       onFilterChange(filter);
+    }
+  };
+  
+  // Function to fetch reposted posts
+  const fetchRepostedPosts = async () => {
+    try {
+      console.log('[POST SECTION] Fetching reposted posts from API');
+      
+      // Call the API to get reposted posts using our dedicated function
+      const response = await API.getRepostedPosts();
+      
+      console.log('[POST SECTION] Reposted posts API response:', response);
+      
+      if (response && response.results && response.results.length > 0) {
+        console.log('[POST SECTION] Sample raw API post:', response.results[0]);
+        
+        // Format posts for our application
+        const formattedPosts = response.results.map(post => {
+          const formattedPost = {
+            id: post.id.toString(),
+            title: post.description || "No title",
+            content: post.description || "No content",
+            author: post.created_by?.full_name || "Unknown",
+            date: formatDateForAPI(new Date(post.date_created)),
+            date_created: post.date_created,
+            post_status: post.post_status || post.status,
+            image: post.media && post.media.length ? API.getImageUrl(post.media[0].media) : null,
+            authorImage: post.created_by?.picture ? API.getImageUrl(post.created_by.picture) : null,
+            isReposted: true // Explicitly mark all posts from this API as reposted
+          };
+          
+          return formattedPost;
+        });
+        
+        console.log('[POST SECTION] First formatted post after mapping:', formattedPosts[0]);
+        
+        // Update the posts state with reposted posts
+        if (setPosts && typeof setPosts === 'function') {
+          setPosts(formattedPosts);
+          console.log('[POST SECTION] Posts state updated with formatted posts');
+        } else {
+          console.error('[POST SECTION] setPosts is not a function or not available');
+        }
+        
+        console.log(`[POST SECTION] Updated posts with ${formattedPosts.length} reposted posts`);
+        
+        // Manually set the filter to reposted to ensure correct UI state
+        if (onFilterChange && typeof onFilterChange === 'function') {
+          onFilterChange("reposted");
+        }
+      } else {
+        // If no posts returned or empty array, still update the state
+        setPosts([]);
+        console.log(`[POST SECTION] No reposted posts found in API response`);
+        
+        // Still set filter to reposted to update UI state
+        if (onFilterChange && typeof onFilterChange === 'function') {
+          onFilterChange("reposted");
+        }
+      }
+    } catch (error) {
+      console.error('[POST SECTION] Error fetching reposted posts:', error);
+      // On error, set empty array to avoid showing old data
+      setPosts([]);
     }
   };
 
@@ -438,7 +517,13 @@ const PostSection = ({
         result = posts.filter(post => post.post_status === "approved");
         break;
       case "reposted":
-        result = posts.filter(post => post.title?.startsWith("[Repost]") || post.reposted_from || post.isReposted);
+        // More thorough check for reposted posts
+        result = posts.filter(post => 
+          post.isReposted === true || 
+          post.title?.toLowerCase().includes("repost") || 
+          post.content?.toLowerCase().includes("repost") ||
+          post.reposted_from
+        );
         console.log(`[FILTERED POSTS] Found ${result.length} reposted posts`);
         if (result.length > 0) {
           console.log('[FILTERED POSTS] Sample reposted post:', {
@@ -449,6 +534,7 @@ const PostSection = ({
           });
         } else {
           console.log('[FILTERED POSTS] No reposted posts found in current posts array');
+          console.log('[FILTERED POSTS] Current posts array:', posts);
         }
         break;
       case "flagged": 

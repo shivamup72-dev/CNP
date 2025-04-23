@@ -197,7 +197,7 @@ const FilterAndModeration = ({
               style={buttonStyle("reposted", activeFilter === "reposted", "var(--bs-success)")}
               onClick={() => {
                 console.log('[FILTER] Reposted button clicked');
-                console.log('[FILTER] Calling handleFilterButtonClick with: "reposted"');
+                console.log('[FILTER] This will trigger API call to fetch reposted posts');
                 handleFilterButtonClick("reposted");
               }}
               onMouseEnter={() => setHoveredButton("reposted")}

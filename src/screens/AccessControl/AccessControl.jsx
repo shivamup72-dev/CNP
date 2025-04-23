@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { Container, Row, Col, Card, Button, Table, Badge, Tabs, Tab, Nav, Alert, Pagination, Spinner } from "react-bootstrap";
+import { Container, Row, Col, Card, Button, Table, Badge, Tabs, Tab, Nav, Alert, Pagination, Spinner, Toast, ToastContainer } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 import {
   FiUsers,
@@ -16,7 +16,8 @@ import {
   FiUser,
   FiUserCheck,
   FiFileText,
-  FiImage
+  FiImage,
+  FiCheckCircle
 } from "react-icons/fi";
 import PostSection from "../Dashboard/postSection/PostSection.jsx";
 import API from "../../api/endpoint";
@@ -42,131 +43,18 @@ const AccessControl = () => {
 
   // Modal states
   const [showCreateUserOrAdminModal, setShowCreateUserOrAdminModal] = useState(false);
+  
+  // Success message state
+  const [userCreationSuccess, setUserCreationSuccess] = useState(null);
+  const [showSuccessToast, setShowSuccessToast] = useState(false);
 
-  // Sample users data
-  const [users, setUsers] = useState([
-    {
-      id: 1,
-      name: "Arun Kumar",
-      email: "arun@example.com",
-      role: "ground_zero",
-      location: "Delhi",
-      status: "active",
-      lastActive: "2023-06-01",
-      accessLevel: 1
-    },
-    {
-      id: 2,
-      name: "Rajesh Singh",
-      email: "rajesh@example.com",
-      role: "city_manager",
-      location: "Mumbai",
-      status: "active",
-      lastActive: "2023-06-02",
-      accessLevel: 2
-    },
-    {
-      id: 3,
-      name: "Priya Sharma",
-      email: "priya@example.com",
-      role: "state_manager",
-      location: "Bangalore",
-      status: "active",
-      lastActive: "2023-06-03",
-      accessLevel: 3
-    },
-    {
-      id: 4,
-      name: "Vikram Patel",
-      email: "vikram@example.com",
-      role: "national_manager",
-      location: "Delhi",
-      status: "active",
-      lastActive: "2023-06-04",
-      accessLevel: 4
-    },
-    {
-      id: 5,
-      name: "Ananya Das",
-      email: "ananya@example.com",
-      role: "god_admin",
-      location: "Chennai",
-      status: "active",
-      lastActive: "2023-06-05",
-      accessLevel: 5
-    },
-    // Regular users without specific roles
-    {
-      id: 6,
-      name: "Rahul Mehta",
-      email: "rahul@example.com",
-      role: "",
-      location: "Pune",
-      status: "active",
-      lastActive: "2023-06-10",
-      accessLevel: 0
-    },
-    {
-      id: 7,
-      name: "Sneha Joshi",
-      email: "sneha@example.com",
-      role: "",
-      location: "Hyderabad",
-      status: "active",
-      lastActive: "2023-06-12",
-      accessLevel: 0
-    },
-    {
-      id: 8,
-      name: "Arjun Nair",
-      email: "arjun@example.com",
-      role: "",
-      location: "Kochi",
-      status: "active",
-      lastActive: "2023-06-15",
-      accessLevel: 0
-    },
-    {
-      id: 9,
-      name: "Meera Reddy",
-      email: "meera@example.com",
-      role: "",
-      location: "Chennai",
-      status: "active",
-      lastActive: "2023-06-18",
-      accessLevel: 0
-    },
-    {
-      id: 10,
-      name: "Karan Malhotra",
-      email: "karan@example.com",
-      role: "",
-      location: "Delhi",
-      status: "active",
-      lastActive: "2023-06-20",
-      accessLevel: 0
-    },
-    {
-      id: 11,
-      name: "Pooja Verma",
-      email: "pooja@example.com",
-      role: "",
-      location: "Jaipur",
-      status: "active",
-      lastActive: "2023-06-22",
-      accessLevel: 0
-    },
-    {
-      id: 12,
-      name: "Sanjay Gupta",
-      email: "sanjay@example.com",
-      role: "",
-      location: "Kolkata",
-      status: "active",
-      lastActive: "2023-06-25",
-      accessLevel: 0
-    }
-  ]);
+  // Users state
+  const [users, setUsers] = useState([]);
+  const [usersLoading, setUsersLoading] = useState(false);
+  const [usersError, setUsersError] = useState(null);
+  const [currentUsersPage, setCurrentUsersPage] = useState(1);
+  const [usersTotalPages, setUsersTotalPages] = useState(1);
+  const [usersTotalCount, setUsersTotalCount] = useState(0);
 
   const [showUsersList, setShowUsersList] = useState(false);
   const [showAdminsList, setShowAdminsList] = useState(false);
@@ -174,6 +62,80 @@ const AccessControl = () => {
   const [isLoadingAdmins, setIsLoadingAdmins] = useState(false);
   const [usersLoadError, setUsersLoadError] = useState(null);
   const [adminsLoadError, setAdminsLoadError] = useState(null);
+
+  // Function to fetch users from API
+  const fetchUsers = async (page = 1) => {
+    setUsersLoading(true);
+    setUsersError(null);
+
+    try {
+      const limit = 10;
+      const offset = (page - 1) * limit;
+      const apiUrl = `/api/v1/web/users/?limit=${limit}&offset=${offset}`;
+
+      console.log(`[ACCESS CONTROL] Fetching users from: ${apiUrl}`);
+      
+      const data = await API.get(apiUrl);
+      console.log(`[ACCESS CONTROL] Users response:`, data);
+
+      // Format the users data
+      const formattedUsers = data.results.map(userObj => ({
+        id: userObj.id,
+        name: `${userObj.user.first_name} ${userObj.user.last_name}`,
+        email: userObj.user.email,
+        username: userObj.user.username,
+        role: determineUserRole(userObj),
+        location: userObj.district ? userObj.district.name : (userObj.state ? userObj.state.name : "Unknown"),
+        status: "active",
+        lastActive: new Date().toISOString().split('T')[0],
+        phone: userObj.phone_number,
+        picture: userObj.picture,
+        gender: userObj.gender,
+        dob: userObj.date_of_birth,
+        accessLevel: calculateAccessLevel(userObj)
+      }));
+
+      setUsers(formattedUsers);
+      setUsersTotalCount(data.count);
+      setUsersTotalPages(Math.ceil(data.count / limit));
+      setCurrentUsersPage(page);
+    } catch (error) {
+      console.error("[ACCESS CONTROL] Error fetching users:", error);
+      setUsersError("Failed to fetch users. Please try again.");
+    } finally {
+      setUsersLoading(false);
+    }
+  };
+
+  // Helper function to determine user role from API data
+  const determineUserRole = (userObj) => {
+    // This is a placeholder logic - adjust based on your actual API data structure
+    // For now, we'll return a sample role
+    // In a real scenario, you would extract role information from the API response
+    const roles = ["ground_zero", "city_manager", "state_manager", "national_manager", "god_admin"];
+    const roleIndex = userObj.id % 5; // Simple way to distribute roles for demonstration
+    return roles[roleIndex];
+  };
+
+  // Helper function to calculate access level based on role
+  const calculateAccessLevel = (userObj) => {
+    const role = determineUserRole(userObj);
+    const accessLevels = {
+      "god_admin": 5,
+      "national_manager": 4,
+      "state_manager": 3,
+      "city_manager": 2,
+      "ground_zero": 1
+    };
+    return accessLevels[role] || 0;
+  };
+
+  // Load users when component mounts
+  useEffect(() => {
+    if (activeTab === "users") {
+      fetchUsers();
+    }
+  }, [activeTab]);
 
   // Function to fetch posts data from API
   const fetchPostsData = async (page = 1, search = "", showLoader = true) => {
@@ -281,7 +243,7 @@ const AccessControl = () => {
     const matchesSearch =
       user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.location.toLowerCase().includes(searchTerm.toLowerCase());
+      (user.location && user.location.toLowerCase().includes(searchTerm.toLowerCase()));
 
     return matchesRole && matchesSearch;
   });
@@ -372,34 +334,28 @@ const AccessControl = () => {
   };
 
   // Handle user creation
-  const handleCreateUser = (userData) => {
+  const handleCreateUser = (userData, successMessage) => {
     console.log("Creating new user with data:", userData);
     
-    // Map permission ID to role based on API values
-    // ID 1 = Admin = god_admin role
-    // ID 2 = Moderator = ground_zero role
-    const roleMap = {
-      "1": "god_admin",
-      "2": "ground_zero"
-    };
-    
-    // Create a new user object from the form data
-    const newUser = {
-      id: users.length + 1,
-      name: `${userData.first_name} ${userData.last_name}`,
-      email: userData.email,
-      role: roleMap[userData.permission] || "ground_zero",
-      location: userData.city,
-      status: "active",
-      lastActive: new Date().toISOString().split('T')[0],
-      accessLevel: userData.permission === "1" ? 5 : 1
-    };
-    
-    // Add the new user to the users array
-    setUsers([newUser, ...users]);
+    // After successful creation, refresh the users list
+    fetchUsers(1);
     
     // Close the modal
     setShowCreateUserOrAdminModal(false);
+
+    // Set success message
+    setUserCreationSuccess(successMessage || `User ${userData.first_name} ${userData.last_name} created successfully!`);
+    setShowSuccessToast(true);
+    
+    // Hide success message after 5 seconds
+    setTimeout(() => {
+      setShowSuccessToast(false);
+    }, 5000);
+  };
+
+  // Handle users pagination
+  const handleUsersPageChange = (page) => {
+    fetchUsers(page);
   };
 
   // Function to fetch all users
@@ -409,15 +365,7 @@ const AccessControl = () => {
       setUsersLoadError(null);
       setShowAdminsList(false); // Hide admin list when showing all users
       
-      // In a real implementation, this would be an API call
-      // For now, we'll just use the existing sample data
-      console.log("Fetching regular users only (no roles)");
-      
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      // No need to set users since we already have sample data
-      // In a real implementation, you would update the users state here
+      await fetchUsers(1);
       
       setShowUsersList(true);
       setActiveTab("users");
@@ -436,15 +384,7 @@ const AccessControl = () => {
       setAdminsLoadError(null);
       setShowUsersList(false); // Hide users list when showing admins
       
-      // In a real implementation, this would be an API call to get only admin users
-      console.log("Fetching admin users and users with roles");
-      
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      // Filter for admin users (in a real implementation, this would be server-side)
-      // const adminUsers = await API.getAdminUsers();
-      // setUsers(adminUsers);
+      await fetchUsers(1);
       
       setShowAdminsList(true);
       setActiveTab("users");
@@ -483,6 +423,52 @@ const AccessControl = () => {
       background: "linear-gradient(to bottom, #f8fcf8 0%, #f8fcf8 100%)",
       minHeight: "100vh"
     }}>
+      {/* Toast container for success messages */}
+      <ToastContainer 
+        className="p-3" 
+        position="top-end"
+        style={{ 
+          zIndex: 1070,
+          marginTop: '60px'
+        }}
+      >
+        <Toast 
+          show={showSuccessToast} 
+          onClose={() => setShowSuccessToast(false)}
+          delay={5000}
+          autohide
+          className="border-0"
+          style={{ 
+            maxWidth: '250px',
+            fontSize: '0.8rem',
+            boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
+            borderRadius: '8px',
+            overflow: 'hidden'
+          }}
+        >
+          <div className="d-flex align-items-center py-2 px-3" 
+            style={{ 
+              borderWidth: '4px', 
+              borderLeftColor: '#13d378',
+              backgroundColor: '#0a8d4c',
+              color: 'white'
+            }}
+          >
+            <span className="me-2" style={{ color: 'white' }}>
+              <FiCheckCircle size={12} />
+            </span>
+            <span style={{ color: 'white', fontWeight: '500' }}>{userCreationSuccess}</span>
+            <button 
+              type="button" 
+              className="btn-close btn-close-white ms-auto" 
+              style={{ fontSize: '0.6rem', padding: '4px' }}
+              onClick={() => setShowSuccessToast(false)}
+              aria-label="Close"
+            ></button>
+          </div>
+        </Toast>
+      </ToastContainer>
+
       {/* Header with back button */}
       <div className="d-flex align-items-center mb-4">
         <Button
@@ -735,49 +721,23 @@ const AccessControl = () => {
             </Col>
           </Row>
 
+          {/* Users loading state */}
+          {usersLoading && (
+            <div className="text-center py-4">
+              <Spinner animation="border" variant="primary" />
+              <p className="mt-2">Loading users...</p>
+            </div>
+          )}
+
           {/* Users error message */}
-          {usersLoadError && (
+          {usersError && (
             <Alert variant="danger" className="mb-4">
-              {usersLoadError}
+              {usersError}
             </Alert>
           )}
 
-          {/* Admins error message */}
-          {adminsLoadError && (
-            <Alert variant="danger" className="mb-4">
-              {adminsLoadError}
-            </Alert>
-          )}
-
-          {/* Conditionally show the specific users table, admin users table, or the filtered users table */}
-          {showUsersList ? (
-            <Card className="shadow-sm border-0">
-              <Card.Body>
-                <UsersTable 
-                  users={getRegularUsers()}
-                  setUsers={setUsers}
-                  getRoleBadgeColor={getRoleBadgeColor}
-                  getRoleIcon={getRoleIcon}
-                  roleDisplayMap={roleDisplayMap}
-                  title="All Users"
-                />
-              </Card.Body>
-            </Card>
-          ) : showAdminsList ? (
-            <Card className="shadow-sm border-0">
-              <Card.Body>
-                <UsersTable 
-                  users={getAdminUsers()}
-                  setUsers={setUsers}
-                  getRoleBadgeColor={getRoleBadgeColor}
-                  getRoleIcon={getRoleIcon}
-                  roleDisplayMap={roleDisplayMap}
-                  title="All Admins"
-                />
-              </Card.Body>
-            </Card>
-          ) : (
-            /* Original filtered users table */
+          {/* Users table */}
+          {!usersLoading && users.length > 0 && (
             <Card className="shadow-sm border-0">
               <Card.Body>
                 <UsersTable 
@@ -786,10 +746,65 @@ const AccessControl = () => {
                   getRoleBadgeColor={getRoleBadgeColor}
                   getRoleIcon={getRoleIcon}
                   roleDisplayMap={roleDisplayMap}
-                  title={activeRole === "all" ? "All Users" : `${roleDisplayMap[activeRole]} Users`}
+                  title={activeRole === "all" ? "All Users" : `${roleDisplayMap[activeRole] || activeRole} Users`}
                 />
+                
+                {/* Pagination */}
+                {usersTotalPages > 1 && (
+                  <div className="d-flex justify-content-center mt-4">
+                    <Pagination>
+                      <Pagination.First 
+                        onClick={() => handleUsersPageChange(1)} 
+                        disabled={currentUsersPage === 1}
+                      />
+                      <Pagination.Prev 
+                        onClick={() => handleUsersPageChange(currentUsersPage - 1)} 
+                        disabled={currentUsersPage === 1}
+                      />
+                      
+                      {Array.from({ length: Math.min(5, usersTotalPages) }).map((_, index) => {
+                        let pageNumber;
+                        if (usersTotalPages <= 5) {
+                          pageNumber = index + 1;
+                        } else if (currentUsersPage <= 3) {
+                          pageNumber = index + 1;
+                        } else if (currentUsersPage >= usersTotalPages - 2) {
+                          pageNumber = usersTotalPages - 4 + index;
+                        } else {
+                          pageNumber = currentUsersPage - 2 + index;
+                        }
+                        
+                        return (
+                          <Pagination.Item
+                            key={pageNumber}
+                            active={pageNumber === currentUsersPage}
+                            onClick={() => handleUsersPageChange(pageNumber)}
+                          >
+                            {pageNumber}
+                          </Pagination.Item>
+                        );
+                      })}
+                      
+                      <Pagination.Next 
+                        onClick={() => handleUsersPageChange(currentUsersPage + 1)} 
+                        disabled={currentUsersPage === usersTotalPages}
+                      />
+                      <Pagination.Last 
+                        onClick={() => handleUsersPageChange(usersTotalPages)} 
+                        disabled={currentUsersPage === usersTotalPages}
+                      />
+                    </Pagination>
+                  </div>
+                )}
               </Card.Body>
             </Card>
+          )}
+
+          {/* No users message */}
+          {!usersLoading && users.length === 0 && !usersError && (
+            <Alert variant="info">
+              No users found. Add a new user using the "Add New User or Admin" button.
+            </Alert>
           )}
         </>
       )}

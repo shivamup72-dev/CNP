@@ -8,73 +8,66 @@ const CreateUserOrAdminModal = ({
   handleCreateUser = () => { },
 }) => {
   const [formData, setFormData] = useState({
-    username: 'kari_2',
-    email: 'kari_2@gmail.com',
-    password: 'koko',
-    permission: '1',
-    first_name: 'kari',
-    last_name: 'singh',
-    phone_number: '9319939217',
-    address: 'sec-62 noida',
-    city: '1',
-    state: '1',
-    zip_code: '201301',
-    gender: 'Female',
-    dob: '1999-11-28',
+    username: '',
+    email: '',
+    password: '',
+    admin_role: '',
+    first_name: '',
+    last_name: '',
+    phone_number: '',
+    address: '',
+    city: '',
+    state: '',
+    zip_code: '',
+    gender: '',
+    dob: '',
     picture: null,
     picturePreview: '',
   });
 
   const [formErrors, setFormErrors] = useState({});
   const [isButtonActive, setIsButtonActive] = useState(false);
-  const [permissions, setPermissions] = useState([]);
-  const [isLoadingPermissions, setIsLoadingPermissions] = useState(false);
-  const [permissionError, setPermissionError] = useState(null);
   const [isCreatingUser, setIsCreatingUser] = useState(false);
   const [apiError, setApiError] = useState(null);
   const [successMessage, setSuccessMessage] = useState(null);
+  const [formSubmitted, setFormSubmitted] = useState(false);
 
-  // Fetch permissions when modal opens
+  // Reset form states when modal opens
   useEffect(() => {
     if (show) {
-      fetchPermissions();
-      // Reset states when modal opens
       setFormErrors({});
       setApiError(null);
       setSuccessMessage(null);
+      setFormSubmitted(false);
     }
   }, [show]);
 
-  const fetchPermissions = async () => {
-    try {
-      setIsLoadingPermissions(true);
-      setPermissionError(null);
-      
-      const data = await API.get('/api/v1/web/functionality-permission');
-      console.log('Permissions data:', data);
-      setPermissions(data);
-      
-      // If permissions were fetched successfully but the current permission is not in the list,
-      // update to the first permission in the list
-      if (data.length > 0 && !data.some(p => p.id.toString() === formData.permission)) {
-        setFormData(prev => ({
-          ...prev,
-          permission: data[0].id.toString()
-        }));
-      }
-    } catch (error) {
-      console.error('Error fetching permissions:', error);
-      setPermissionError('Failed to load permissions. Please try again.');
-    } finally {
-      setIsLoadingPermissions(false);
-    }
-  };
-
   const handleInputChange = (e) => {
     const { name, value } = e.target;
+    
+    let newValue = value;
+    
+    // Special handling for phone number formatting
+    if (name === 'phone_number') {
+      // Remove any non-digit characters
+      const digitsOnly = value.replace(/\D/g, '');
+      
+      // Limit to 10 digits
+      const truncated = digitsOnly.slice(0, 10);
+      
+      // Format as XXX-XXX-XXXX
+      if (truncated.length > 6) {
+        newValue = `${truncated.slice(0, 3)}-${truncated.slice(3, 6)}-${truncated.slice(6)}`;
+      } else if (truncated.length > 3) {
+        newValue = `${truncated.slice(0, 3)}-${truncated.slice(3)}`;
+      } else {
+        newValue = truncated;
+      }
+    }
+    
     setFormData({
       ...formData,
-      [name]: value
+      [name]: newValue
     });
     
     // Clear any errors for this field
@@ -119,10 +112,21 @@ const CreateUserOrAdminModal = ({
       }
     }
     if (!formData.password.trim()) errors.password = "Password is required";
-    if (!formData.permission) errors.permission = "Permission is required";
+    if (!formData.admin_role) errors.admin_role = "Admin role is required";
     if (!formData.first_name.trim()) errors.first_name = "First name is required";
     if (!formData.last_name.trim()) errors.last_name = "Last name is required";
-    if (!formData.phone_number.trim()) errors.phone_number = "Phone number is required";
+    
+    // Phone number validation
+    if (!formData.phone_number.trim()) {
+      errors.phone_number = "Phone number is required";
+    } else {
+      // Remove any non-digit characters for validation
+      const digitsOnly = formData.phone_number.replace(/\D/g, '');
+      if (digitsOnly.length !== 10) {
+        errors.phone_number = "Phone number must be exactly 10 digits";
+      }
+    }
+    
     if (!formData.address.trim()) errors.address = "Address is required";
     if (!formData.city.trim()) errors.city = "City is required";
     if (!formData.state.trim()) errors.state = "State is required";
@@ -157,18 +161,22 @@ const CreateUserOrAdminModal = ({
         }
       });
       
-      // Make API call with our centralized wrapper that handles authentication
-      const data = await API.post('/api/v1/web/create-user/', formDataObj, {
+      // Use the new API endpoint
+      const data = await API.post('/api/v1/web/create-post/', formDataObj, {
         // Don't include Content-Type for FormData as it needs to set its own boundary
         headers: {}
       });
       
       // Success
       console.log('Success response:', data);
-      setSuccessMessage(data.message || 'User created successfully!');
+      const fullName = `${formData.first_name} ${formData.last_name}`;
+      // Create shorter success message
+      const successMsg = `${fullName} created successfully`;
+      setSuccessMessage(successMsg);
+      setFormSubmitted(true);
       
-      // Call the parent component's handler
-      handleCreateUser(formData);
+      // Call the parent component's handler with the success message
+      handleCreateUser(formData, successMsg);
       
       // Close modal after a delay to show success message
       setTimeout(() => {
@@ -194,77 +202,25 @@ const CreateUserOrAdminModal = ({
     setTimeout(() => setIsButtonActive(false), 300);
   };
 
-  // Get the help text for the selected permission
-  const getPermissionHelpText = (permissionId) => {
-    if (permissionId === "1") {
-      return "Admin has full access";
-    } else if (permissionId === "2") {
-      return "Moderator has limited access";
-    }
-    return "";
-  };
-
-  // Render permissions dropdown based on API data
-  const renderPermissionsDropdown = () => {
-    if (isLoadingPermissions) {
-      return (
-        <div className="d-flex align-items-center">
-          <Spinner animation="border" size="sm" className="me-2" />
-          <span>Loading permissions...</span>
-        </div>
-      );
-    }
-
-    if (permissionError) {
-      return (
-        <div className="text-danger">
-          {permissionError}
-          <Button 
-            variant="link" 
-            size="sm" 
-            className="p-0 ms-2" 
-            onClick={fetchPermissions}
-          >
-            Retry
-          </Button>
-        </div>
-      );
-    }
-
-    return (
-      <>
-        <Form.Select
-          name="permission"
-          value={formData.permission}
-          onChange={handleInputChange}
-          isInvalid={!!formErrors.permission}
-        >
-          {permissions.length > 0 ? (
-            permissions.map(permission => (
-              <option key={permission.id} value={permission.id.toString()}>
-                {permission.name} - {permission.id === 1 ? "has full access" : "has limited access"}
-              </option>
-            ))
-          ) : (
-            <>
-              <option value="1">Admin - has full access</option>
-              <option value="2">Moderator - has limited access</option>
-            </>
-          )}
-        </Form.Select>
-        <Form.Control.Feedback type="invalid">
-          {formErrors.permission}
-        </Form.Control.Feedback>
-      </>
-    );
-  };
-
   // Helper to create required field label
   const requiredLabel = (text) => (
     <Form.Label>
       {text} <span className="text-danger">*</span>
     </Form.Label>
   );
+
+  // Admin role descriptions
+  const getRoleDescription = (role) => {
+    const descriptions = {
+      'god_admin': 'Full system access',
+      'national_manager': 'National-level management access',
+      'state_manager': 'State-level management access',
+      'city_manager': 'City-level management access',
+      'ground_zero_reporter': 'Report creation access',
+      'user': 'Basic user access'
+    };
+    return descriptions[role] || '';
+  };
 
   return (
     <Modal show={show} onHide={onHide} centered size="lg" className="custom-modal">
@@ -286,8 +242,18 @@ const CreateUserOrAdminModal = ({
       <Modal.Body style={{ padding: '0.8rem', maxHeight: '70vh', overflowY: 'auto' }}>
         {/* Success message */}
         {successMessage && (
-          <Alert variant="success" className="mb-3">
-            {successMessage}
+          <Alert variant="success" className="mb-3 d-flex align-items-center py-2" style={{
+            backgroundColor: 'rgba(25, 135, 84, 0.08)',
+            borderColor: '#d1e7dd',
+            borderLeft: '4px solid #198754',
+            padding: '8px 12px',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+            fontSize: '0.9rem'
+          }}>
+            <div className="me-2 fs-5 text-success">✓</div>
+            <div>
+              <span>{successMessage}</span>
+            </div>
           </Alert>
         )}
         
@@ -297,6 +263,21 @@ const CreateUserOrAdminModal = ({
             {apiError.general}
           </Alert>
         )}
+        
+        {/* Add success styling */}
+        <style>
+          {`
+            .form-success {
+              animation: successPulse 1.5s ease-in-out;
+            }
+            
+            @keyframes successPulse {
+              0% { box-shadow: 0 0 0 0 rgba(25, 135, 84, 0.5); }
+              70% { box-shadow: 0 0 0 10px rgba(25, 135, 84, 0); }
+              100% { box-shadow: 0 0 0 0 rgba(25, 135, 84, 0); }
+            }
+          `}
+        </style>
         
         <Row>
           <Col md={6}>
@@ -308,6 +289,7 @@ const CreateUserOrAdminModal = ({
                 value={formData.username}
                 onChange={handleInputChange}
                 isInvalid={!!formErrors.username || (apiError && !!apiError.username)}
+                className={formSubmitted ? "form-success" : ""}
               />
               <Form.Control.Feedback type="invalid">
                 {(apiError && apiError.username) ? apiError.username[0] : formErrors.username}
@@ -323,6 +305,7 @@ const CreateUserOrAdminModal = ({
                 value={formData.email}
                 onChange={handleInputChange}
                 isInvalid={!!formErrors.email || (apiError && !!apiError.email)}
+                className={formSubmitted ? "form-success" : ""}
               />
               <Form.Control.Feedback type="invalid">
                 {(apiError && apiError.email) ? apiError.email[0] : formErrors.email}
@@ -341,6 +324,7 @@ const CreateUserOrAdminModal = ({
                 value={formData.password}
                 onChange={handleInputChange}
                 isInvalid={!!formErrors.password}
+                className={formSubmitted ? "form-success" : ""}
               />
               <Form.Control.Feedback type="invalid">
                 {formErrors.password}
@@ -349,8 +333,30 @@ const CreateUserOrAdminModal = ({
           </Col>
           <Col md={6}>
             <Form.Group className="mb-3">
-              {requiredLabel("Permission")}
-              {renderPermissionsDropdown()}
+              {requiredLabel("Admin Role")}
+              <Form.Select
+                name="admin_role"
+                value={formData.admin_role}
+                onChange={handleInputChange}
+                isInvalid={!!formErrors.admin_role}
+                className={formSubmitted ? "form-success" : ""}
+              >
+                <option value="">Select Admin Role</option>
+                <option value="god_admin">God Admin</option>
+                <option value="national_manager">National Manager</option>
+                <option value="state_manager">State Manager</option>
+                <option value="city_manager">City Manager</option>
+                <option value="ground_zero_reporter">Ground Zero Reporter</option>
+                <option value="user">User</option>
+              </Form.Select>
+              {formData.admin_role && (
+                <small className="text-muted d-block mt-1">
+                  {getRoleDescription(formData.admin_role)}
+                </small>
+              )}
+              <Form.Control.Feedback type="invalid">
+                {formErrors.admin_role}
+              </Form.Control.Feedback>
             </Form.Group>
           </Col>
         </Row>
@@ -365,6 +371,7 @@ const CreateUserOrAdminModal = ({
                 value={formData.first_name}
                 onChange={handleInputChange}
                 isInvalid={!!formErrors.first_name}
+                className={formSubmitted ? "form-success" : ""}
               />
               <Form.Control.Feedback type="invalid">
                 {formErrors.first_name}
@@ -380,6 +387,7 @@ const CreateUserOrAdminModal = ({
                 value={formData.last_name}
                 onChange={handleInputChange}
                 isInvalid={!!formErrors.last_name}
+                className={formSubmitted ? "form-success" : ""}
               />
               <Form.Control.Feedback type="invalid">
                 {formErrors.last_name}
@@ -398,10 +406,17 @@ const CreateUserOrAdminModal = ({
                 value={formData.phone_number}
                 onChange={handleInputChange}
                 isInvalid={!!formErrors.phone_number}
+                className={formSubmitted ? "form-success" : ""}
+                placeholder="XXX-XXX-XXXX"
               />
               <Form.Control.Feedback type="invalid">
                 {formErrors.phone_number}
               </Form.Control.Feedback>
+              {!formErrors.phone_number && (
+                <Form.Text className="text-muted">
+                  Please enter a 10-digit phone number
+                </Form.Text>
+              )}
             </Form.Group>
           </Col>
           <Col md={6}>
@@ -412,7 +427,9 @@ const CreateUserOrAdminModal = ({
                 value={formData.gender}
                 onChange={handleInputChange}
                 isInvalid={!!formErrors.gender}
+                className={formSubmitted ? "form-success" : ""}
               >
+                <option value="">Select Gender</option>
                 <option value="Male">Male</option>
                 <option value="Female">Female</option>
                 <option value="Other">Other</option>
@@ -432,6 +449,7 @@ const CreateUserOrAdminModal = ({
             value={formData.address}
             onChange={handleInputChange}
             isInvalid={!!formErrors.address}
+            className={formSubmitted ? "form-success" : ""}
           />
           <Form.Control.Feedback type="invalid">
             {formErrors.address}
@@ -448,6 +466,7 @@ const CreateUserOrAdminModal = ({
                 value={formData.city}
                 onChange={handleInputChange}
                 isInvalid={!!formErrors.city}
+                className={formSubmitted ? "form-success" : ""}
               />
               <Form.Control.Feedback type="invalid">
                 {formErrors.city}
@@ -463,6 +482,7 @@ const CreateUserOrAdminModal = ({
                 value={formData.state}
                 onChange={handleInputChange}
                 isInvalid={!!formErrors.state}
+                className={formSubmitted ? "form-success" : ""}
               />
               <Form.Control.Feedback type="invalid">
                 {formErrors.state}
@@ -478,6 +498,7 @@ const CreateUserOrAdminModal = ({
                 value={formData.zip_code}
                 onChange={handleInputChange}
                 isInvalid={!!formErrors.zip_code}
+                className={formSubmitted ? "form-success" : ""}
               />
               <Form.Control.Feedback type="invalid">
                 {formErrors.zip_code}
@@ -496,6 +517,7 @@ const CreateUserOrAdminModal = ({
                 value={formData.dob}
                 onChange={handleInputChange}
                 isInvalid={!!formErrors.dob}
+                className={formSubmitted ? "form-success" : ""}
               />
               <Form.Control.Feedback type="invalid">
                 {formErrors.dob}
@@ -510,6 +532,7 @@ const CreateUserOrAdminModal = ({
                 accept="image/*"
                 onChange={handleImageUpload}
                 isInvalid={!!formErrors.picture}
+                className={formSubmitted ? "form-success" : ""}
               />
               <Form.Control.Feedback type="invalid">
                 {formErrors.picture}
@@ -550,7 +573,7 @@ const CreateUserOrAdminModal = ({
             transform: isButtonActive ? 'scale(0.98)' : 'scale(1)',
             transition: 'all 0.2s ease'
           }}
-          disabled={isLoadingPermissions || isCreatingUser}
+          disabled={isCreatingUser}
         >
           {isCreatingUser ? (
             <>

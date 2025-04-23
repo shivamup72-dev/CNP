@@ -125,8 +125,8 @@ const Login = () => {
         const userData = {
           name: formatName(data.basic?.name || ""),
           email: data.basic?.email || "",
-          role: determineUserRole(data.permissions),
-          isGodAdmin: false  // Will be set in determineUserRole
+          role: data.basic?.admin_role || "user",
+          isGodAdmin: data.basic?.admin_role === "god_admin"
         };
         
         // Store user data in localStorage

@@ -44,12 +44,21 @@ const PostDetailModal = ({
 
   const renderStatusBadges = () => (
     <>
-      <Badge bg={selectedPost.isApproved ? "success" : "warning"} className="ms-2" style={{ fontSize: "0.7rem" }}>
-        {selectedPost.isApproved ? "Approved" : "Pending"}
-      </Badge>
-      {selectedPost.flagged && (
-        <Badge bg="danger" className="ms-1" style={{ fontSize: "0.7rem" }}>
+      {selectedPost.post_status === "approved" ? (
+        <Badge bg="success" className="ms-2" style={{ fontSize: "0.7rem" }}>
+          Approved
+        </Badge>
+      ) : selectedPost.post_status === "flagged" || selectedPost.flagged ? (
+        <Badge bg="" className="ms-2" style={{ fontSize: "0.7rem", backgroundColor: "#fd7e14" }}>
           Flagged
+        </Badge>
+      ) : selectedPost.post_status === "rejected" || selectedPost.isDeleted ? (
+        <Badge bg="danger" className="ms-2" style={{ fontSize: "0.7rem" }}>
+          Deleted
+        </Badge>
+      ) : (
+        <Badge bg="warning" className="ms-2" style={{ fontSize: "0.7rem" }}>
+          Pending
         </Badge>
       )}
     </>

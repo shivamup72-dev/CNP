@@ -3,6 +3,7 @@ import "../../../assets/css/Dashboard.css";
 import { Card } from "react-bootstrap";
 import { FaCheck, FaListUl, FaShareSquare } from "react-icons/fa";
 import { FiFlag } from "react-icons/fi";
+import toast from 'react-hot-toast';
 import PostTable from "./PostTable";
 import CustomPagination from "../../../components/common/CustomPagination";
 import Button from "../../../components/common/BootstrapButton";

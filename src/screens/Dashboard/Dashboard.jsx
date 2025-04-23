@@ -41,7 +41,7 @@ const Dashboard = () => {
   // User data state
   const [userData, setUserData] = useState({
     name: "",
-    role: "Role not defined",
+    role: "",
     isGodAdmin: false
   });
 
@@ -76,37 +76,6 @@ const Dashboard = () => {
       console.error('[DASHBOARD] Error loading user data:', error);
     }
   }, []);
-
-  // Determine user role based on permissions
-  const determineUserRole = (permissions) => {
-    if (!permissions || permissions.length === 0) {
-      return "Role not defined";
-    }
-
-    // Check if all permissions have "Full" access
-    const hasFullAccess = permissions.every(module => 
-      module.sub_modules.some(subModule => 
-        subModule.name === "Full" && subModule.is_allowed === true
-      )
-    );
-
-    return hasFullAccess ? "God Admin" : "Role not defined";
-  };
-
-  // Parse login response data to get user info
-  const parseLoginResponseData = (data) => {
-    if (!data) return null;
-
-    const name = data.basic?.name || "";
-    const role = determineUserRole(data.permissions);
-    const isGodAdmin = role === "God Admin";
-
-    // Store data in localStorage for persistence
-    const userData = { name, role, isGodAdmin };
-    localStorage.setItem('userData', JSON.stringify(userData));
-    
-    return userData;
-  };
 
   const updateModalState = useCallback((type, show, post = null) => {
     if (post) setSelectedPost(post);
@@ -151,6 +120,15 @@ const Dashboard = () => {
   // Function to fetch posts from API with search capability
   const fetchPosts = useCallback(async (search = "", showLoader = true) => {
     try {
+      // Skip fetching for reposted filter as it's handled by the PostSection component
+      if (activeFilter === "reposted") {
+        console.log(`[DASHBOARD] Skipping regular fetch for 'reposted' filter`);
+        if (showLoader) {
+          setLoading(false);
+        }
+        return; // Exit early
+      }
+
       if (showLoader) {
         setLoading(true);
       }
@@ -214,33 +192,6 @@ const Dashboard = () => {
         authorImage: API.getImageUrl(p.created_by.picture),
         isApproved: p.post_status === "approved"
       }));
-
-      // Special handling for reposted filter since the API doesn't have a dedicated filter for it
-      if (activeFilter === "reposted") {
-        console.log(`[DASHBOARD] Special handling for reposted posts`);
-        
-        // Filter the posts client-side to find reposted ones
-        const repostedPosts = formattedPosts.filter(p => 
-          p.title?.startsWith("[Repost]") || 
-          p.reposted_from || 
-          p.isReposted
-        );
-        
-        console.log(`[DASHBOARD] Found ${repostedPosts.length} reposted posts client-side`);
-        
-        if (repostedPosts.length > 0) {
-          // Use the reposted posts we found
-          setPosts(repostedPosts);
-          setError(null);
-          return; // Return early since we've handled the posts
-        } else {
-          console.log("[DASHBOARD] No reposted posts found");
-          // Empty array is fine, just show no posts
-          setPosts([]);
-          setError(null);
-          return;
-        }
-      }
 
       // Special handling for flagged filter since API might not return correct data
       if (activeFilter === "flagged") {
@@ -378,6 +329,15 @@ const Dashboard = () => {
 
   useEffect(() => {
     console.log(`[DASHBOARD] useEffect triggered - activeFilter: ${activeFilter}`);
+    
+    // Skip fetching posts when filter is "reposted" since that's handled in PostSection component
+    if (activeFilter === "reposted") {
+      console.log("[DASHBOARD] Skipping fetchPosts for 'reposted' filter as it's handled by PostSection");
+      // Set loading to false in case it was set to true
+      setLoading(false);
+      return;
+    }
+    
     fetchPosts(searchTerm);
   }, [fetchPosts, currentPage, activeFilter, ordering, searchTerm]);
 
@@ -395,6 +355,18 @@ const Dashboard = () => {
     { name: "Oct", uv: 1800 }, { name: "Nov", uv: 1500 }, { name: "Dec", uv: 1500 }
   ];
 
+  // Helper function to format role name for display
+  const formatRoleName = (role) => {
+    if (!role) return "User";
+    
+    // Convert snake_case to Title Case
+    const formatted = role.split('_')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(' ');
+      
+    return formatted;
+  };
+
   return (
     <Container fluid className="p-4" style={{ background: "#f8fcf8" }}>
       <div className="d-flex justify-content-between align-items-center mb-4 flex-md-row flex-column">
@@ -410,7 +382,7 @@ const Dashboard = () => {
       </div>
 
       <p className="mb-4" style={{ fontSize: "12px" }}>
-        Welcome, <strong>{formatName(userData.name) || "User"}</strong> ({userData.role || "Role not defined"})
+        Welcome, <strong>{formatName(userData.name) || "User"}</strong> ({formatRoleName(userData.role) || "User"})
       </p>
 
       <StatsCards customStats={statsCardsData} />

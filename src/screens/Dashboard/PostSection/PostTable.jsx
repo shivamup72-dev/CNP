@@ -4,6 +4,7 @@ import { FaCheck, FaShareSquare, FaFlag, FaTrashRestore } from "react-icons/fa";
 import { FiTrash, FiFlag } from "react-icons/fi";
 import Button from "../../../components/common/BootstrapButton";
 import { formatDate } from "../../../utils/DateUtility";
+import { showSuccessToast } from "../../../components/common/Toast.jsx";
 
 const PostTable = ({
     currentPage,
@@ -33,6 +34,18 @@ const PostTable = ({
         console.log(`[PostTable] Deleted posts in table:`, 
             getCurrentFilteredPosts().filter(post => post.isDeleted || post.post_status === "rejected"));
     }
+    
+    // Helper function to handle approve with toast
+    const handleApproveWithToast = (postId) => {
+        handleApprovePost(postId);
+    };
+    
+    // Helper function to handle repost with toast
+    const handleRepostWithToast = (post) => {
+        handleRepost(post.id);
+        // Mark as reposted immediately for visual feedback
+        post.isReposted = true;
+    };
     
     // Common table cell style for consistency
     const tableCellStyle = {

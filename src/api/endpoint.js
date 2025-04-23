@@ -171,6 +171,29 @@ const API = {
       console.error('[API] Error reposting post:', error);
       throw error;
     }
+  },
+
+  // Fetch reposted posts
+  getRepostedPosts: async () => {
+    try {
+      const url = `${API.ENDPOINTS.POSTS}?status=all&is_reposted=true`;
+      
+      console.log(`[API] Fetching reposted posts from: ${url}`);
+      
+      // Use direct fetch instead of API.get to avoid triggering dependencies
+      const headers = API.getHeaders();
+      const response = await fetch(`${API.BASE_URL}${url}`, { headers });
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch reposted posts: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error('[API] Error fetching reposted posts:', error);
+      throw error;
+    }
   }
 };
 
