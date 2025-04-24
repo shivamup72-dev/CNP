@@ -60,13 +60,25 @@ const API = {
       if (!response.ok) {
         console.error(`[API] Error response (${response.status}):`, data);
         
+        // Enhanced error logging for debugging
+        console.log('[API] Full error response details:');
+        console.log('- Status:', response.status);
+        console.log('- Status Text:', response.statusText);
+        console.log('- Response Data:', data);
+        console.log('- Request URL:', url);
+        console.log('- Request Method:', options.method || 'GET');
+        
         // Handle 401 errors (unauthorized)
         if (response.status === 401) {
           console.error('[API] Authentication error. Token may be invalid or expired.');
           // Here you could implement token refresh logic or redirect to login
         }
         
-        throw new Error(data.message || data.detail || `Request failed with status: ${response.status}`);
+        // Create a custom error object with more details
+        const error = new Error(data.message || data.detail || `Request failed with status: ${response.status}`);
+        error.response = { status: response.status, data: data };
+        error.request = { url, method: options.method || 'GET' };
+        throw error;
       }
       
       return data;

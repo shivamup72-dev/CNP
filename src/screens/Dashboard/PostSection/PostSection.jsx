@@ -60,14 +60,7 @@ const PostSection = ({
   const [loading, setLoading] = useState(false);
   const [formErrors, setFormErrors] = useState({});
   const [newPost, setNewPost] = useState({
-    title: '',
-    content: '',
-    author: '',
-    category: '',
-    image: '',
-    imageFile: null,
-    imagePreview: '',
-    email: ''
+    content: ''
   });
 
   // Repost states
@@ -257,22 +250,6 @@ const PostSection = ({
     setIsEditMode(false);
   };
 
-  // New post functions
-  const handleImageUpload = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setNewPost({
-          ...newPost,
-          imageFile: file,
-          imagePreview: reader.result
-        });
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
   const handleNewPostChange = (e) => {
     const { name, value } = e.target;
     setNewPost({ ...newPost, [name]: value });
@@ -283,45 +260,10 @@ const PostSection = ({
 
   const validateForm = () => {
     const errors = {};
-    if (!newPost.title.trim()) errors.title = "Title is required";
     if (!newPost.content.trim()) errors.content = "Content is required";
-    if (!newPost.author.trim()) errors.author = "Author name is required";
-    if (!newPost.category) errors.category = "Category is required";
-    
-    // Email validation
-    if (newPost.email) {
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(newPost.email.trim())) {
-        errors.email = "Please enter a valid email address";
-      }
-    }
     
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
-  };
-
-  const handleCreatePost = () => {
-    if (!validateForm()) return;
-    setLoading(true);
-    const createdPost = {
-      id: Date.now().toString(),
-      title: newPost.title,
-      content: newPost.content,
-      author: newPost.author,
-      category: newPost.category,
-      image: newPost.imagePreview || null,
-      date: formatDateForAPI(new Date()),
-      post_status: "pending",
-    };
-    setPosts([createdPost, ...posts]);
-    setTimeout(() => {
-      setLoading(false);
-      setNewPost({
-        title: '', content: '', author: '', category: '',
-        image: '', imageFile: null, imagePreview: '', email: ''
-      });
-      setShowNewPostModal(false);
-    }, 500);
   };
 
   // Filter functions
@@ -805,10 +747,10 @@ const PostSection = ({
           onHide={() => setShowNewPostModal(false)}
           newPost={newPost}
           handleNewPostChange={handleNewPostChange}
-          handleImageUpload={handleImageUpload}
-          handleCreatePost={handleCreatePost}
           validateForm={validateForm}
           formErrors={formErrors}
+          setFormErrors={setFormErrors}
+          setPosts={setPosts}
         />
       </Container>
     </div>

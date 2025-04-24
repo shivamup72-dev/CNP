@@ -162,7 +162,7 @@ const CreateUserOrAdminModal = ({
       });
       
       // Use the new API endpoint
-      const data = await API.post('/api/v1/web/create-post/', formDataObj, {
+      const data = await API.post('/api/v1/web/create-user/', formDataObj, {
         // Don't include Content-Type for FormData as it needs to set its own boundary
         headers: {}
       });
@@ -184,6 +184,14 @@ const CreateUserOrAdminModal = ({
       }, 1500);
     } catch (error) {
       console.error('Error creating user:', error);
+      
+      // Add detailed error response logging
+      console.log('Full error object:', error);
+      console.log('Error response:', error.response);
+      if (error.response) {
+        console.log('Error status:', error.response.status);
+        console.log('Error data:', error.response.data);
+      }
       
       // Handle API error response
       if (error.response && error.response.status === 400) {

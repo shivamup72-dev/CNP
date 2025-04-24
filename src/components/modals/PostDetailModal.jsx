@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Modal, Button, Badge, Form, Card } from 'react-bootstrap';
 import { FiEdit, FiFlag, FiTrash, FiCheck } from 'react-icons/fi';
 import { formatDate } from '../../utils/DateUtility';
+import API from '../../api/endpoint';
 
 const PostDetailModal = ({
   show = false,
@@ -17,6 +18,41 @@ const PostDetailModal = ({
   isAdminPost = () => false
 }) => {
   if (!selectedPost && show && !isEditMode) return null;
+
+  // Log modal content when it opens
+  useEffect(() => {
+    if (show && selectedPost) {
+      console.log('======= PostDetailModal Content =======');
+      console.log('Selected Post:', selectedPost);
+      
+      // Log more detailed information
+      console.log('Post ID:', selectedPost.id);
+      console.log('Title:', selectedPost.title);
+      console.log('Content:', selectedPost.content);
+      console.log('Author:', selectedPost.author);
+      console.log('Date Created:', selectedPost.date_created);
+      console.log('Post Status:', selectedPost.post_status);
+      
+      // Log media information
+      console.log('Image URL:', selectedPost.image);
+      if (selectedPost.allMedia) {
+        console.log('All Media Files:', selectedPost.allMedia);
+      }
+      
+      // Log flags and other status information
+      console.log('Is Flagged:', selectedPost.flagged);
+      console.log('Is Deleted:', selectedPost.isDeleted);
+      if (selectedPost.flagReason) {
+        console.log('Flag Reason:', selectedPost.flagReason);
+        console.log('Flag Comment:', selectedPost.flagComment);
+      }
+      
+      console.log('Is Edit Mode:', isEditMode);
+      console.log('Edited Post:', editedPost);
+      console.log('Is Admin Post:', isAdminPost(selectedPost));
+      console.log('=====================================');
+    }
+  }, [show, selectedPost, isEditMode, editedPost, isAdminPost]);
 
   const closeModal = () => {
     onHide();
@@ -119,7 +155,39 @@ const PostDetailModal = ({
         ) : (
           selectedPost && (
             <>
-              {selectedPost.image && (
+              {/* Display all media files if available */}
+              {selectedPost.allMedia && selectedPost.allMedia.length > 0 ? (
+                <div className="mb-3">
+                  <p className="small text-muted mb-2">All Media Files ({selectedPost.allMedia.length}):</p>
+                  <div className="d-flex flex-wrap gap-2">
+                    {selectedPost.allMedia.map((media, index) => (
+                      <div key={index} className="border rounded p-1" style={{ width: '100px' }}>
+                        <img
+                          src={typeof media === 'object' && media.media 
+                            ? API.getImageUrl(media.media) 
+                            : typeof media === 'string' 
+                              ? media 
+                              : "https://via.placeholder.com/100x100?text=File"}
+                          alt={`Media ${index}`}
+                          style={{ 
+                            cursor: 'pointer', 
+                            width: '100%', 
+                            height: '80px', 
+                            objectFit: 'cover', 
+                            borderRadius: '4px' 
+                          }}
+                          onError={(e) => { e.target.src = "https://via.placeholder.com/100x100?text=Media"; }}
+                          onClick={() => window.open(typeof media === 'object' && media.media 
+                            ? API.getImageUrl(media.media) 
+                            : typeof media === 'string' 
+                              ? media 
+                              : null, '_blank')}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : selectedPost.image && !selectedPost.image.includes('placeholder') ? (
                 <div className="mb-3 text-center">
                   <img
                     src={selectedPost.image}
@@ -128,7 +196,7 @@ const PostDetailModal = ({
                     onError={(e) => { e.target.src = "https://via.placeholder.com/400x300?text=Image+Unavailable"; }}
                   />
                 </div>
-              )}
+              ) : null}
 
               <h4 className="mb-3">{selectedPost.title || "No Title"}</h4>
               <p className="mb-4" style={{ whiteSpace: "pre-wrap" }}>{selectedPost.content || "No content available."}</p>

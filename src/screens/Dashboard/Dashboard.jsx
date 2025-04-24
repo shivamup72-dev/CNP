@@ -38,6 +38,17 @@ const Dashboard = () => {
   const [ordering, setOrdering] = useState("newest"); // Default to newest
   const [searchTerm, setSearchTerm] = useState(""); // Add search term state
   
+  // Dashboard stats state
+  const [dashboardStats, setDashboardStats] = useState({
+    total_user: 0,
+    total_post_count: 0,
+    active_user_percentage: 0,
+    pending_post_count: 0,
+    approve_post_count: 0,
+    red_flag_post_count: 0,
+    rejected_post_count: 0
+  });
+
   // User data state
   const [userData, setUserData] = useState({
     name: "",
@@ -75,7 +86,23 @@ const Dashboard = () => {
     } catch (error) {
       console.error('[DASHBOARD] Error loading user data:', error);
     }
+    
+    // Fetch dashboard stats
+    fetchDashboardStats();
   }, []);
+
+  // Function to fetch dashboard stats
+  const fetchDashboardStats = async () => {
+    try {
+      console.log('[DASHBOARD] Fetching dashboard stats');
+      const data = await API.get('/api/v1/web/dashboard-stats');
+      console.log('[DASHBOARD] Dashboard stats:', data);
+      setDashboardStats(data);
+    } catch (error) {
+      console.error('[DASHBOARD] Error fetching dashboard stats:', error);
+      // Keep the default values in state if fetch fails
+    }
+  };
 
   const updateModalState = useCallback((type, show, post = null) => {
     if (post) setSelectedPost(post);
@@ -341,20 +368,6 @@ const Dashboard = () => {
     fetchPosts(searchTerm);
   }, [fetchPosts, currentPage, activeFilter, ordering, searchTerm]);
 
-  const statsCardsData = [
-    { title: "Total Users", value: "1,234", icon: <FiUsers />, color: "primary" },
-    { title: "Total Posts", value: "456", icon: <FiFileText />, color: "success" },
-    { title: "Active Users", value: "60%", icon: <FiUserCheck />, color: "warning" },
-    { title: "Polling Turn Up", value: "75%", icon: <FaPoll />, color: "info" }
-  ];
-
-  const chartData = [
-    { name: "Jan", uv: 1500 }, { name: "Feb", uv: 1800 }, { name: "Mar", uv: 2200 },
-    { name: "Apr", uv: 2800 }, { name: "May", uv: 3500 }, { name: "Jun", uv: 4500 },
-    { name: "Jul", uv: 5000 }, { name: "Aug", uv: 3500 }, { name: "Sep", uv: 2500 },
-    { name: "Oct", uv: 1800 }, { name: "Nov", uv: 1500 }, { name: "Dec", uv: 1500 }
-  ];
-
   // Helper function to format role name for display
   const formatRoleName = (role) => {
     if (!role) return "User";
@@ -366,6 +379,41 @@ const Dashboard = () => {
       
     return formatted;
   };
+
+  // Generate stats cards data using the dashboard stats
+  const statsCardsData = [
+    { 
+      title: "Total Users", 
+      value: dashboardStats.total_user.toLocaleString() || "0", 
+      icon: <FiUsers />, 
+      color: "primary" 
+    },
+    { 
+      title: "Total Posts", 
+      value: dashboardStats.total_post_count.toLocaleString() || "0", 
+      icon: <FiFileText />, 
+      color: "success" 
+    },
+    { 
+      title: "Active Users", 
+      value: `${Math.round(dashboardStats.active_user_percentage)}%` || "0%", 
+      icon: <FiUserCheck />, 
+      color: "warning" 
+    },
+    { 
+      title: "Polling Turn Up", 
+      value: "75%", 
+      icon: <FaPoll />, 
+      color: "info" 
+    }
+  ];
+
+  const chartData = [
+    { name: "Jan", uv: 1500 }, { name: "Feb", uv: 1800 }, { name: "Mar", uv: 2200 },
+    { name: "Apr", uv: 2800 }, { name: "May", uv: 3500 }, { name: "Jun", uv: 4500 },
+    { name: "Jul", uv: 5000 }, { name: "Aug", uv: 3500 }, { name: "Sep", uv: 2500 },
+    { name: "Oct", uv: 1800 }, { name: "Nov", uv: 1500 }, { name: "Dec", uv: 1500 }
+  ];
 
   return (
     <Container fluid className="p-4" style={{ background: "#f8fcf8" }}>
