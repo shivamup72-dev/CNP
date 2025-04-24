@@ -193,8 +193,18 @@ const PostTable = ({
                                                 maxWidth: "calc(100% - 40px)"
                                             }}>
                                                 {post.author ? 
-                                                    post.author.split(' ')
-                                                        .map(name => name.charAt(0).toUpperCase() + name.slice(1).toLowerCase())
+                                                    post.author.trim().split(/\s+/)
+                                                        .map(name => {
+                                                            if (!name) return '';
+                                                            // Handle hyphenated names (e.g., Smith-Jones)
+                                                            if (name.includes('-')) {
+                                                                return name.split('-')
+                                                                    .map(part => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+                                                                    .join('-');
+                                                            }
+                                                            return name.charAt(0).toUpperCase() + name.slice(1).toLowerCase();
+                                                        })
+                                                        .filter(Boolean)
                                                         .join(' ') 
                                                     : "Unknown"}
                                             </div>

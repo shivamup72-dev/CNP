@@ -87,8 +87,8 @@ const UsersTable = ({
   
   // Render role badge with proper handling for empty roles
   const renderRoleBadge = (user) => {
-    // If user has no role, render as regular user
-    if (!user.role) {
+    // If user has no role or role is "user", render as regular user
+    if (!user.role || user.role === "user") {
       return (
         <div className="text-muted d-flex align-items-center gap-1" style={{ fontSize: "11.2px" }}>
           <FiUser /> Regular User
@@ -280,7 +280,7 @@ const UsersTable = ({
                   <td style={tableCellStyle}>{user.lastActive}</td>
                   <td style={lastCellStyle}>
                     <div className="d-flex gap-2 justify-content-center">
-                      {user.role ? (
+                      {user.role && user.role !== "user" ? (
                         <>
                           {/* Approve Button */}
                           <Button

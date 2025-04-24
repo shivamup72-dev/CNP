@@ -63,6 +63,37 @@ const AccessControl = () => {
   const [usersLoadError, setUsersLoadError] = useState(null);
   const [adminsLoadError, setAdminsLoadError] = useState(null);
 
+  // Helper to normalize roles from API to match the expected frontend role names
+  const normalizeRoleFromAPI = (apiRole) => {
+    if (!apiRole) return null;
+    
+    // Convert to lowercase for consistent comparison
+    const lowerRole = apiRole.toLowerCase();
+    
+    // Map potential variations to our expected role names
+    if (lowerRole === "god_admin" || lowerRole === "godadmin" || lowerRole === "god admin") {
+      return "god_admin";
+    }
+    if (lowerRole === "state_manager" || lowerRole === "statemanager" || lowerRole === "state manager") {
+      return "state_manager";
+    }
+    if (lowerRole === "ground_zero" || lowerRole === "groundzero" || lowerRole === "ground zero") {
+      return "ground_zero";
+    }
+    if (lowerRole === "ground_zero_reporter" || lowerRole === "groundzeroreporter" || lowerRole === "ground zero reporter") {
+      return "ground_zero_reporter";
+    }
+    if (lowerRole === "city_manager" || lowerRole === "citymanager" || lowerRole === "city manager") {
+      return "city_manager";
+    }
+    if (lowerRole === "national_manager" || lowerRole === "nationalmanager" || lowerRole === "national manager") {
+      return "national_manager";
+    }
+    
+    // Return original if no mapping found
+    return apiRole;
+  };
+
   // Function to fetch users from API
   const fetchUsers = async (page = 1) => {
     setUsersLoading(true);
@@ -77,6 +108,31 @@ const AccessControl = () => {
       
       const data = await API.get(apiUrl);
       
+      // ADMIN LOGGING: Log all admin users to console
+      console.log("====================");
+      console.log("ALL ADMIN USERS DATA");
+      console.log("====================");
+      
+      // Filter to only get users with admin_role
+      const allAdmins = data.results.filter(user => user.admin_role);
+      
+      // Log the total count
+      console.log(`Found ${allAdmins.length} admins out of ${data.results.length} total users`);
+      
+      // Log each admin with their role
+      allAdmins.forEach((admin, index) => {
+        console.log(`Admin #${index + 1}:`);
+        console.log(`- ID: ${admin.id}`);
+        console.log(`- Name: ${admin.user.first_name} ${admin.user.last_name}`);
+        console.log(`- Email: ${admin.user.email}`);
+        console.log(`- Role: ${admin.admin_role} (${typeof admin.admin_role})`);
+        console.log(`- Role normalized: ${normalizeRoleFromAPI(admin.admin_role)}`);
+        console.log("---");
+      });
+      
+      console.log("Raw admin data:", allAdmins);
+      console.log("====================");
+      
       // Format the users data
       const formattedUsers = data.results.map(userObj => {
         // Capitalize the first letter of first name and last name
@@ -88,11 +144,24 @@ const AccessControl = () => {
           userObj.user.last_name.charAt(0).toUpperCase() + userObj.user.last_name.slice(1).toLowerCase() : 
           "";
         
+        // Normalize the role from API
+        const normalizedRole = normalizeRoleFromAPI(userObj.admin_role);
+        
+        // Log specific users with state_manager or god_admin roles (case insensitive)
+        if (normalizedRole === "state_manager" || normalizedRole === "god_admin") {
+          console.log(`[DEBUG] Found user with role ${userObj.admin_role} (normalized: ${normalizedRole}):`, {
+            id: userObj.id,
+            name: `${firstName} ${lastName}`,
+            email: userObj.user.email
+          });
+        }
+        
         return {
           id: userObj.id,
           name: `${firstName} ${lastName}`,
           email: userObj.user.email,
           username: userObj.user.username,
+          role: normalizedRole,
           location: userObj.district ? userObj.district.name : (userObj.state ? userObj.state.name : "Unknown"),
           status: "active",
           lastActive: new Date().toISOString().split('T')[0],
@@ -219,6 +288,7 @@ const AccessControl = () => {
   // Role display mapping
   const roleDisplayMap = {
     "ground_zero": "Ground Zero Reporter",
+    "ground_zero_reporter": "Ground Zero Reporter",
     "city_manager": "City Manager",
     "state_manager": "State Manager",
     "national_manager": "National Manager",
@@ -228,6 +298,7 @@ const AccessControl = () => {
   // Role description mapping
   const roleDescriptions = {
     "ground_zero": "Can view posts from their Zila only. Can view flagged & deleted posts with reasons only of their zila. Cannot edit or delete posts.",
+    "ground_zero_reporter": "Can view posts from their Zila only. Can view flagged & deleted posts with reasons only of their zila. Cannot edit or delete posts.",
     "city_manager": "Can view both Ground Zero & City posts. Can view flagged & deleted posts with reasons only of their zila and city. Cannot edit or delete posts.",
     "state_manager": "Can view Ground Zero, City & State posts. Can view flagged & deleted posts with reasons only of their zila, city and state, not of others city or state. Cannot edit or delete posts.",
     "national_manager": "Can view Ground Zero, City, State & National posts. Can view flagged & deleted posts with reasons of all city, state, zila everything. Cannot edit or delete posts.",
@@ -236,13 +307,59 @@ const AccessControl = () => {
 
   // Filter users based on selected role and search term
   const filteredUsers = users.filter(user => {
-    // Simple filter just based on search term initially
+    // Log for debugging
+    console.log(`[DEBUG] Filtering user:`, user);
+    console.log(`[DEBUG] Active role: ${activeRole}, User role: ${user.role}`);
+    
+    // Get normalized roles for comparison
+    const normalizedUserRole = normalizeRoleFromAPI(user.role);
+    const normalizedActiveRole = normalizeRoleFromAPI(activeRole);
+    
+    // Special debug for god_admin
+    if (activeRole === "god_admin") {
+      console.log(`[GOD ADMIN DEBUG] Checking user ${user.name}, has role: ${user.role}`);
+      console.log(`[GOD ADMIN DEBUG] Normalized: activeRole=${normalizedActiveRole}, userRole=${normalizedUserRole}`);
+      console.log(`[GOD ADMIN DEBUG] Direct compare: ${user.role === "god_admin"}`);
+      console.log(`[GOD ADMIN DEBUG] Normalized compare: ${normalizedUserRole === "god_admin"}`);
+    }
+    
+    // Filter by role
+    let matchesRole = true;
+    if (activeRole === "admin") {
+      // Show only users with admin roles (excluding "user" role)
+      matchesRole = !!user.role && normalizedUserRole !== "user";
+    } else if (activeRole === null) {
+      // Show only regular users without roles or with "user" role
+      matchesRole = !user.role || normalizedUserRole === "user";
+    } else if (activeRole !== "all") {
+      // Match a specific role
+      if (normalizedActiveRole === "ground_zero_reporter" && 
+          (normalizedUserRole === "ground_zero" || normalizedUserRole === "ground_zero_reporter")) {
+        matchesRole = true;
+      } else if (normalizedActiveRole === "ground_zero" && 
+                (normalizedUserRole === "ground_zero" || normalizedUserRole === "ground_zero_reporter")) {
+        matchesRole = true;
+      } else if (normalizedActiveRole === "state_manager" && normalizedUserRole === "state_manager") {
+        matchesRole = true;
+        console.log(`[DEBUG] Found state_manager: ${user.name}`);
+      } else if (normalizedActiveRole === "god_admin" && normalizedUserRole === "god_admin") {
+        matchesRole = true;
+        console.log(`[DEBUG] Found god_admin: ${user.name}`);
+      } else {
+        matchesRole = normalizedUserRole === normalizedActiveRole;
+      }
+    }
+    
+    // Filter by search term
     const matchesSearch =
       user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (user.location && user.location.toLowerCase().includes(searchTerm.toLowerCase()));
 
-    return matchesSearch;
+    const result = matchesRole && matchesSearch;
+    console.log(`[DEBUG] User ${user.name} matches: ${result} (role: ${matchesRole}, search: ${matchesSearch})`);
+    
+    return result;
   });
   
   console.log("[DEBUG] Filtered users count:", filteredUsers.length, "out of", users.length);
@@ -252,7 +369,9 @@ const AccessControl = () => {
     if (!role) return "light"; // Light gray for regular users without roles
     
     switch (role) {
-      case "ground_zero": return "secondary";
+      case "ground_zero": 
+      case "ground_zero_reporter": 
+        return "secondary";
       case "city_manager": return "info";
       case "state_manager": return "primary";
       case "national_manager": return "warning";
@@ -269,7 +388,9 @@ const AccessControl = () => {
     if (!role) return <span style={iconStyle}><FiUser /></span>; // Default user icon for regular users
     
     switch (role) {
-      case "ground_zero": return <span style={iconStyle}><FiMapPin /></span>;
+      case "ground_zero":
+      case "ground_zero_reporter": 
+        return <span style={iconStyle}><FiMapPin /></span>;
       case "city_manager": return <span style={iconStyle}><FiLayers /></span>;
       case "state_manager": return <span style={iconStyle}><FiGlobe /></span>;
       case "national_manager": return <span style={iconStyle}><FiShield /></span>;
@@ -367,6 +488,8 @@ const AccessControl = () => {
       // Use the standard endpoint
       await fetchUsers(1);
       
+      // Set filter to show only regular users (without admin roles or with role "user")
+      setActiveRole(null); // Use null to indicate regular users only
       setShowUsersList(true);
       setActiveTab("users");
     } catch (error) {
@@ -387,6 +510,8 @@ const AccessControl = () => {
       // Use the standard endpoint
       await fetchUsers(1);
       
+      // Show only users with admin roles
+      setActiveRole("admin"); // Special flag to show admin users
       setShowAdminsList(true);
       setActiveTab("users");
     } catch (error) {
@@ -409,14 +534,104 @@ const AccessControl = () => {
   
   // Get only regular users (without roles)
   const getRegularUsers = () => {
-    // Filter for users without roles
-    return users.filter(user => !user.role);
+    // Filter for users without roles or with "user" role
+    return users.filter(user => !user.role || user.role === "user");
   };
   
   // Get only admin users and users with roles
   const getAdminUsers = () => {
-    // Filter for users with roles (any role, not just god_admin)
-    return users.filter(user => user.role);
+    // Filter for users with roles (any role except "user")
+    return users.filter(user => user.role && user.role !== "user");
+  };
+
+  // Function to handle role filter button clicks
+  const handleRoleFilter = async (role) => {
+    console.log(`[DEBUG] Setting active role to: ${role}`);
+    console.log(`[DEBUG] Before setting - Active role: ${activeRole}, showUsersList: ${showUsersList}, showAdminsList: ${showAdminsList}`);
+    
+    // Reset other filters
+    setShowUsersList(true);
+    setShowAdminsList(false);
+    setSearchTerm("");
+    
+    // Set the active role
+    setActiveRole(role);
+    
+    // For specific important roles, let's fetch all users to make sure we have them in our state
+    if (role === "god_admin" || role === "state_manager") {
+      console.log(`[FETCH ALL] Fetching all users for ${role} filter`);
+      setUsersLoading(true);
+      
+      try {
+        // Fetch all users (with a large limit)
+        const apiUrl = `/api/v1/web/users/?limit=100&offset=0`;
+        console.log(`[FETCH ALL] Fetching users from: ${apiUrl}`);
+        
+        const data = await API.get(apiUrl);
+        console.log(`[FETCH ALL] Retrieved ${data.results.length} users`);
+        
+        // Check for the specific role
+        const matchingUsers = data.results.filter(u => 
+          normalizeRoleFromAPI(u.admin_role) === role
+        );
+        
+        console.log(`[FETCH ALL] Found ${matchingUsers.length} users with role "${role}":`, 
+          matchingUsers.map(u => ({
+            id: u.id,
+            name: `${u.user.first_name} ${u.user.last_name}`,
+            role: u.admin_role
+          }))
+        );
+        
+        // Format the users data
+        const formattedUsers = data.results.map(userObj => {
+          // Capitalize the first letter of first name and last name
+          const firstName = userObj.user.first_name ? 
+            userObj.user.first_name.charAt(0).toUpperCase() + userObj.user.first_name.slice(1).toLowerCase() : 
+            "";
+          
+          const lastName = userObj.user.last_name ? 
+            userObj.user.last_name.charAt(0).toUpperCase() + userObj.user.last_name.slice(1).toLowerCase() : 
+            "";
+          
+          return {
+            id: userObj.id,
+            name: `${firstName} ${lastName}`,
+            email: userObj.user.email,
+            username: userObj.user.username,
+            role: normalizeRoleFromAPI(userObj.admin_role),
+            location: userObj.district ? userObj.district.name : (userObj.state ? userObj.state.name : "Unknown"),
+            status: "active",
+            lastActive: new Date().toISOString().split('T')[0],
+            phone: userObj.phone_number,
+            picture: userObj.picture,
+            gender: userObj.gender,
+            dob: userObj.date_of_birth
+          };
+        });
+        
+        // Update the users state with all users
+        setUsers(formattedUsers);
+        setUsersTotalCount(data.count);
+        setUsersTotalPages(Math.ceil(data.count / 10));
+        
+      } catch (error) {
+        console.error(`[FETCH ALL] Error fetching all users:`, error);
+      } finally {
+        setUsersLoading(false);
+      }
+    }
+    
+    // Special console logging for admins
+    console.log("========================");
+    console.log(`FILTERING BY ROLE: ${role}`);
+    console.log("========================");
+    
+    // Log the current state after setting
+    setTimeout(() => {
+      console.log(`[DEBUG] After setting - Active role: ${activeRole}`);
+      console.log(`[DEBUG] showUsersList: ${showUsersList}, showAdminsList: ${showAdminsList}`);
+    }, 0);
   };
 
   return (
@@ -577,21 +792,17 @@ const AccessControl = () => {
                   variant={activeRole === "all" ? "dark" : "outline-dark"}
                   size="sm"
                   onClick={() => {
-                    setActiveRole("all");
-                    setShowUsersList(false);
-                    setShowAdminsList(false);
+                    handleRoleFilter("all");
                   }}
                   className="d-flex align-items-center"
                 >
                   <FiUsers className="me-1" /> All (Users + Admins)
                 </Button>
                 <Button
-                  variant={activeRole === "ground_zero" ? "dark" : "outline-dark"}
+                  variant={activeRole === "ground_zero" || activeRole === "ground_zero_reporter" ? "dark" : "outline-dark"}
                   size="sm"
                   onClick={() => {
-                    setActiveRole("ground_zero");
-                    setShowUsersList(false);
-                    setShowAdminsList(false);
+                    handleRoleFilter("ground_zero_reporter");
                   }}
                   className="d-flex align-items-center"
                 >
@@ -601,9 +812,7 @@ const AccessControl = () => {
                   variant={activeRole === "city_manager" ? "dark" : "outline-dark"}
                   size="sm"
                   onClick={() => {
-                    setActiveRole("city_manager");
-                    setShowUsersList(false);
-                    setShowAdminsList(false);
+                    handleRoleFilter("city_manager");
                   }}
                   className="d-flex align-items-center"
                 >
@@ -613,9 +822,7 @@ const AccessControl = () => {
                   variant={activeRole === "state_manager" ? "dark" : "outline-dark"}
                   size="sm"
                   onClick={() => {
-                    setActiveRole("state_manager");
-                    setShowUsersList(false);
-                    setShowAdminsList(false);
+                    handleRoleFilter("state_manager");
                   }}
                   className="d-flex align-items-center"
                 >
@@ -625,9 +832,7 @@ const AccessControl = () => {
                   variant={activeRole === "national_manager" ? "dark" : "outline-dark"}
                   size="sm"
                   onClick={() => {
-                    setActiveRole("national_manager");
-                    setShowUsersList(false);
-                    setShowAdminsList(false);
+                    handleRoleFilter("national_manager");
                   }}
                   className="d-flex align-items-center"
                   style={{
@@ -644,9 +849,7 @@ const AccessControl = () => {
                   variant={activeRole === "god_admin" ? "dark" : "outline-dark"}
                   size="sm"
                   onClick={() => {
-                    setActiveRole("god_admin");
-                    setShowUsersList(false);
-                    setShowAdminsList(false);
+                    handleRoleFilter("god_admin");
                   }}
                   className="d-flex align-items-center"
                 >
@@ -690,7 +893,7 @@ const AccessControl = () => {
                     }}
                     disabled={isLoadingAdmins}
                   >
-                    <FiUsers className="me-1" /> All Users
+                    <FiUsers className="me-1" /> Regular Users
                   </Button>
                 )}
                 
@@ -753,7 +956,10 @@ const AccessControl = () => {
                   getRoleBadgeColor={getRoleBadgeColor}
                   getRoleIcon={getRoleIcon}
                   roleDisplayMap={roleDisplayMap}
-                  title="Users List"
+                  title={activeRole === null ? "Regular Users" : 
+                         activeRole === "admin" ? "Admin Users" :
+                         activeRole === "all" ? "All Users" : 
+                         `${roleDisplayMap[activeRole] || activeRole} Users`}
                 />
                 
                 {/* Pagination */}
