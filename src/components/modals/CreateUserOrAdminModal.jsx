@@ -23,6 +23,8 @@ const CreateUserOrAdminModal = ({
     dob: '',
     picture: null,
     picturePreview: '',
+    state_id: '',
+    city_id: '',
   });
 
   const [formErrors, setFormErrors] = useState({});
@@ -31,31 +33,72 @@ const CreateUserOrAdminModal = ({
   const [apiError, setApiError] = useState(null);
   const [successMessage, setSuccessMessage] = useState(null);
   const [formSubmitted, setFormSubmitted] = useState(false);
+  
+  const [states, setStates] = useState([]);
+  const [cities, setCities] = useState([]);
+  const [filteredCities, setFilteredCities] = useState([]);
+  const [isLoadingStates, setIsLoadingStates] = useState(false);
+  const [isLoadingCities, setIsLoadingCities] = useState(false);
 
-  // Reset form states when modal opens
   useEffect(() => {
     if (show) {
       setFormErrors({});
       setApiError(null);
       setSuccessMessage(null);
       setFormSubmitted(false);
+      fetchStates();
+      fetchCities();
     }
   }, [show]);
+
+  useEffect(() => {
+    if (formData.state_id) {
+      const selectedState = states.find(state => state.id.toString() === formData.state_id.toString());
+      const stateName = selectedState ? selectedState.name : '';
+      
+      const filtered = cities.filter(city => city.state === stateName);
+      setFilteredCities(filtered);
+    } else {
+      setFilteredCities(cities);
+    }
+  }, [formData.state_id, cities, states]);
+
+  const fetchStates = async () => {
+    try {
+      setIsLoadingStates(true);
+      const response = await API.get('/api/v1/master/state');
+      console.log('States API response:', response);
+      setStates(response.results || []);
+    } catch (error) {
+      console.error('Error fetching states:', error);
+    } finally {
+      setIsLoadingStates(false);
+    }
+  };
+
+  const fetchCities = async () => {
+    try {
+      setIsLoadingCities(true);
+      const response = await API.get('/api/v1/master/district');
+      console.log('Cities API response:', response);
+      setCities(response.results || []);
+    } catch (error) {
+      console.error('Error fetching cities:', error);
+    } finally {
+      setIsLoadingCities(false);
+    }
+  };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     
     let newValue = value;
     
-    // Special handling for phone number formatting
     if (name === 'phone_number') {
-      // Remove any non-digit characters
       const digitsOnly = value.replace(/\D/g, '');
       
-      // Limit to 10 digits
       const truncated = digitsOnly.slice(0, 10);
       
-      // Format as XXX-XXX-XXXX
       if (truncated.length > 6) {
         newValue = `${truncated.slice(0, 3)}-${truncated.slice(3, 6)}-${truncated.slice(6)}`;
       } else if (truncated.length > 3) {
@@ -65,12 +108,33 @@ const CreateUserOrAdminModal = ({
       }
     }
     
-    setFormData({
-      ...formData,
-      [name]: newValue
-    });
+    if (name === 'state_id') {
+      const selectedState = states.find(state => state.id.toString() === value.toString());
+      
+      setFormData(prevData => ({
+        ...prevData,
+        state_id: value ? parseInt(value, 10) : '',
+        state: selectedState ? selectedState.name : '',
+        city: '',
+        city_id: ''
+      }));
+    } 
+    else if (name === 'city_id') {
+      const selectedCity = cities.find(city => city.id.toString() === value.toString());
+      
+      setFormData(prevData => ({
+        ...prevData,
+        city_id: value ? parseInt(value, 10) : '',
+        city: selectedCity ? selectedCity.name : ''
+      }));
+    } 
+    else {
+      setFormData({
+        ...formData,
+        [name]: newValue
+      });
+    }
     
-    // Clear any errors for this field
     if (formErrors[name]) {
       setFormErrors({
         ...formErrors,
@@ -78,7 +142,6 @@ const CreateUserOrAdminModal = ({
       });
     }
     
-    // Clear API error when user changes input
     if (apiError && (apiError.username || apiError.email)) {
       setApiError(null);
     }
@@ -116,11 +179,9 @@ const CreateUserOrAdminModal = ({
     if (!formData.first_name.trim()) errors.first_name = "First name is required";
     if (!formData.last_name.trim()) errors.last_name = "Last name is required";
     
-    // Phone number validation
     if (!formData.phone_number.trim()) {
       errors.phone_number = "Phone number is required";
     } else {
-      // Remove any non-digit characters for validation
       const digitsOnly = formData.phone_number.replace(/\D/g, '');
       if (digitsOnly.length !== 10) {
         errors.phone_number = "Phone number must be exactly 10 digits";
@@ -128,8 +189,8 @@ const CreateUserOrAdminModal = ({
     }
     
     if (!formData.address.trim()) errors.address = "Address is required";
-    if (!formData.city.trim()) errors.city = "City is required";
-    if (!formData.state.trim()) errors.state = "State is required";
+    if (!formData.state_id) errors.state_id = "State is required";
+    if (!formData.city_id) errors.city_id = "City is required";
     if (!formData.zip_code.trim()) errors.zip_code = "ZIP code is required";
     if (!formData.gender) errors.gender = "Gender is required";
     if (!formData.dob) errors.dob = "Date of birth is required";
@@ -146,32 +207,92 @@ const CreateUserOrAdminModal = ({
     setSuccessMessage(null);
     
     try {
-      // Create FormData object
+      // Get the field names from API response errors if we get a validation error
+      // Create a data object with all possible field variations
+      const userData = {
+        username: formData.username,
+        email: formData.email,
+        password: formData.password,
+        admin_role: formData.admin_role,
+        first_name: formData.first_name,
+        last_name: formData.last_name,
+        phone_number: formData.phone_number.replace(/\D/g, ''),
+        address: formData.address,
+        
+        // Try multiple variations of state field
+        state: parseInt(formData.state_id, 10),
+        state_id: parseInt(formData.state_id, 10),
+        
+        // Try multiple variations of city/district field
+        city: parseInt(formData.city_id, 10), 
+        city_id: parseInt(formData.city_id, 10),
+        district: parseInt(formData.city_id, 10),
+        district_id: parseInt(formData.city_id, 10),
+        
+        zip_code: formData.zip_code,
+        gender: formData.gender,
+        dob: formData.dob,
+      };
+      
+      // Create FormData object to send
       const formDataObj = new FormData();
       
-      // Append all form fields to FormData
-      Object.entries(formData).forEach(([key, value]) => {
-        if (key === 'picture') {
-          // Only append the file if it exists
-          if (value) {
-            formDataObj.append(key, value);
-          }
-        } else if (value !== null && value !== undefined) {
+      // Append all fields to FormData
+      Object.entries(userData).forEach(([key, value]) => {
+        if (value !== null && value !== undefined && value !== '') {
           formDataObj.append(key, value);
+          console.log(`Appended to FormData: ${key} = ${value}`);
         }
       });
       
-      // Use the new API endpoint
-      const data = await API.post('/api/v1/web/create-user/', formDataObj, {
-        // Don't include Content-Type for FormData as it needs to set its own boundary
-        headers: {}
+      // Add picture separately if it exists
+      if (formData.picture) {
+        formDataObj.append('picture', formData.picture);
+        console.log('Appended picture to FormData');
+      }
+      
+      console.log('Sending FormData to API...');
+      
+      // Try using a direct fetch approach for more control over the request
+      const apiUrl = `${API.BASE_URL}/api/v1/web/create-user/`;
+      console.log(`API URL: ${apiUrl}`);
+      
+      // Add authorization headers
+      const headers = API.getHeaders();
+      console.log('Using headers:', headers);
+      
+      // Make the API request
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: headers,
+        body: formDataObj
       });
+      
+      console.log('API Response Status:', response.status);
+      
+      // Parse the response
+      const data = await response.json();
+      console.log('API Response Data:', data);
+      
+      if (!response.ok) {
+        // If the response is not ok, throw an error with the response data
+        throw { 
+          response: {
+            status: response.status,
+            data: data
+          } 
+        };
+      }
       
       // Success
       console.log('Success response:', data);
-      const fullName = `${formData.first_name} ${formData.last_name}`;
-      // Create shorter success message
-      const successMsg = `${fullName} created successfully`;
+      
+      // Determine if this is an admin or a user based on the role
+      const isAdmin = formData.admin_role && formData.admin_role !== 'user';
+      const userType = isAdmin ? 'Admin' : 'User';
+      
+      // Create success message without person's name
+      const successMsg = `${userType} created successfully`;
       setSuccessMessage(successMsg);
       setFormSubmitted(true);
       
@@ -182,15 +303,22 @@ const CreateUserOrAdminModal = ({
       setTimeout(() => {
         onHide();
       }, 1500);
+      
     } catch (error) {
       console.error('Error creating user:', error);
       
       // Add detailed error response logging
       console.log('Full error object:', error);
-      console.log('Error response:', error.response);
       if (error.response) {
         console.log('Error status:', error.response.status);
         console.log('Error data:', error.response.data);
+        
+        // Log each field error for easier debugging
+        if (error.response.data) {
+          Object.entries(error.response.data).forEach(([field, errors]) => {
+            console.log(`Field error - ${field}:`, errors);
+          });
+        }
       }
       
       // Handle API error response
@@ -210,14 +338,12 @@ const CreateUserOrAdminModal = ({
     setTimeout(() => setIsButtonActive(false), 300);
   };
 
-  // Helper to create required field label
   const requiredLabel = (text) => (
     <Form.Label>
       {text} <span className="text-danger">*</span>
     </Form.Label>
   );
 
-  // Admin role descriptions
   const getRoleDescription = (role) => {
     const descriptions = {
       'god_admin': 'Full system access',
@@ -248,7 +374,6 @@ const CreateUserOrAdminModal = ({
       </Modal.Header>
 
       <Modal.Body style={{ padding: '0.8rem', maxHeight: '70vh', overflowY: 'auto' }}>
-        {/* Success message */}
         {successMessage && (
           <Alert variant="success" className="mb-3 d-flex align-items-center py-2" style={{
             backgroundColor: 'rgba(25, 135, 84, 0.08)',
@@ -265,14 +390,12 @@ const CreateUserOrAdminModal = ({
           </Alert>
         )}
         
-        {/* General API error */}
         {apiError && apiError.general && (
           <Alert variant="danger" className="mb-3">
             {apiError.general}
           </Alert>
         )}
         
-        {/* Add success styling */}
         <style>
           {`
             .form-success {
@@ -467,33 +590,57 @@ const CreateUserOrAdminModal = ({
         <Row>
           <Col md={4}>
             <Form.Group className="mb-3">
-              {requiredLabel("City")}
-              <Form.Control
-                type="text"
-                name="city"
-                value={formData.city}
+              {requiredLabel("State")}
+              <Form.Select
+                name="state_id"
+                value={formData.state_id}
                 onChange={handleInputChange}
-                isInvalid={!!formErrors.city}
+                isInvalid={!!formErrors.state_id || (apiError && !!apiError.state)}
                 className={formSubmitted ? "form-success" : ""}
-              />
+                disabled={isLoadingStates}
+              >
+                <option value="">Select State</option>
+                {states.map(state => (
+                  <option key={state.id} value={state.id}>
+                    {state.name}
+                  </option>
+                ))}
+              </Form.Select>
+              {isLoadingStates && (
+                <div className="mt-1">
+                  <Spinner animation="border" size="sm" /> Loading states...
+                </div>
+              )}
               <Form.Control.Feedback type="invalid">
-                {formErrors.city}
+                {(apiError && apiError.state) ? apiError.state[0] : formErrors.state_id}
               </Form.Control.Feedback>
             </Form.Group>
           </Col>
           <Col md={4}>
             <Form.Group className="mb-3">
-              {requiredLabel("State")}
-              <Form.Control
-                type="text"
-                name="state"
-                value={formData.state}
+              {requiredLabel("City")}
+              <Form.Select
+                name="city_id"
+                value={formData.city_id}
                 onChange={handleInputChange}
-                isInvalid={!!formErrors.state}
+                isInvalid={!!formErrors.city_id || (apiError && !!apiError.city)}
                 className={formSubmitted ? "form-success" : ""}
-              />
+                disabled={isLoadingCities || !formData.state_id}
+              >
+                <option value="">Select City</option>
+                {filteredCities.map(city => (
+                  <option key={city.id} value={city.id}>
+                    {city.name}
+                  </option>
+                ))}
+              </Form.Select>
+              {isLoadingCities && (
+                <div className="mt-1">
+                  <Spinner animation="border" size="sm" /> Loading cities...
+                </div>
+              )}
               <Form.Control.Feedback type="invalid">
-                {formErrors.state}
+                {(apiError && apiError.city) ? apiError.city[0] : formErrors.city_id}
               </Form.Control.Feedback>
             </Form.Group>
           </Col>
@@ -555,10 +702,12 @@ const CreateUserOrAdminModal = ({
               src={formData.picturePreview}
               alt="Profile Preview"
               style={{
-                maxWidth: '150px',
-                maxHeight: '150px',
+                width: '150px',
+                height: '150px',
                 borderRadius: '50%',
-                objectFit: 'cover'
+                objectFit: 'cover',
+                border: '1px solid #dee2e6',
+                boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
               }}
             />
           </div>

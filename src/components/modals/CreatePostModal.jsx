@@ -107,7 +107,7 @@ const CreatePostModal = ({
         id: response.id.toString(),
         title: "No title",
         content: response.description,
-        author: "Anonymous",
+        author: response.created_by?.full_name || "Anonymous",
         category: "Other",
         image: response.media_files && response.media_files.length > 0 
           ? API.getImageUrl(response.media_files[0].media) 
@@ -115,7 +115,10 @@ const CreatePostModal = ({
         allMedia: response.media_files || [],
         date: new Date().toISOString(),
         post_status: response.status === "publish" ? "approved" : "pending",
-        isReposted: false
+        isReposted: false,
+        // Keep track of author details
+        authorImage: response.created_by?.picture ? API.getImageUrl(response.created_by.picture) : null,
+        created_by: response.created_by
       };
       
       // Update the posts state

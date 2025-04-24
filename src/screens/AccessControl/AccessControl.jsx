@@ -76,24 +76,32 @@ const AccessControl = () => {
       console.log(`[ACCESS CONTROL] Fetching users from: ${apiUrl}`);
       
       const data = await API.get(apiUrl);
-      console.log(`[ACCESS CONTROL] Users response:`, data);
-
+      
       // Format the users data
-      const formattedUsers = data.results.map(userObj => ({
-        id: userObj.id,
-        name: `${userObj.user.first_name} ${userObj.user.last_name}`,
-        email: userObj.user.email,
-        username: userObj.user.username,
-        role: determineUserRole(userObj),
-        location: userObj.district ? userObj.district.name : (userObj.state ? userObj.state.name : "Unknown"),
-        status: "active",
-        lastActive: new Date().toISOString().split('T')[0],
-        phone: userObj.phone_number,
-        picture: userObj.picture,
-        gender: userObj.gender,
-        dob: userObj.date_of_birth,
-        accessLevel: calculateAccessLevel(userObj)
-      }));
+      const formattedUsers = data.results.map(userObj => {
+        // Capitalize the first letter of first name and last name
+        const firstName = userObj.user.first_name ? 
+          userObj.user.first_name.charAt(0).toUpperCase() + userObj.user.first_name.slice(1).toLowerCase() : 
+          "";
+        
+        const lastName = userObj.user.last_name ? 
+          userObj.user.last_name.charAt(0).toUpperCase() + userObj.user.last_name.slice(1).toLowerCase() : 
+          "";
+        
+        return {
+          id: userObj.id,
+          name: `${firstName} ${lastName}`,
+          email: userObj.user.email,
+          username: userObj.user.username,
+          location: userObj.district ? userObj.district.name : (userObj.state ? userObj.state.name : "Unknown"),
+          status: "active",
+          lastActive: new Date().toISOString().split('T')[0],
+          phone: userObj.phone_number,
+          picture: userObj.picture,
+          gender: userObj.gender,
+          dob: userObj.date_of_birth
+        };
+      });
 
       setUsers(formattedUsers);
       setUsersTotalCount(data.count);
@@ -108,26 +116,15 @@ const AccessControl = () => {
   };
 
   // Helper function to determine user role from API data
-  const determineUserRole = (userObj) => {
-    // This is a placeholder logic - adjust based on your actual API data structure
-    // For now, we'll return a sample role
-    // In a real scenario, you would extract role information from the API response
-    const roles = ["ground_zero", "city_manager", "state_manager", "national_manager", "god_admin"];
-    const roleIndex = userObj.id % 5; // Simple way to distribute roles for demonstration
-    return roles[roleIndex];
+  const determineUserRole = () => {
+    // Return null to represent a regular user
+    return null;
   };
 
   // Helper function to calculate access level based on role
-  const calculateAccessLevel = (userObj) => {
-    const role = determineUserRole(userObj);
-    const accessLevels = {
-      "god_admin": 5,
-      "national_manager": 4,
-      "state_manager": 3,
-      "city_manager": 2,
-      "ground_zero": 1
-    };
-    return accessLevels[role] || 0;
+  const calculateAccessLevel = () => {
+    // Return 0 as default access level
+    return 0;
   };
 
   // Load users when component mounts
@@ -239,14 +236,16 @@ const AccessControl = () => {
 
   // Filter users based on selected role and search term
   const filteredUsers = users.filter(user => {
-    const matchesRole = activeRole === "all" || user.role === activeRole;
+    // Simple filter just based on search term initially
     const matchesSearch =
       user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (user.location && user.location.toLowerCase().includes(searchTerm.toLowerCase()));
 
-    return matchesRole && matchesSearch;
+    return matchesSearch;
   });
+  
+  console.log("[DEBUG] Filtered users count:", filteredUsers.length, "out of", users.length);
 
   // Role badge color mapping
   const getRoleBadgeColor = (role) => {
@@ -343,8 +342,8 @@ const AccessControl = () => {
     // Close the modal
     setShowCreateUserOrAdminModal(false);
 
-    // Set success message
-    setUserCreationSuccess(successMessage || `User ${userData.first_name} ${userData.last_name} created successfully!`);
+    // Set success message - use the message provided by the modal
+    setUserCreationSuccess(successMessage);
     setShowSuccessToast(true);
     
     // Hide success message after 5 seconds
@@ -365,6 +364,7 @@ const AccessControl = () => {
       setUsersLoadError(null);
       setShowAdminsList(false); // Hide admin list when showing all users
       
+      // Use the standard endpoint
       await fetchUsers(1);
       
       setShowUsersList(true);
@@ -384,6 +384,7 @@ const AccessControl = () => {
       setAdminsLoadError(null);
       setShowUsersList(false); // Hide users list when showing admins
       
+      // Use the standard endpoint
       await fetchUsers(1);
       
       setShowAdminsList(true);
@@ -446,12 +447,13 @@ const AccessControl = () => {
             overflow: 'hidden'
           }}
         >
-          <div className="d-flex align-items-center py-2 px-3" 
+          <div className="d-flex align-items-center" 
             style={{ 
               borderWidth: '4px', 
               borderLeftColor: '#13d378',
               backgroundColor: '#0a8d4c',
-              color: 'white'
+              color: 'white',
+              padding: '12px 14px'
             }}
           >
             <span className="me-2" style={{ color: 'white' }}>
@@ -461,7 +463,7 @@ const AccessControl = () => {
             <button 
               type="button" 
               className="btn-close btn-close-white ms-auto" 
-              style={{ fontSize: '0.6rem', padding: '4px' }}
+              style={{ fontSize: '0.6rem', padding: '4px', marginLeft: '8px' }}
               onClick={() => setShowSuccessToast(false)}
               aria-label="Close"
             ></button>
@@ -680,7 +682,12 @@ const AccessControl = () => {
                     variant={showUsersList ? "dark" : "outline-dark"}
                     className="d-flex align-items-center flex-grow-1 flex-md-grow-0"
                     size="sm"
-                    onClick={handleAllUsersClick}
+                    onClick={() => {
+                      // Reset all filters
+                      setSearchTerm('');
+                      // Then fetch all users
+                      handleAllUsersClick();
+                    }}
                     disabled={isLoadingAdmins}
                   >
                     <FiUsers className="me-1" /> All Users
@@ -746,7 +753,7 @@ const AccessControl = () => {
                   getRoleBadgeColor={getRoleBadgeColor}
                   getRoleIcon={getRoleIcon}
                   roleDisplayMap={roleDisplayMap}
-                  title={activeRole === "all" ? "All Users" : `${roleDisplayMap[activeRole] || activeRole} Users`}
+                  title="Users List"
                 />
                 
                 {/* Pagination */}

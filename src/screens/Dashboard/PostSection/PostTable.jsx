@@ -135,7 +135,9 @@ const PostTable = ({
                                             textOverflow: "ellipsis",
                                             maxWidth: "100%"
                                         }}>
-                                            {post.title || "No content"}
+                                            {post.title ? 
+                                                post.title.charAt(0).toUpperCase() + post.title.slice(1) 
+                                                : "No content"}
                                         </div>
                                     </td>
                                     <td
@@ -190,7 +192,11 @@ const PostTable = ({
                                                 textOverflow: "ellipsis",
                                                 maxWidth: "calc(100% - 40px)"
                                             }}>
-                                                {post.author || "Unknown"}
+                                                {post.author ? 
+                                                    post.author.split(' ')
+                                                        .map(name => name.charAt(0).toUpperCase() + name.slice(1).toLowerCase())
+                                                        .join(' ') 
+                                                    : "Unknown"}
                                             </div>
                                         </div>
                                     </td>

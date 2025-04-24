@@ -155,45 +155,82 @@ const PostDetailModal = ({
         ) : (
           selectedPost && (
             <>
-              {/* Display all media files if available */}
+              {/* Display media files based on count */}
               {selectedPost.allMedia && selectedPost.allMedia.length > 0 ? (
                 <div className="mb-3">
-                  <p className="small text-muted mb-2">All Media Files ({selectedPost.allMedia.length}):</p>
-                  <div className="d-flex flex-wrap gap-2">
-                    {selectedPost.allMedia.map((media, index) => (
-                      <div key={index} className="border rounded p-1" style={{ width: '100px' }}>
-                        <img
-                          src={typeof media === 'object' && media.media 
-                            ? API.getImageUrl(media.media) 
-                            : typeof media === 'string' 
-                              ? media 
-                              : "https://via.placeholder.com/100x100?text=File"}
-                          alt={`Media ${index}`}
-                          style={{ 
-                            cursor: 'pointer', 
-                            width: '100%', 
-                            height: '80px', 
-                            objectFit: 'cover', 
-                            borderRadius: '4px' 
-                          }}
-                          onError={(e) => { e.target.src = "https://via.placeholder.com/100x100?text=Media"; }}
-                          onClick={() => window.open(typeof media === 'object' && media.media 
-                            ? API.getImageUrl(media.media) 
-                            : typeof media === 'string' 
-                              ? media 
-                              : null, '_blank')}
-                        />
+                  {selectedPost.allMedia.length === 1 ? (
+                    // Single media - display larger and centered
+                    <div className="text-center">
+                      <img
+                        src={typeof selectedPost.allMedia[0] === 'object' && selectedPost.allMedia[0].media 
+                          ? API.getImageUrl(selectedPost.allMedia[0].media) 
+                          : typeof selectedPost.allMedia[0] === 'string' 
+                            ? selectedPost.allMedia[0] 
+                            : "https://via.placeholder.com/400x300?text=Image+Unavailable"}
+                        alt={selectedPost.title || ""}
+                        style={{ 
+                          maxWidth: "90%", 
+                          maxHeight: "280px", 
+                          objectFit: "contain", 
+                          borderRadius: "4px",
+                          cursor: "pointer" 
+                        }}
+                        onError={(e) => { e.target.src = "https://via.placeholder.com/400x300?text=Image+Unavailable"; }}
+                        onClick={() => window.open(typeof selectedPost.allMedia[0] === 'object' && selectedPost.allMedia[0].media 
+                          ? API.getImageUrl(selectedPost.allMedia[0].media) 
+                          : typeof selectedPost.allMedia[0] === 'string' 
+                            ? selectedPost.allMedia[0] 
+                            : null, '_blank')}
+                      />
+                    </div>
+                  ) : (
+                    // Multiple media - display as gallery
+                    <>
+                      <p className="small text-muted mb-2">Media Files ({selectedPost.allMedia.length}):</p>
+                      <div className="d-flex flex-wrap gap-2">
+                        {selectedPost.allMedia.map((media, index) => (
+                          <div key={index} className="border rounded p-1" style={{ width: '100px' }}>
+                            <img
+                              src={typeof media === 'object' && media.media 
+                                ? API.getImageUrl(media.media) 
+                                : typeof media === 'string' 
+                                  ? media 
+                                  : "https://via.placeholder.com/100x100?text=File"}
+                              alt={`Media ${index}`}
+                              style={{ 
+                                cursor: 'pointer', 
+                                width: '100%', 
+                                height: '80px', 
+                                objectFit: 'cover', 
+                                borderRadius: '4px' 
+                              }}
+                              onError={(e) => { e.target.src = "https://via.placeholder.com/100x100?text=Media"; }}
+                              onClick={() => window.open(typeof media === 'object' && media.media 
+                                ? API.getImageUrl(media.media) 
+                                : typeof media === 'string' 
+                                  ? media 
+                                  : null, '_blank')}
+                            />
+                          </div>
+                        ))}
                       </div>
-                    ))}
-                  </div>
+                    </>
+                  )}
                 </div>
               ) : selectedPost.image && !selectedPost.image.includes('placeholder') ? (
                 <div className="mb-3 text-center">
                   <img
                     src={selectedPost.image}
                     alt={selectedPost.title || ""}
-                    style={{ maxWidth: "100%", maxHeight: "250px", objectFit: "contain", borderRadius: "4px" }}
+                    style={{ 
+                      maxWidth: "90%", 
+                      maxHeight: "280px", 
+                      objectFit: "contain", 
+                      borderRadius: "4px",
+                      cursor: "pointer" 
+                    }}
                     onError={(e) => { e.target.src = "https://via.placeholder.com/400x300?text=Image+Unavailable"; }}
+                    onClick={() => window.open(selectedPost.image, '_blank')}
                   />
                 </div>
               ) : null}
