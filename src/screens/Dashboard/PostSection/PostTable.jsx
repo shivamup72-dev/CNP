@@ -1,5 +1,5 @@
-import React from "react";
-import { Table, Spinner } from "react-bootstrap";
+import React, { useEffect, useState } from "react";
+import { Table, Spinner, Badge } from "react-bootstrap";
 import { FaCheck, FaShareSquare, FaFlag, FaTrashRestore } from "react-icons/fa";
 import { FiTrash, FiFlag } from "react-icons/fi";
 import Button from "../../../components/common/BootstrapButton";
@@ -23,6 +23,25 @@ const PostTable = ({
     isSearching = false,
     activeFilter = "all"
 }) => {
+    // State to store the current logged-in user ID
+    const [loggedInUserId, setLoggedInUserId] = useState(null);
+    
+    // Get the logged-in user ID from localStorage when component mounts
+    useEffect(() => {
+        try {
+            const userDataStr = localStorage.getItem("userData");
+            if (userDataStr) {
+                const userData = JSON.parse(userDataStr);
+                if (userData.userId) {
+                    setLoggedInUserId(userData.userId);
+                    console.log("[PostTable] Logged-in user ID:", userData.userId);
+                }
+            }
+        } catch (e) {
+            console.error("[PostTable] Error getting user ID from localStorage:", e);
+        }
+    }, []);
+    
     // Add logging for debugging
     console.log(`[PostTable] Rendering with activeFilter: ${activeFilter}`);
     console.log(`[PostTable] Posts count:`, getCurrentFilteredPosts().length);
@@ -45,6 +64,12 @@ const PostTable = ({
         handleRepost(post.id);
         // Mark as reposted immediately for visual feedback
         post.isReposted = true;
+    };
+    
+    // Helper function to check if post is created by the logged-in user
+    const isCreatedByCurrentUser = (post) => {
+        if (!loggedInUserId || !post.createdBy) return false;
+        return post.createdBy.user_id === loggedInUserId;
     };
     
     // Common table cell style for consistency
@@ -99,8 +124,9 @@ const PostTable = ({
                             <th style={{ ...tableCellStyle, width: "5%" }}>S.No.</th>
                             <th style={{ ...tableCellStyle, width: "20%" }}>Content</th>
                             <th style={{ ...tableCellStyle, width: "10%" }}>Media</th>
-                            <th style={{ ...tableCellStyle, width: "15%" }}>Author</th>
-                            <th style={{ ...tableCellStyle, width: "12%" }}>Date</th>
+                            <th style={{ ...tableCellStyle, width: "12%" }}>Author</th>
+                            <th style={{ ...tableCellStyle, width: "10%" }}>Role</th>
+                            <th style={{ ...tableCellStyle, width: "10%" }}>Date</th>
                             <th style={{ ...tableCellStyle, width: "8%" }}>Status</th>
                             <th style={{ ...lastCellStyle, width: "10%" }}>Actions</th>
                         </tr>
@@ -108,7 +134,7 @@ const PostTable = ({
                     <tbody>
                         {error ? (
                             <tr>
-                                <td colSpan="7" className="text-center py-4 text-danger">
+                                <td colSpan="8" className="text-center py-4 text-danger">
                                     <div className="alert alert-danger mb-0">
                                         {error}
                                     </div>
@@ -116,7 +142,7 @@ const PostTable = ({
                             </tr>
                         ) : getCurrentFilteredPosts().length === 0 ? (
                             <tr>
-                                <td colSpan="7" className="text-center py-4">No posts available</td>
+                                <td colSpan="8" className="text-center py-4">No posts available</td>
                             </tr>
                         ) : (
                             getCurrentFilteredPosts().map((post, index) => (
@@ -135,9 +161,11 @@ const PostTable = ({
                                             textOverflow: "ellipsis",
                                             maxWidth: "100%"
                                         }}>
-                                            {post.title ? 
-                                                post.title.charAt(0).toUpperCase() + post.title.slice(1) 
-                                                : "No content"}
+                                            {post.content ? 
+                                                post.content.charAt(0).toUpperCase() + post.content.slice(1) 
+                                                : (post.title ? 
+                                                    post.title.charAt(0).toUpperCase() + post.title.slice(1) 
+                                                    : "No content")}
                                         </div>
                                     </td>
                                     <td
@@ -209,6 +237,18 @@ const PostTable = ({
                                                     : "Unknown"}
                                             </div>
                                         </div>
+                                    </td>
+                                    <td style={tableCellStyle}>
+                                        {/* Check if the post is created by the logged-in user */}
+                                        {loggedInUserId && post.authorId && post.authorId === loggedInUserId ? (
+                                            <Badge bg="dark" className="text-white">
+                                                Admin
+                                            </Badge>
+                                        ) : (
+                                            <span className="text-muted" style={{ fontSize: "0.7rem" }}>
+                                                Regular User
+                                            </span>
+                                        )}
                                     </td>
                                     <td style={tableCellStyle}>{formatDate(post.date)}</td>
                                     <td style={tableCellStyle}>

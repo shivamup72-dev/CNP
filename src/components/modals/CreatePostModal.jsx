@@ -105,9 +105,10 @@ const CreatePostModal = ({
       // Format the new post for our UI
       const createdPost = {
         id: response.id.toString(),
-        title: "No title",
-        content: response.description,
+        title: response.description || "No title",
+        content: response.description || "No content",
         author: response.created_by?.full_name || "Anonymous",
+        authorId: response.created_by?.user_id,
         category: "Other",
         image: response.media_files && response.media_files.length > 0 
           ? API.getImageUrl(response.media_files[0].media) 

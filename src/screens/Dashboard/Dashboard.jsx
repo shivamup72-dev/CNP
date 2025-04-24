@@ -182,6 +182,20 @@ const Dashboard = () => {
       console.log(`[DASHBOARD] API Request: GET ${url}`);
       console.log(`[DASHBOARD] Active Filter: ${activeFilter}, Status: ${status}`);
       
+      // Get logged-in user ID for comparison
+      const userDataStr = localStorage.getItem("userData");
+      let loggedInUserId = null;
+      
+      if (userDataStr) {
+        try {
+          const userData = JSON.parse(userDataStr);
+          loggedInUserId = userData.userId;
+          console.log(`[DASHBOARD] Current logged-in user ID: ${loggedInUserId}`);
+        } catch (e) {
+          console.error("[DASHBOARD] Error parsing user data:", e);
+        }
+      }
+      
       const res = await fetch(url, { headers: API.getHeaders() });
       if (!res.ok) throw new Error("Failed to fetch posts");
       const data = await res.json();
@@ -196,6 +210,32 @@ const Dashboard = () => {
         search: search
       });
 
+      // Check for posts created by the logged-in user
+      if (loggedInUserId) {
+        console.log("[DASHBOARD] Checking for posts created by current user...");
+        data.results.forEach((post, index) => {
+          const createdByUserId = post.created_by?.user_id;
+          const isMatch = createdByUserId === loggedInUserId;
+          
+          if (isMatch) {
+            console.log(`[DASHBOARD] MATCH FOUND - Post #${index + 1} (ID: ${post.id})`);
+            console.log(`[DASHBOARD] Created by user ID ${createdByUserId} matches logged-in user ID ${loggedInUserId}`);
+            console.log(`[DASHBOARD] Post details:`, {
+              id: post.id,
+              description: post.description,
+              date_created: post.date_created,
+              author: post.created_by.full_name,
+              author_id: post.created_by.user_id,
+              status: post.post_status
+            });
+          }
+        });
+        
+        // Count and log total matches
+        const totalMatches = data.results.filter(post => post.created_by?.user_id === loggedInUserId).length;
+        console.log(`[DASHBOARD] Found ${totalMatches} posts created by the current user (ID: ${loggedInUserId})`);
+      }
+
       const approved = data.results.map(p => p.id);
       setApprovedPosts(approved);
       setTotalPosts(data.count);
@@ -206,6 +246,7 @@ const Dashboard = () => {
         title: p.description || "No title",
         content: p.description || "No content",
         author: p.created_by.full_name,
+        authorId: p.created_by.user_id,
         image: p.media.length ? API.getImageUrl(p.media[0].media) : null,
         allMedia: p.media || [],
         post_status: p.post_status,
@@ -240,6 +281,7 @@ const Dashboard = () => {
               title: p.description || "No title",
               content: p.description || "No content",
               author: p.created_by.full_name,
+              authorId: p.created_by.user_id,
               image: p.media.length ? API.getImageUrl(p.media[0].media) : null,
               allMedia: p.media || [],
               post_status: p.post_status,
@@ -287,6 +329,7 @@ const Dashboard = () => {
               title: p.description || "No title",
               content: p.description || "No content",
               author: p.created_by.full_name,
+              authorId: p.created_by.user_id,
               image: p.media.length ? API.getImageUrl(p.media[0].media) : null,
               allMedia: p.media || [],
               post_status: p.post_status,

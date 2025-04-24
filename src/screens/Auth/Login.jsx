@@ -113,7 +113,7 @@ const Login = () => {
         localStorage.setItem("auth", "true");
         localStorage.setItem("token", data.key);
         
-        // Save API token in the endpoint.js
+        // Store API token in the endpoint.js
         if (data.key) {
           console.log("Setting AUTH_TOKEN in API service:", data.key);
           // Note: In a real app, you'd update this through a context provider or Redux
@@ -126,12 +126,20 @@ const Login = () => {
           name: formatName(data.basic?.name || ""),
           email: data.basic?.email || "",
           role: data.basic?.admin_role || "user",
-          isGodAdmin: data.basic?.admin_role === "god_admin"
+          isGodAdmin: data.basic?.admin_role === "god_admin",
+          userId: data.basic?.user_id || null,
+          profileId: data.basic?.profile_id || null
         };
         
         // Store user data in localStorage
         localStorage.setItem("userData", JSON.stringify(userData));
         console.log("User data stored:", userData);
+        
+        // Store user_id separately if needed for easier access
+        if (data.basic?.user_id) {
+          localStorage.setItem("user_id", data.basic.user_id);
+          console.log("User ID stored:", data.basic.user_id);
+        }
         
         // Save credentials if remember me is checked
         if (rememberMe) {
