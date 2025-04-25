@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Table, Spinner, Badge } from "react-bootstrap";
 import { FaCheck, FaShareSquare, FaFlag, FaTrashRestore } from "react-icons/fa";
-import { FiTrash, FiFlag } from "react-icons/fi";
+import { FiTrash, FiFlag, FiEdit } from "react-icons/fi";
 import Button from "../../../components/common/BootstrapButton";
 import { formatDate } from "../../../utils/DateUtility";
 import { showSuccessToast } from "../../../components/common/Toast.jsx";
@@ -70,6 +70,11 @@ const PostTable = ({
     const isCreatedByCurrentUser = (post) => {
         if (!loggedInUserId || !post.createdBy) return false;
         return post.createdBy.user_id === loggedInUserId;
+    };
+    
+    // Helper function to check if the post is from an admin user
+    const isAdminPost = (post) => {
+        return loggedInUserId && post.authorId && post.authorId === loggedInUserId;
     };
     
     // Common table cell style for consistency
@@ -159,7 +164,8 @@ const PostTable = ({
                                             whiteSpace: "nowrap",
                                             overflow: "hidden",
                                             textOverflow: "ellipsis",
-                                            maxWidth: "100%"
+                                            maxWidth: "100%",
+                                            fontSize: "0.75rem"
                                         }}>
                                             {post.content ? 
                                                 post.content.charAt(0).toUpperCase() + post.content.slice(1) 
@@ -218,7 +224,8 @@ const PostTable = ({
                                                 whiteSpace: "nowrap",
                                                 overflow: "hidden",
                                                 textOverflow: "ellipsis",
-                                                maxWidth: "calc(100% - 40px)"
+                                                maxWidth: "calc(100% - 40px)",
+                                                fontSize: "0.75rem"
                                             }}>
                                                 {post.author ? 
                                                     post.author.trim().split(/\s+/)
@@ -239,7 +246,6 @@ const PostTable = ({
                                         </div>
                                     </td>
                                     <td style={tableCellStyle}>
-                                        {/* Check if the post is created by the logged-in user */}
                                         {loggedInUserId && post.authorId && post.authorId === loggedInUserId ? (
                                             <Badge bg="dark" className="text-white">
                                                 Admin
@@ -250,7 +256,11 @@ const PostTable = ({
                                             </span>
                                         )}
                                     </td>
-                                    <td style={tableCellStyle}>{formatDate(post.date)}</td>
+                                    <td style={tableCellStyle}>
+                                        <span style={{ fontSize: "0.7rem" }}>
+                                            {formatDate(post.date)}
+                                        </span>
+                                    </td>
                                     <td style={tableCellStyle}>
                                         <div className="d-flex justify-content-start">
                                             {post.post_status === "approved" ? (
@@ -270,7 +280,7 @@ const PostTable = ({
                                                 variant="light"
                                                 size="sm"
                                                 className="d-flex justify-content-center align-items-center"
-                                                style={{ width: "32px", height: "32px", padding: "0" }}
+                                                style={{ width: "28px", height: "28px", padding: "0" }}
                                                 onClick={() => handleApprovePost(post.id)}
                                                 disabled={approvingPostId === post.id || post.post_status === "approved"}
                                                 title={post.post_status === "approved" ? "Already Approved" : "Approve Post"}
@@ -279,7 +289,8 @@ const PostTable = ({
                                                     <span>...</span>
                                                 ) : (
                                                     <FaCheck style={{
-                                                        color: post.post_status === "approved" ? "var(--bs-success)" : "#6c757d"
+                                                        color: post.post_status === "approved" ? "var(--bs-success)" : "#6c757d",
+                                                        fontSize: "0.8rem"
                                                     }} />
                                                 )}
                                             </Button>
@@ -288,8 +299,8 @@ const PostTable = ({
                                                 size="sm"
                                                 className="d-flex justify-content-center align-items-center"
                                                 style={{ 
-                                                    width: "32px", 
-                                                    height: "32px", 
+                                                    width: "28px", 
+                                                    height: "28px", 
                                                     padding: "0",
                                                     opacity: post.post_status !== "approved" ? "0.5" : "1",
                                                     border: "none",
@@ -308,7 +319,8 @@ const PostTable = ({
                                                 ) : (
                                                     <FaShareSquare style={{
                                                         color: post.post_status !== "approved" ? "#adb5bd" : 
-                                                               post.isReposted ? "var(--bs-success)" : "#0d6efd"
+                                                               post.isReposted ? "var(--bs-success)" : "#0d6efd",
+                                                        fontSize: "0.8rem"
                                                     }} />
                                                 )}
                                             </Button>
@@ -316,7 +328,7 @@ const PostTable = ({
                                                 variant="light"
                                                 size="sm"
                                                 className="d-flex justify-content-center align-items-center"
-                                                style={{ width: "32px", height: "32px", padding: "0" }}
+                                                style={{ width: "28px", height: "28px", padding: "0" }}
                                                 onClick={() => handleFlagButtonClick(post)}
                                                 disabled={flaggingPostId === post.id}
                                                 title={post.flagged ? "Unflag Post" : "Flag Post"}
@@ -326,29 +338,47 @@ const PostTable = ({
                                                 ) : post.flagged ? (
                                                     <FaFlag
                                                         style={{
-                                                            color: "#fd7e14"
+                                                            color: "#fd7e14",
+                                                            fontSize: "0.8rem"
                                                         }}
                                                     />
                                                 ) : (
                                                     <FiFlag
                                                         style={{
-                                                            color: "#6c757d"
+                                                            color: "#6c757d",
+                                                            fontSize: "0.8rem"
                                                         }}
                                                     />
                                                 )}
                                             </Button>
+                                            {/* Add Edit button for Admin posts */}
+                                            {isAdminPost(post) && (
+                                                <Button
+                                                    variant="dark"
+                                                    size="sm"
+                                                    className="d-flex justify-content-center align-items-center"
+                                                    style={{ width: "28px", height: "28px", padding: "0" }}
+                                                    onClick={() => {
+                                                        setSelectedPost(post);
+                                                        setShowPostDetailModal(true);
+                                                    }}
+                                                    title="Edit Post"
+                                                >
+                                                    <FiEdit style={{ color: "white", fontSize: "0.8rem" }} />
+                                                </Button>
+                                            )}
                                             <Button
                                                 variant={post.isDeleted || post.post_status === "rejected" ? "success" : "danger"}
                                                 size="sm"
                                                 className="d-flex justify-content-center align-items-center"
-                                                style={{ width: "32px", height: "32px", padding: "0" }}
+                                                style={{ width: "28px", height: "28px", padding: "0" }}
                                                 onClick={() => handleDeleteButtonClick(post)}
                                                 title={post.isDeleted || post.post_status === "rejected" ? "Restore Post" : "Delete Post"}
                                             >
                                                 {post.isDeleted || post.post_status === "rejected" ? (
-                                                    <FaTrashRestore />
+                                                    <FaTrashRestore style={{ fontSize: "0.8rem" }} />
                                                 ) : (
-                                                    <FiTrash />
+                                                    <FiTrash style={{ fontSize: "0.8rem" }} />
                                                 )}
                                             </Button>
                                         </div>

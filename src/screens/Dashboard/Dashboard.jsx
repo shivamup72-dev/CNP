@@ -56,6 +56,11 @@ const Dashboard = () => {
     isGodAdmin: false
   });
 
+  // Monthly user stats state
+  const [monthlyUserStats, setMonthlyUserStats] = useState([]);
+  const [chartLoading, setChartLoading] = useState(true);
+  const [currentMonthUsers, setCurrentMonthUsers] = useState(0);
+
   const [modalState, setModalState] = useState({
     flag: { show: false, reason: "Hate speech or discrimination", comment: "" },
     delete: { show: false, reason: "Hate speech or discrimination", comment: "" },
@@ -89,6 +94,9 @@ const Dashboard = () => {
     
     // Fetch dashboard stats
     fetchDashboardStats();
+    
+    // Fetch monthly user stats
+    fetchMonthlyUserStats();
   }, []);
 
   // Function to fetch dashboard stats
@@ -101,6 +109,41 @@ const Dashboard = () => {
     } catch (error) {
       console.error('[DASHBOARD] Error fetching dashboard stats:', error);
       // Keep the default values in state if fetch fails
+    }
+  };
+
+  // Function to fetch monthly user stats
+  const fetchMonthlyUserStats = async () => {
+    try {
+      setChartLoading(true);
+      console.log('[DASHBOARD] Fetching monthly user stats');
+      const data = await API.get('/api/v1/web/user-monthly-stats/');
+      console.log('[DASHBOARD] Monthly user stats:', data);
+      
+      // Map the data to the format needed for the chart
+      const formattedData = data.map(item => ({
+        name: item.month_name.substring(0, 3), // Abbreviate month name
+        month: item.month,
+        total_users: item.total_users,
+        active_users: item.active_users,
+        inactive_users: item.inactive_users,
+        staff_users: item.staff_users
+      }));
+      
+      setMonthlyUserStats(formattedData);
+      
+      // Get current month's user count
+      const currentMonth = new Date().getMonth() + 1; // JavaScript months are 0-indexed
+      const currentMonthData = data.find(item => item.month === currentMonth);
+      if (currentMonthData) {
+        setCurrentMonthUsers(currentMonthData.total_users);
+      }
+    } catch (error) {
+      console.error('[DASHBOARD] Error fetching monthly user stats:', error);
+      // Set an empty array if fetch fails
+      setMonthlyUserStats([]);
+    } finally {
+      setChartLoading(false);
     }
   };
 
@@ -432,7 +475,8 @@ const Dashboard = () => {
       title: "Total Users", 
       value: dashboardStats.total_user.toLocaleString() || "0", 
       icon: <FiUsers />, 
-      color: "primary" 
+      color: "primary",
+      subText: `(This month: ${currentMonthUsers})`
     },
     { 
       title: "Total Posts", 
@@ -452,13 +496,6 @@ const Dashboard = () => {
       icon: <FaPoll />, 
       color: "info" 
     }
-  ];
-
-  const chartData = [
-    { name: "Jan", uv: 1500 }, { name: "Feb", uv: 1800 }, { name: "Mar", uv: 2200 },
-    { name: "Apr", uv: 2800 }, { name: "May", uv: 3500 }, { name: "Jun", uv: 4500 },
-    { name: "Jul", uv: 5000 }, { name: "Aug", uv: 3500 }, { name: "Sep", uv: 2500 },
-    { name: "Oct", uv: 1800 }, { name: "Nov", uv: 1500 }, { name: "Dec", uv: 1500 }
   ];
 
   return (
@@ -483,7 +520,17 @@ const Dashboard = () => {
 
       <Row className="g-3 mb-4">
         <Col xs={12}>
-          <UserInteractionsChart customData={chartData} title="User Interactions" height={300} />
+          {chartLoading ? (
+            <div className="text-center py-5">
+              <p>Loading user statistics...</p>
+            </div>
+          ) : (
+            <UserInteractionsChart 
+              customData={monthlyUserStats} 
+              title="Monthly User Statistics" 
+              height={300} 
+            />
+          )}
         </Col>
       </Row>
 

@@ -73,9 +73,15 @@ const PostDetailModal = ({
   };
 
   const renderUserTypeBadge = () => (
-    <Badge bg="secondary" className="ms-2 px-2 py-1" style={{ fontSize: "0.7rem" }}>
-      {isAdminPost(selectedPost) ? "admin" : "user"}
-    </Badge>
+    isAdminPost(selectedPost) ? (
+      <Badge bg="dark" className="ms-2 px-2 py-1 text-white" style={{ fontSize: "0.7rem" }}>
+        Admin
+      </Badge>
+    ) : (
+      <Badge bg="light" className="ms-2 px-2 py-1 text-muted" style={{ fontSize: "0.7rem", border: "1px solid #dee2e6" }}>
+        Regular User
+      </Badge>
+    )
   );
 
   const renderStatusBadges = () => (
@@ -264,10 +270,10 @@ const PostDetailModal = ({
                 <div>
                   <Button variant="outline-success" size="sm" className="me-1" title="Approve"><FiCheck /></Button>
                   <Button variant="outline-warning" size="sm" className="me-1" title="Flag"><FiFlag /></Button>
-                  <Button variant="outline-danger" size="sm" className="me-1" title="Delete"><FiTrash /></Button>
                   {isAdminPost(selectedPost) && (
-                    <Button variant="outline-dark" size="sm" onClick={enableEditMode} title="Edit"><FiEdit /></Button>
+                    <Button variant="outline-dark" size="sm" className="me-1" onClick={enableEditMode} title="Edit"><FiEdit /></Button>
                   )}
+                  <Button variant="outline-danger" size="sm" className="me-1" title="Delete"><FiTrash /></Button>
                 </div>
               </div>
             </>

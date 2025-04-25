@@ -24,10 +24,17 @@ const StatsCards = ({ customStats }) => {
               <div className="d-flex justify-content-between align-items-center">
                 <div>
                   <div className="small mb-1 fw-bold" style={{ color: "grey" }}>{stat.title}</div>
-                  <h3 className="fw-bold" style={{
-                    color: stat.color === "success" ? "#198754" :
-                      stat.color === "warning" ? "#ffc107" : "black"
-                  }}>{stat.value}</h3>
+                  <div className="d-flex align-items-center">
+                    <h3 className="fw-bold m-0" style={{
+                      color: stat.color === "success" ? "#198754" :
+                        stat.color === "warning" ? "#ffc107" : "black"
+                    }}>{stat.value}</h3>
+                    {stat.subText && (
+                      <div className="small ms-2" style={{ color: "#808080" }}>
+                        {stat.subText}
+                      </div>
+                    )}
+                  </div>
                 </div>
                 {stat.icon}
               </div>

@@ -178,7 +178,7 @@ const UsersTable = ({
                 style={{ ...tableCellStyle, width: "5%", cursor: "pointer" }}
                 onClick={() => handleSortClick('id')}
               >
-                ID {renderSortIndicator('id')}
+                Serial No. {renderSortIndicator('id')}
               </th>
               <th 
                 style={{ ...tableCellStyle, width: "15%", cursor: "pointer" }}
@@ -225,9 +225,9 @@ const UsersTable = ({
                 <td colSpan="8" className="text-center py-4">No users found matching your search criteria</td>
               </tr>
             ) : (
-              sortedUsers.map((user) => (
+              sortedUsers.map((user, index) => (
                 <tr key={user.id}>
-                  <td style={tableCellStyle}>{user.id}</td>
+                  <td style={tableCellStyle}>{index + 1}</td>
                   <td style={tableCellStyle}>
                     <div className="d-flex align-items-center">
                       <div
