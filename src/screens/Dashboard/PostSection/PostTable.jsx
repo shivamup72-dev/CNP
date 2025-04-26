@@ -351,22 +351,33 @@ const PostTable = ({
                                                     />
                                                 )}
                                             </Button>
-                                            {/* Add Edit button for Admin posts */}
-                                            {isAdminPost(post) && (
-                                                <Button
-                                                    variant="dark"
-                                                    size="sm"
-                                                    className="d-flex justify-content-center align-items-center"
-                                                    style={{ width: "28px", height: "28px", padding: "0" }}
-                                                    onClick={() => {
+                                            {/* Edit button for all posts, enabled only for Admin posts */}
+                                            <Button
+                                                variant={isAdminPost(post) ? "dark" : "secondary"}
+                                                size="sm"
+                                                className="d-flex justify-content-center align-items-center"
+                                                style={{ 
+                                                    width: "28px", 
+                                                    height: "28px", 
+                                                    padding: "0",
+                                                    opacity: isAdminPost(post) ? "1" : "0.5",
+                                                    backgroundColor: isAdminPost(post) ? "" : "#adb5bd",
+                                                    border: isAdminPost(post) ? "" : "none"
+                                                }}
+                                                onClick={() => {
+                                                    if (isAdminPost(post)) {
                                                         setSelectedPost(post);
                                                         setShowPostDetailModal(true);
-                                                    }}
-                                                    title="Edit Post"
-                                                >
-                                                    <FiEdit style={{ color: "white", fontSize: "0.8rem" }} />
-                                                </Button>
-                                            )}
+                                                    }
+                                                }}
+                                                disabled={!isAdminPost(post)}
+                                                title={isAdminPost(post) ? "Edit Post" : "Only Admin Can Edit Post"}
+                                            >
+                                                <FiEdit style={{ 
+                                                    color: "white", 
+                                                    fontSize: "0.8rem" 
+                                                }} />
+                                            </Button>
                                             <Button
                                                 variant={post.isDeleted || post.post_status === "rejected" ? "success" : "danger"}
                                                 size="sm"

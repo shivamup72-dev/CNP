@@ -432,7 +432,24 @@ const PostSection = ({
     return null;
   };
 
-  const isAdminPost = () => false;
+  // Updated isAdminPost function that actually checks for admin status
+  const isAdminPost = (post) => {
+    if (!post) return false;
+    
+    try {
+      // Get the logged-in user ID from localStorage
+      const userDataStr = localStorage.getItem("userData");
+      if (userDataStr) {
+        const userData = JSON.parse(userDataStr);
+        // Check if the post's authorId matches the logged-in user's ID
+        return userData.userId && post.authorId && post.authorId === userData.userId;
+      }
+    } catch (e) {
+      console.error("[PostSection] Error checking admin post:", e);
+    }
+    
+    return false;
+  };
 
   const canConfirmAction = (reason, comment, isRemarkRequired) => {
     // If remark is required, comment must not be empty

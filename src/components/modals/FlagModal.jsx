@@ -120,7 +120,11 @@ const FlagModal = ({
               )}
               <div>
                 <p className="mb-0 fw-bold">{selectedPost.author || "Unknown"}</p>
-                <p className="text-muted small mb-0">{formatDate(selectedPost.date_created || Date.now())}</p>
+                <p className="text-muted small mb-0">
+                  {selectedPost.date_created ? 
+                    formatDate(selectedPost.date_created) : 
+                    "No date available"}
+                </p>
               </div>
             </div>
             {selectedPost.image && (
