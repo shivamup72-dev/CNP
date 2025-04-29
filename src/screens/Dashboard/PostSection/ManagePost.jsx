@@ -1,12 +1,14 @@
 import React, { useState, useEffect, useRef } from "react";
 import "../../../assets/css/Dashboard.css";
 import { Card } from "react-bootstrap";
-import { FaCheck, FaListUl, FaShareSquare } from "react-icons/fa";
+import { FaCheck, FaListUl, FaShareSquare, FaVoteYea } from "react-icons/fa";
 import { FiFlag } from "react-icons/fi";
 import toast from 'react-hot-toast';
 import PostTable from "./PostTable";
 import CustomPagination from "../../../components/common/CustomPagination";
 import Button from "../../../components/common/BootstrapButton";
+import VoterCardTable from "../../../components/tables/VoterCardTable";
+import { useView } from "../../../context/ViewContext";
 
 // Common button styles
 const buttonBaseStyle = {
@@ -62,6 +64,7 @@ const ManagePost = ({
 }) => {
   const [selectedButton, setSelectedButton] = useState(ordering === "newest" ? 'New' : 'Old');
   const [localIsSearching, setLocalIsSearching] = useState(false);
+  const { currentView, setCurrentView } = useView();
 
   const handleButtonClick = (button) => {
     setSelectedButton(button);
@@ -70,7 +73,25 @@ const ManagePost = ({
     onOrderingChange(button === 'New' ? 'newest' : 'oldest');
   };
 
+  // Handle filter button clicks and ensure posts view is active
+  const handleFilterClick = (filter) => {
+    // Reset to posts view and apply the filter
+    setCurrentView('posts');
+    handleFilterButtonClick(filter);
+  };
+
+  // Handle "All" button click and ensure posts view is active
+  const handleAllButtonClick = () => {
+    // Reset to posts view and show all posts
+    setCurrentView('posts');
+    handleAllClick();
+  };
+
   const getFilterTitle = () => {
+    if (currentView === 'voterCards') {
+      return "Voter Card Requests";
+    }
+
     const titles = {
       all: "Manage Posts",
       review: "Under Review Posts",
@@ -99,107 +120,124 @@ const ManagePost = ({
         <Card.Body className="p-0">
           {/* Header with consistent margin */}
           <div className="d-flex flex-wrap justify-content-between align-items-center" style={sectionStyle}>
-            <h5 className="fw-bold mb-0 me-2">{getFilterTitle()}</h5>
-            <div className="d-flex gap-2">
-              <Button
-                variant={selectedButton === 'New' ? "success" : "outline-success"}
-                size="sm"
-                className="px-3 new-post-btn"
-                style={{
-                  minWidth: "60px",
-                  height: "32px",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  backgroundColor: selectedButton === 'New' ? "var(--bs-success)" : "#fff",
-                  color: selectedButton === 'New' ? "#fff" : "var(--bs-success)",
-                  borderColor: "var(--bs-success)"
-                }}
-                onClick={() => handleButtonClick('New')}
-              >
-                New
-              </Button>
-              <Button
-                variant={selectedButton === 'Old' ? "success" : "outline-success"}
-                size="sm"
-                className="px-3 new-post-btn"
-                style={{
-                  minWidth: "60px",
-                  height: "32px",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  backgroundColor: selectedButton === 'Old' ? "var(--bs-success)" : "#fff",
-                  color: selectedButton === 'Old' ? "#fff" : "var(--bs-success)",
-                  borderColor: "var(--bs-success)"
-                }}
-                onClick={() => handleButtonClick('Old')}
-              >
-                Old
-              </Button>
-              <Button
-                variant="dark"
-                size="sm"
-                className="px-3 new-post-btn"
-                onClick={handleNewPost}
-                onMouseOver={(e) => e.currentTarget.style.opacity = "0.9"}
-                onMouseOut={(e) => e.currentTarget.style.opacity = "1.0"}
-              >
-                + New Post
-              </Button>
-            </div>
+            <h5 className="fw-bold mb-0 me-2">
+              {currentView === 'voterCards' ? (
+                <>
+                  <FaVoteYea style={{ color: "#3498db", marginRight: "8px" }} />
+                  {getFilterTitle()}
+                </>
+              ) : (
+                getFilterTitle()
+              )}
+            </h5>
+            {currentView === 'posts' && (
+              <div className="d-flex gap-2">
+                <Button
+                  variant={selectedButton === 'New' ? "success" : "outline-success"}
+                  size="sm"
+                  className="px-3 new-post-btn"
+                  style={{
+                    minWidth: "60px",
+                    height: "32px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    backgroundColor: selectedButton === 'New' ? "var(--bs-success)" : "#fff",
+                    color: selectedButton === 'New' ? "#fff" : "var(--bs-success)",
+                    borderColor: "var(--bs-success)"
+                  }}
+                  onClick={() => handleButtonClick('New')}
+                >
+                  New
+                </Button>
+                <Button
+                  variant={selectedButton === 'Old' ? "success" : "outline-success"}
+                  size="sm"
+                  className="px-3 new-post-btn"
+                  style={{
+                    minWidth: "60px",
+                    height: "32px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    backgroundColor: selectedButton === 'Old' ? "var(--bs-success)" : "#fff",
+                    color: selectedButton === 'Old' ? "#fff" : "var(--bs-success)",
+                    borderColor: "var(--bs-success)"
+                  }}
+                  onClick={() => handleButtonClick('Old')}
+                >
+                  Old
+                </Button>
+                <Button
+                  variant="dark"
+                  size="sm"
+                  className="px-3 new-post-btn"
+                  onClick={handleNewPost}
+                  onMouseOver={(e) => e.currentTarget.style.opacity = "0.9"}
+                  onMouseOut={(e) => e.currentTarget.style.opacity = "1.0"}
+                >
+                  + New Post
+                </Button>
+              </div>
+            )}
           </div>
 
-          {/* Filter buttons with consistent spacing */}
-          <div className="d-flex flex-wrap justify-content-between align-items-center" style={sectionStyle}>
-            <div className="d-flex flex-wrap align-items-center gap-2">
-              <Button
-                variant={activeFilter === "all" ? "dark" : "outline-dark"}
-                size="sm"
-                className="filter-btn"
-                onClick={handleAllClick}
-              >
-                <FaListUl style={{ marginRight: "4px" }} />
-                All Posts
-              </Button>
-              <Button
-                variant={activeFilter === "approved" ? "dark" : "outline-dark"}
-                size="sm"
-                className="filter-btn"
-                onClick={() => handleFilterButtonClick("approved")}
-              >
-                <FaCheck style={{ marginRight: "4px" }} />
-                Approved
-              </Button>
+          {/* Filter buttons with consistent spacing - only show for posts view */}
+          {currentView === 'posts' && (
+            <div className="d-flex flex-wrap justify-content-between align-items-center" style={sectionStyle}>
+              <div className="d-flex flex-wrap align-items-center gap-2">
+                <Button
+                  variant={activeFilter === "all" ? "dark" : "outline-dark"}
+                  size="sm"
+                  className="filter-btn"
+                  onClick={handleAllButtonClick}
+                >
+                  <FaListUl style={{ marginRight: "4px" }} />
+                  All Posts
+                </Button>
+                <Button
+                  variant={activeFilter === "approved" ? "dark" : "outline-dark"}
+                  size="sm"
+                  className="filter-btn"
+                  onClick={() => handleFilterClick("approved")}
+                >
+                  <FaCheck style={{ marginRight: "4px" }} />
+                  Approved
+                </Button>
+              </div>
+              <div className="text-muted small">
+                Showing {filteredPosts().length} of {totalPosts} posts
+              </div>
             </div>
-            <div className="text-muted small">
-              Showing {filteredPosts().length} of {totalPosts} posts
-            </div>
-          </div>
+          )}
 
-          {/* Posts Table with consistent margin */}
+          {/* Table display based on current view */}
           <div style={sectionStyle}>
-            <PostTable
-              currentPage={currentPage}
-              getCurrentFilteredPosts={getCurrentFilteredPosts}
-              setSelectedPost={setSelectedPost}
-              setShowPostDetailModal={setShowPostDetailModal}
-              getUserAvatar={getUserAvatar}
-              handleApprovePost={handleApprovePost}
-              handleFlagButtonClick={handleFlagButtonClick}
-              handleRepost={handleRepost}
-              handleDeleteButtonClick={handleDeleteButtonClick}
-              approvingPostId={approvingPostId}
-              flaggingPostId={flaggingPostId}
-              repostingPostId={repostingPostId}
-              error={error}
-              isSearching={isSearching || localIsSearching}
-              activeFilter={activeFilter}
-            />
+            {currentView === 'voterCards' ? (
+              <VoterCardTable />
+            ) : (
+              <PostTable
+                currentPage={currentPage}
+                getCurrentFilteredPosts={getCurrentFilteredPosts}
+                setSelectedPost={setSelectedPost}
+                setShowPostDetailModal={setShowPostDetailModal}
+                getUserAvatar={getUserAvatar}
+                handleApprovePost={handleApprovePost}
+                handleFlagButtonClick={handleFlagButtonClick}
+                handleRepost={handleRepost}
+                handleDeleteButtonClick={handleDeleteButtonClick}
+                approvingPostId={approvingPostId}
+                flaggingPostId={flaggingPostId}
+                repostingPostId={repostingPostId}
+                error={error}
+                isSearching={isSearching || localIsSearching}
+                activeFilter={activeFilter}
+              />
+            )}
           </div>
 
-          {/* Pagination */}
-          {getCurrentFilteredPosts().length > 0 ? (
+          {/* Pagination - only show for posts view with data */}
+          {currentView === 'posts' && getCurrentFilteredPosts().length > 0 ? (
             <div className="d-flex flex-column align-items-center mt-2 mb-2 px-3">
               <CustomPagination
                 currentPage={currentPage}
@@ -210,11 +248,11 @@ const ManagePost = ({
                 className="w-100"
               />
             </div>
-          ) : (
+          ) : currentView === 'posts' ? (
             <div className="text-center text-muted mt-3 mb-2">
               No posts found matching your current filters
             </div>
-          )}
+          ) : null}
         </Card.Body>
       </Card>
     </div>

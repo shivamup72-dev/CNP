@@ -54,7 +54,7 @@ const ProtectedLayout = () => {
         height: '100vh',
         display: 'flex',
         flexDirection: 'column',
-        backgroundColor: '#FFF8E1' // Match the app's background color
+        backgroundColor: '#f8fcf8' // Match the app's background color
       }}
     >
       <Outlet />

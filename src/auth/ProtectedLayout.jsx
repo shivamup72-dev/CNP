@@ -34,7 +34,7 @@ const ProtectedLayout = () => {
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center',
-          backgroundColor: '#FFF8E1'
+          backgroundColor: '#f8fcf8'
         }}
       >
         <div>Checking authentication...</div>
@@ -56,7 +56,7 @@ const ProtectedLayout = () => {
         height: '100vh',
         display: 'flex',
         flexDirection: 'column',
-        backgroundColor: '#FFF8E1' // Match the app's background color
+        backgroundColor: '#f8fcf8' // Match the app's background color
       }}
     >
       <Outlet />

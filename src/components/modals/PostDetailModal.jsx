@@ -685,8 +685,12 @@ const PostDetailModal = ({
     return isUserAdmin(selectedPost) ? (
       <Badge bg="dark" className="ms-2 px-2 py-1 text-white" style={{ fontSize: "0.7rem" }}>
         Admin
-    </Badge>
-    ) : null;
+      </Badge>
+    ) : (
+      <Badge bg="secondary" className="ms-2 px-2 py-1 text-white" style={{ fontSize: "0.7rem" }}>
+        Regular User
+      </Badge>
+    );
   };
 
   const renderStatusBadges = () => (

@@ -4,6 +4,7 @@ import { Card, Row, Col } from "react-bootstrap";
 import { FaSearch, FaFlag, FaCheck, FaListUl, FaShareSquare } from "react-icons/fa";
 import { FiTrash, FiFlag, FiClock as FiClockIcon } from "react-icons/fi";
 import BootstrapButton from "../../../components/common/BootstrapButton";
+import { useView } from "../../../context/ViewContext";
 
 const FilterAndModeration = ({
   activeFilter,
@@ -16,6 +17,7 @@ const FilterAndModeration = ({
   const [hoveredButton, setHoveredButton] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const searchTimeoutRef = useRef(null);
+  const { currentView, setCurrentView } = useView();
 
   // Helper function to get flagged posts
   const getFlaggedPosts = () => {
@@ -53,6 +55,20 @@ const FilterAndModeration = ({
     justifyContent: "center"
   });
 
+  // Custom filter click handler that always resets to posts view
+  const handleFilterClick = (filter) => {
+    // Reset to posts view and apply the filter
+    setCurrentView('posts');
+    handleFilterButtonClick(filter);
+  };
+
+  // Custom "Show All" click handler that always resets to posts view
+  const handleShowAllClick = () => {
+    // Reset to posts view and show all posts
+    setCurrentView('posts');
+    handleAllClick();
+  };
+
   const handleSearch = (e) => {
     const value = e.target.value;
     setSearchTerm(value);
@@ -66,6 +82,10 @@ const FilterAndModeration = ({
     searchTimeoutRef.current = setTimeout(() => {
       // Call the searchPosts function with the search term after debounce
       if (searchPosts) {
+        // If there's content in the search field, switch to posts view
+        if (value.trim() !== '') {
+          setCurrentView('posts');
+        }
         searchPosts(value, activeFilter);
       }
     }, 500); // 500ms debounce
@@ -126,7 +146,7 @@ const FilterAndModeration = ({
               variant={activeFilter === "all" ? "primary" : "light"}
               className="w-100"
               style={buttonStyle("all", activeFilter === "all", "#000000")}
-              onClick={handleAllClick}
+              onClick={handleShowAllClick}
               onMouseEnter={() => setHoveredButton("all")}
               onMouseLeave={() => setHoveredButton(null)}
             >
@@ -142,7 +162,7 @@ const FilterAndModeration = ({
               variant={activeFilter === "review" ? "warning" : "light"}
               className="w-100"
               style={buttonStyle("review", activeFilter === "review", "#ffc107")}
-              onClick={() => handleFilterButtonClick("review")}
+              onClick={() => handleFilterClick("review")}
               onMouseEnter={() => setHoveredButton("review")}
               onMouseLeave={() => setHoveredButton(null)}
             >
@@ -158,7 +178,7 @@ const FilterAndModeration = ({
               variant={activeFilter === "approved" ? "success" : "light"}
               className="w-100"
               style={buttonStyle("approved", activeFilter === "approved", "var(--bs-success)")}
-              onClick={() => handleFilterButtonClick("approved")}
+              onClick={() => handleFilterClick("approved")}
               onMouseEnter={() => setHoveredButton("approved")}
               onMouseLeave={() => setHoveredButton(null)}
             >
@@ -178,6 +198,8 @@ const FilterAndModeration = ({
                 console.log('[FILTER] Flagged button clicked');
                 getFlaggedPosts();
                 console.log('[FILTER] Calling handleFilterButtonClick with: "flagged"');
+                // Always reset to posts view
+                setCurrentView('posts');
                 handleFilterButtonClick("flagged");
               }}
               onMouseEnter={() => setHoveredButton("flagged")}
@@ -198,6 +220,8 @@ const FilterAndModeration = ({
               onClick={() => {
                 console.log('[FILTER] Reposted button clicked');
                 console.log('[FILTER] This will trigger API call to fetch reposted posts');
+                // Always reset to posts view
+                setCurrentView('posts');
                 handleFilterButtonClick("reposted");
               }}
               onMouseEnter={() => setHoveredButton("reposted")}
@@ -219,6 +243,8 @@ const FilterAndModeration = ({
                 console.log('[FILTER] Deleted button clicked');
                 getDeletedPosts();
                 console.log('[FILTER] Calling handleFilterButtonClick with: "deleted"');
+                // Always reset to posts view
+                setCurrentView('posts');
                 handleFilterButtonClick("deleted");
               }}
               onMouseEnter={() => setHoveredButton("deleted")}
