@@ -795,6 +795,7 @@ const AccessControl = () => {
                       handleRoleFilter("all");
                     }}
                     className="d-flex align-items-center"
+                    style={{ fontSize: "0.75rem", padding: "0.4rem 0.8rem" }}
                   >
                     <FiUsers className="me-1" /> All (Users + Admins)
                   </Button>
@@ -805,6 +806,7 @@ const AccessControl = () => {
                       handleRoleFilter("ground_zero_reporter");
                     }}
                     className="d-flex align-items-center"
+                    style={{ fontSize: "0.75rem", padding: "0.4rem 0.8rem" }}
                   >
                     <FiMapPin className="me-1" /> Ground Zero Reporter (Zila/District)
                   </Button>
@@ -815,6 +817,7 @@ const AccessControl = () => {
                       handleRoleFilter("city_manager");
                     }}
                     className="d-flex align-items-center"
+                    style={{ fontSize: "0.75rem", padding: "0.4rem 0.8rem" }}
                   >
                     <FiLayers className="me-1" /> City Manager
                   </Button>
@@ -827,6 +830,7 @@ const AccessControl = () => {
                       handleRoleFilter("state_manager");
                     }}
                     className="d-flex align-items-center"
+                    style={{ fontSize: "0.75rem" }}
                   >
                     <FiGlobe className="me-1" /> State Manager
                   </Button>
@@ -837,12 +841,13 @@ const AccessControl = () => {
                       handleRoleFilter("national_manager");
                     }}
                     className="d-flex align-items-center"
-                    style={{
+                    style={{ 
                       whiteSpace: "normal",
                       textAlign: "left",
                       minHeight: "38px",
                       height: "auto",
-                      padding: "4px 8px"
+                      padding: "4px 8px",
+                      fontSize: "0.75rem"
                     }}
                   >
                     <FiShield className="me-1 flex-shrink-0" /> National Manager (Demi God)
@@ -854,6 +859,7 @@ const AccessControl = () => {
                       handleRoleFilter("god_admin");
                     }}
                     className="d-flex align-items-center"
+                    style={{ fontSize: "0.75rem" }}
                   >
                     <FiUser className="me-1" /> God Admin
                   </Button>
