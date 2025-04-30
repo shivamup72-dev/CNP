@@ -25,7 +25,7 @@ const PostTable = ({
 }) => {
     // State to store the current logged-in user ID
     const [loggedInUserId, setLoggedInUserId] = useState(null);
-    
+
     // Get the logged-in user ID from localStorage when component mounts
     useEffect(() => {
         try {
@@ -41,42 +41,42 @@ const PostTable = ({
             console.error("[PostTable] Error getting user ID from localStorage:", e);
         }
     }, []);
-    
+
     // Add logging for debugging
     console.log(`[PostTable] Rendering with activeFilter: ${activeFilter}`);
     console.log(`[PostTable] Posts count:`, getCurrentFilteredPosts().length);
     if (activeFilter === "flagged") {
-        console.log(`[PostTable] Flagged posts in table:`, 
+        console.log(`[PostTable] Flagged posts in table:`,
             getCurrentFilteredPosts().filter(post => post.flagged || post.post_status === "flagged"));
     }
     if (activeFilter === "deleted") {
-        console.log(`[PostTable] Deleted posts in table:`, 
+        console.log(`[PostTable] Deleted posts in table:`,
             getCurrentFilteredPosts().filter(post => post.isDeleted || post.post_status === "rejected"));
     }
-    
+
     // Helper function to handle approve with toast
     const handleApproveWithToast = (postId) => {
         handleApprovePost(postId);
     };
-    
+
     // Helper function to handle repost with toast
     const handleRepostWithToast = (post) => {
         handleRepost(post.id);
         // Mark as reposted immediately for visual feedback
         post.isReposted = true;
     };
-    
+
     // Helper function to check if post is created by the logged-in user
     const isCreatedByCurrentUser = (post) => {
         if (!loggedInUserId || !post.createdBy) return false;
         return post.createdBy.user_id === loggedInUserId;
     };
-    
+
     // Helper function to check if the post is from an admin user
     const isAdminPost = (post) => {
         return loggedInUserId && post.authorId && post.authorId === loggedInUserId;
     };
-    
+
     // Common table cell style for consistency
     const tableCellStyle = {
         verticalAlign: "middle",
@@ -167,10 +167,10 @@ const PostTable = ({
                                             maxWidth: "100%",
                                             fontSize: "0.75rem"
                                         }}>
-                                            {post.content ? 
-                                                post.content.charAt(0).toUpperCase() + post.content.slice(1) 
-                                                : (post.title ? 
-                                                    post.title.charAt(0).toUpperCase() + post.title.slice(1) 
+                                            {post.content ?
+                                                post.content.charAt(0).toUpperCase() + post.content.slice(1)
+                                                : (post.title ?
+                                                    post.title.charAt(0).toUpperCase() + post.title.slice(1)
                                                     : "No content")}
                                         </div>
                                     </td>
@@ -194,7 +194,7 @@ const PostTable = ({
                                             <span className="text-muted">No media</span>
                                         )}
                                     </td>
-                                    <td style={tableCellStyle}>
+                                    <td style={{ ...tableCellStyle, cursor: "pointer" }}>
                                         <div className="d-flex align-items-center">
                                             <div
                                                 className="rounded-circle overflow-hidden flex-shrink-0"
@@ -226,8 +226,11 @@ const PostTable = ({
                                                 textOverflow: "ellipsis",
                                                 maxWidth: "calc(100% - 40px)",
                                                 fontSize: "0.75rem"
+                                            }} onClick={() => {
+                                                setSelectedPost(post);
+                                                setShowPostDetailModal(true);
                                             }}>
-                                                {post.author ? 
+                                                {post.author ?
                                                     post.author.trim().split(/\s+/)
                                                         .map(name => {
                                                             if (!name) return '';
@@ -240,8 +243,10 @@ const PostTable = ({
                                                             return name.charAt(0).toUpperCase() + name.slice(1).toLowerCase();
                                                         })
                                                         .filter(Boolean)
-                                                        .join(' ') 
+                                                        .join(' ')
                                                     : "Unknown"}
+
+                                                
                                             </div>
                                         </div>
                                     </td>
@@ -298,9 +303,9 @@ const PostTable = ({
                                                 variant="light"
                                                 size="sm"
                                                 className="d-flex justify-content-center align-items-center"
-                                                style={{ 
-                                                    width: "28px", 
-                                                    height: "28px", 
+                                                style={{
+                                                    width: "28px",
+                                                    height: "28px",
                                                     padding: "0",
                                                     opacity: post.post_status !== "approved" ? "0.5" : "1",
                                                     border: "none",
@@ -318,8 +323,8 @@ const PostTable = ({
                                                     <span>...</span>
                                                 ) : (
                                                     <FaShareSquare style={{
-                                                        color: post.post_status !== "approved" ? "#adb5bd" : 
-                                                               post.isReposted ? "var(--bs-success)" : "#0d6efd",
+                                                        color: post.post_status !== "approved" ? "#adb5bd" :
+                                                            post.isReposted ? "var(--bs-success)" : "#0d6efd",
                                                         fontSize: "0.8rem"
                                                     }} />
                                                 )}
@@ -356,9 +361,9 @@ const PostTable = ({
                                                 variant={isAdminPost(post) ? "dark" : "secondary"}
                                                 size="sm"
                                                 className="d-flex justify-content-center align-items-center"
-                                                style={{ 
-                                                    width: "28px", 
-                                                    height: "28px", 
+                                                style={{
+                                                    width: "28px",
+                                                    height: "28px",
                                                     padding: "0",
                                                     opacity: isAdminPost(post) ? "1" : "0.5",
                                                     backgroundColor: isAdminPost(post) ? "" : "#adb5bd",
@@ -373,9 +378,9 @@ const PostTable = ({
                                                 disabled={!isAdminPost(post)}
                                                 title={isAdminPost(post) ? "Edit Post" : "Only Admin Can Edit Post"}
                                             >
-                                                <FiEdit style={{ 
-                                                    color: "white", 
-                                                    fontSize: "0.8rem" 
+                                                <FiEdit style={{
+                                                    color: "white",
+                                                    fontSize: "0.8rem"
                                                 }} />
                                             </Button>
                                             <Button

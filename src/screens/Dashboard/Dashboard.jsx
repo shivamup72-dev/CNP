@@ -527,7 +527,7 @@ const Dashboard = () => {
           ) : (
             <UserInteractionsChart 
               customData={monthlyUserStats} 
-              title="Monthly User Statistics" 
+              title="User Interactions" 
               height={300} 
             />
           )}

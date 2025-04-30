@@ -133,7 +133,11 @@ const API = {
     ACCESS_CONTROL: '/web/access-control',
 
     // New endpoint for fetching admin choices
-    ADMIN_CHOICES: '/api/v1/web/global-admin-choice'
+    ADMIN_CHOICES: '/api/v1/web/global-admin-choice',
+
+    // Voter Card
+    VOTER_CARDS: '/api/v1/web/voter-card',
+    VOTER_CARD_APPROVE: (id) => `/api/v1/web/voter-card/${id}/`,
   },
 
   // Fetch admin choices for a specific type

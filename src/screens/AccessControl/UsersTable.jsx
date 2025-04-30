@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Table, Badge, Button, Form, InputGroup, Row, Col, Spinner } from 'react-bootstrap';
 import { FiEye, FiEdit, FiTrash, FiSearch, FiUser, FiFlag } from 'react-icons/fi';
 import { FaCheck, FaShareSquare, FaFlag } from 'react-icons/fa';
+import UserDetailsModal from '../../components/modals/UserDetailsModal';
 
 const UsersTable = ({ 
   users, 
@@ -17,6 +18,8 @@ const UsersTable = ({
   const [approvingUserId, setApprovingUserId] = useState(null);
   const [repostingUserId, setRepostingUserId] = useState(null);
   const [flaggingUserId, setFlaggingUserId] = useState(null);
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [showUserDetails, setShowUserDetails] = useState(false);
   
   // Common table cell style for consistency
   const tableCellStyle = {
@@ -149,6 +152,12 @@ const UsersTable = ({
       setFlaggingUserId(null);
     }, 500);
   };
+
+  // Handle user click to show details
+  const handleUserClick = (user) => {
+    setSelectedUser(user);
+    setShowUserDetails(true);
+  };
   
   return (
     <div>
@@ -229,7 +238,11 @@ const UsersTable = ({
                 <tr key={user.id}>
                   <td style={tableCellStyle}>{index + 1}</td>
                   <td style={tableCellStyle}>
-                    <div className="d-flex align-items-center">
+                    <div 
+                      className="d-flex align-items-center"
+                      style={{ cursor: "pointer" }}
+                      onClick={() => handleUserClick(user)}
+                    >
                       <div
                         className="rounded-circle overflow-hidden flex-shrink-0"
                         style={{
@@ -369,6 +382,13 @@ const UsersTable = ({
           </tbody>
         </Table>
       </div>
+
+      {/* User Details Modal */}
+      <UserDetailsModal
+        show={showUserDetails}
+        onHide={() => setShowUserDetails(false)}
+        user={selectedUser}
+      />
     </div>
   );
 };
