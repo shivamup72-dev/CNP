@@ -371,7 +371,7 @@ const AccessControl = () => {
     switch (role) {
       case "ground_zero": 
       case "ground_zero_reporter": 
-        return "secondary";
+        return "custom-ground-zero"; // Custom color for ground zero reporters
       case "city_manager": return "info";
       case "state_manager": return "primary";
       case "national_manager": return "warning";
@@ -637,7 +637,6 @@ const AccessControl = () => {
   return (
     <Container fluid className="p-4" style={{
       background: "linear-gradient(to bottom, #f8fcf8 0%, #f8fcf8 100%)",
-      minHeight: "100vh"
     }}>
       {/* Toast container for success messages */}
       <ToastContainer 
@@ -785,149 +784,81 @@ const AccessControl = () => {
         <>
           {/* Role filter and search */}
           <Row className="mb-4 align-items-end">
-            <Col md={4} xs={12} className="mb-3 mb-md-0">
+            <Col md={12} className="mb-3 mb-md-0">
               <label className="form-label">Filter by Role</label>
-              <div className="d-flex flex-wrap gap-2">
-                <Button
-                  variant={activeRole === "all" ? "dark" : "outline-dark"}
-                  size="sm"
-                  onClick={() => {
-                    handleRoleFilter("all");
-                  }}
-                  className="d-flex align-items-center"
-                >
-                  <FiUsers className="me-1" /> All (Users + Admins)
-                </Button>
-                <Button
-                  variant={activeRole === "ground_zero" || activeRole === "ground_zero_reporter" ? "dark" : "outline-dark"}
-                  size="sm"
-                  onClick={() => {
-                    handleRoleFilter("ground_zero_reporter");
-                  }}
-                  className="d-flex align-items-center"
-                >
-                  <FiMapPin className="me-1" /> Ground Zero Reporter (Zila/District)
-                </Button>
-                <Button
-                  variant={activeRole === "city_manager" ? "dark" : "outline-dark"}
-                  size="sm"
-                  onClick={() => {
-                    handleRoleFilter("city_manager");
-                  }}
-                  className="d-flex align-items-center"
-                >
-                  <FiLayers className="me-1" /> City Manager
-                </Button>
-                <Button
-                  variant={activeRole === "state_manager" ? "dark" : "outline-dark"}
-                  size="sm"
-                  onClick={() => {
-                    handleRoleFilter("state_manager");
-                  }}
-                  className="d-flex align-items-center"
-                >
-                  <FiGlobe className="me-1" /> State Manager
-                </Button>
-                <Button
-                  variant={activeRole === "national_manager" ? "dark" : "outline-dark"}
-                  size="sm"
-                  onClick={() => {
-                    handleRoleFilter("national_manager");
-                  }}
-                  className="d-flex align-items-center"
-                  style={{
-                    whiteSpace: "normal",
-                    textAlign: "left",
-                    minHeight: "38px",
-                    height: "auto",
-                    padding: "4px 8px"
-                  }}
-                >
-                  <FiShield className="me-1 flex-shrink-0" /> National Manager (Demi God)
-                </Button>
-                <Button
-                  variant={activeRole === "god_admin" ? "dark" : "outline-dark"}
-                  size="sm"
-                  onClick={() => {
-                    handleRoleFilter("god_admin");
-                  }}
-                  className="d-flex align-items-center"
-                >
-                  <FiUser className="me-1" /> God Admin
-                </Button>
-              </div>
-            </Col>
-            <Col md={4} xs={12} className="mb-3 mb-md-0">
-              <label className="form-label">Search</label>
-              <input
-                type="text"
-                className="form-control"
-                placeholder="Search by name, email, or location"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </Col>
-            <Col md={4} xs={12} className="d-flex flex-column justify-content-md-end align-items-md-end">
-              <div className="d-flex gap-2 mb-2 w-100 justify-content-md-end">
-                {/* All Users button */}
-                {isLoadingUsers ? (
-                  <Button 
-                    variant="outline-dark" 
-                    className="d-flex align-items-center flex-grow-1 flex-md-grow-0"
-                    size="sm"
-                    disabled
-                  >
-                    <Spinner animation="border" size="sm" className="me-1" />
-                    <span>Loading...</span>
-                  </Button>
-                ) : (
+              <div className="d-flex flex-column gap-2">
+                <div className="d-flex flex-wrap gap-2">
                   <Button
-                    variant={showUsersList ? "dark" : "outline-dark"}
-                    className="d-flex align-items-center flex-grow-1 flex-md-grow-0"
+                    variant={activeRole === "all" ? "dark" : "outline-dark"}
                     size="sm"
                     onClick={() => {
-                      // Reset all filters
-                      setSearchTerm('');
-                      // Then fetch all users
-                      handleAllUsersClick();
+                      handleRoleFilter("all");
                     }}
-                    disabled={isLoadingAdmins}
+                    className="d-flex align-items-center"
                   >
-                    <FiUsers className="me-1" /> Regular Users
+                    <FiUsers className="me-1" /> All (Users + Admins)
                   </Button>
-                )}
-                
-                {/* All Admins button */}
-                {isLoadingAdmins ? (
-                  <Button 
-                    variant="outline-dark" 
-                    className="d-flex align-items-center flex-grow-1 flex-md-grow-0"
-                    size="sm"
-                    disabled
-                  >
-                    <Spinner animation="border" size="sm" className="me-1" />
-                    <span>Loading...</span>
-                  </Button>
-                ) : (
                   <Button
-                    variant={showAdminsList ? "dark" : "outline-dark"}
-                    className="d-flex align-items-center flex-grow-1 flex-md-grow-0"
+                    variant={activeRole === "ground_zero" || activeRole === "ground_zero_reporter" ? "dark" : "outline-dark"}
                     size="sm"
-                    onClick={handleAllAdminsClick}
-                    disabled={isLoadingUsers}
+                    onClick={() => {
+                      handleRoleFilter("ground_zero_reporter");
+                    }}
+                    className="d-flex align-items-center"
                   >
-                    <FiUserCheck className="me-1" /> All Admins
+                    <FiMapPin className="me-1" /> Ground Zero Reporter (Zila/District)
                   </Button>
-                )}
+                  <Button
+                    variant={activeRole === "city_manager" ? "dark" : "outline-dark"}
+                    size="sm"
+                    onClick={() => {
+                      handleRoleFilter("city_manager");
+                    }}
+                    className="d-flex align-items-center"
+                  >
+                    <FiLayers className="me-1" /> City Manager
+                  </Button>
+                </div>
+                <div className="d-flex flex-wrap gap-2">
+                  <Button
+                    variant={activeRole === "state_manager" ? "dark" : "outline-dark"}
+                    size="sm"
+                    onClick={() => {
+                      handleRoleFilter("state_manager");
+                    }}
+                    className="d-flex align-items-center"
+                  >
+                    <FiGlobe className="me-1" /> State Manager
+                  </Button>
+                  <Button
+                    variant={activeRole === "national_manager" ? "dark" : "outline-dark"}
+                    size="sm"
+                    onClick={() => {
+                      handleRoleFilter("national_manager");
+                    }}
+                    className="d-flex align-items-center"
+                    style={{
+                      whiteSpace: "normal",
+                      textAlign: "left",
+                      minHeight: "38px",
+                      height: "auto",
+                      padding: "4px 8px"
+                    }}
+                  >
+                    <FiShield className="me-1 flex-shrink-0" /> National Manager (Demi God)
+                  </Button>
+                  <Button
+                    variant={activeRole === "god_admin" ? "dark" : "outline-dark"}
+                    size="sm"
+                    onClick={() => {
+                      handleRoleFilter("god_admin");
+                    }}
+                    className="d-flex align-items-center"
+                  >
+                    <FiUser className="me-1" /> God Admin
+                  </Button>
+                </div>
               </div>
-              <Button
-                variant="dark"
-                className="d-flex align-items-center"
-                style={{ backgroundColor: "#000", borderColor: "#000" }}
-                onClick={() => setShowCreateUserOrAdminModal(true)}
-              >
-                <FiUserPlus className="me-2" /> Add New User or Admin
-              </Button>
             </Col>
           </Row>
 
@@ -948,7 +879,7 @@ const AccessControl = () => {
 
           {/* Users table */}
           {!usersLoading && users.length > 0 && (
-            <Card className="shadow-sm border-0">
+            <Card className="shadow-sm" style={{  borderRadius: "0.25rem" }}>
               <Card.Body>
                 <UsersTable 
                   users={filteredUsers}
@@ -960,6 +891,15 @@ const AccessControl = () => {
                          activeRole === "admin" ? "Admin Users" :
                          activeRole === "all" ? "All Users" : 
                          `${roleDisplayMap[activeRole] || activeRole} Users`}
+                  searchTerm={searchTerm}
+                  onSearchChange={(e) => setSearchTerm(e.target.value)}
+                  showUsersList={showUsersList}
+                  showAdminsList={showAdminsList}
+                  isLoadingUsers={isLoadingUsers}
+                  isLoadingAdmins={isLoadingAdmins}
+                  onAllUsersClick={handleAllUsersClick}
+                  onAllAdminsClick={handleAllAdminsClick}
+                  onAddUserClick={() => setShowCreateUserOrAdminModal(true)}
                 />
                 
                 {/* Pagination */}

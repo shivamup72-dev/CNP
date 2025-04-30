@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { Table, Badge, Button, Form, InputGroup, Row, Col, Spinner } from 'react-bootstrap';
-import { FiEye, FiEdit, FiTrash, FiSearch, FiUser, FiFlag } from 'react-icons/fi';
+import { FiEye, FiEdit, FiTrash2, FiSearch, FiUser, FiFlag, FiUsers, FiUserCheck, FiUserPlus } from 'react-icons/fi';
 import { FaCheck, FaShareSquare, FaFlag } from 'react-icons/fa';
 import UserDetailsModal from '../../components/modals/UserDetailsModal';
+import { formatDate } from '../../utils/DateUtility';
 
 const UsersTable = ({ 
   users, 
@@ -10,9 +11,17 @@ const UsersTable = ({
   getRoleBadgeColor, 
   getRoleIcon, 
   roleDisplayMap,
-  title = "All Users"
+  title = "All Users",
+  searchTerm,
+  onSearchChange,
+  showUsersList,
+  showAdminsList,
+  isLoadingUsers,
+  isLoadingAdmins,
+  onAllUsersClick,
+  onAllAdminsClick,
+  onAddUserClick
 }) => {
-  const [searchTerm, setSearchTerm] = useState('');
   const [sortField, setSortField] = useState('name');
   const [sortDirection, setSortDirection] = useState('asc');
   const [approvingUserId, setApprovingUserId] = useState(null);
@@ -20,6 +29,8 @@ const UsersTable = ({
   const [flaggingUserId, setFlaggingUserId] = useState(null);
   const [selectedUser, setSelectedUser] = useState(null);
   const [showUserDetails, setShowUserDetails] = useState(false);
+  const [editingUserId, setEditingUserId] = useState(null);
+  const [deletingUserId, setDeletingUserId] = useState(null);
   
   // Common table cell style for consistency
   const tableCellStyle = {
@@ -27,14 +38,38 @@ const UsersTable = ({
     borderRight: "1px solid #e0e0e0",
     borderBottom: "1px solid #e0e0e0",
     padding: "0.4rem 0.5rem",
-    fontSize: "0.85rem"
+    fontSize: "0.75rem"
+  };
+
+  const firstCellStyle = {
+    ...tableCellStyle,
+    borderLeft: "1px solid #e0e0e0"
   };
 
   const lastCellStyle = {
     verticalAlign: "middle",
     borderBottom: "1px solid #e0e0e0",
+    borderRight: "1px solid #e0e0e0",
     padding: "0.4rem",
-    fontSize: "0.85rem"
+    fontSize: "0.75rem"
+  };
+  
+  // Table header style
+  const tableHeaderStyle = {
+    ...tableCellStyle,
+    fontSize: "0.85rem",
+    fontWeight: "bold",
+    borderTop: "1px solid #e0e0e0"
+  };
+
+  const firstHeaderStyle = {
+    ...tableHeaderStyle,
+    borderLeft: "1px solid #e0e0e0"
+  };
+
+  const lastHeaderStyle = {
+    ...tableHeaderStyle,
+    borderRight: "1px solid #e0e0e0"
   };
   
   // Filter users based on search term
@@ -110,7 +145,9 @@ const UsersTable = ({
           height: user.role === "national_manager" ? "auto" : "",
           padding: user.role === "national_manager" ? "5px 8px" : "",
           lineHeight: user.role === "national_manager" ? "1" : "",
-          fontSize: "11.2px"
+          fontSize: "11.2px",
+          backgroundColor: (user.role === "ground_zero" || user.role === "ground_zero_reporter") ? "#9370DB" : undefined,
+          color: (user.role === "ground_zero" || user.role === "ground_zero_reporter") ? "#fff" : undefined
         }}
       >
         {getRoleIcon(user.role)} {user.role === "national_manager" ? (
@@ -158,74 +195,140 @@ const UsersTable = ({
     setSelectedUser(user);
     setShowUserDetails(true);
   };
+
+  // Handle edit action
+  const handleEdit = (userId) => {
+    setEditingUserId(userId);
+    // TODO: Implement edit functionality
+    setTimeout(() => {
+      setEditingUserId(null);
+    }, 500);
+  };
+
+  // Handle delete action
+  const handleDelete = (userId) => {
+    setDeletingUserId(userId);
+    // TODO: Implement delete functionality
+    setTimeout(() => {
+      setDeletingUserId(null);
+    }, 500);
+  };
   
   return (
     <div>
-      <Row className="mb-3">
-        <Col md={6}>
-          <h5 className="fw-bold mb-3">{title}</h5>
+      <Row className="mb-3 align-items-center">
+        <Col md={4}>
+          <h5 className="fw-bold mb-0">{title}</h5>
         </Col>
-        <Col md={6}>
-          <InputGroup>
-            <InputGroup.Text id="user-search">
-              <FiSearch />
-            </InputGroup.Text>
-            <Form.Control
-              placeholder="Search users..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </InputGroup>
+        <Col md={4} className="d-flex justify-content-center">
+          <input
+            type="text"
+            className="form-control"
+            placeholder="Search by name, email, or location"
+            value={searchTerm}
+            onChange={onSearchChange}
+            style={{ maxWidth: "300px" }}
+          />
+        </Col>
+        <Col md={4} className="d-flex flex-column gap-2 align-items-end">
+          <div className="d-flex gap-2">
+            {isLoadingUsers ? (
+              <Button 
+                variant="outline-dark" 
+                className="d-flex align-items-center"
+                size="sm"
+                disabled
+              >
+                <Spinner animation="border" size="sm" className="me-1" />
+                <span>Loading...</span>
+              </Button>
+            ) : (
+              <Button
+                variant={showUsersList ? "dark" : "outline-dark"}
+                className="d-flex align-items-center"
+                size="sm"
+                onClick={onAllUsersClick}
+                disabled={isLoadingAdmins}
+              >
+                <FiUsers className="me-1" /> All Regular Users
+              </Button>
+            )}
+            
+            {isLoadingAdmins ? (
+              <Button 
+                variant="outline-dark" 
+                className="d-flex align-items-center"
+                size="sm"
+                disabled
+              >
+                <Spinner animation="border" size="sm" className="me-1" />
+                <span>Loading...</span>
+              </Button>
+            ) : (
+              <Button
+                variant={showAdminsList ? "dark" : "outline-dark"}
+                className="d-flex align-items-center"
+                size="sm"
+                onClick={onAllAdminsClick}
+                disabled={isLoadingUsers}
+              >
+                <FiUserCheck className="me-1" /> All Admins
+              </Button>
+            )}
+          </div>
+          
+          <Button
+            variant="dark"
+            className="d-flex align-items-center"
+            size="sm"
+            style={{ 
+              backgroundColor: "#000", 
+              borderColor: "#000",
+              padding: "0.5rem 1rem"
+            }}
+            onClick={onAddUserClick}
+          >
+            <FiUserPlus className="me-1" /> Add New User or Admin
+          </Button>
         </Col>
       </Row>
       
-      <div className="table-responsive">
-        <Table hover responsive className="mb-0" style={{ border: "none", margin: 0 }}>
+      <div className="table-responsive" style={{ marginTop: "2rem" }}>
+        <Table hover responsive className="mb-0" style={{ 
+          border: "none",
+          margin: 0 
+        }}>
           <thead>
             <tr>
-              <th 
-                style={{ ...tableCellStyle, width: "5%", cursor: "pointer" }}
-                onClick={() => handleSortClick('id')}
-              >
-                Serial No. {renderSortIndicator('id')}
+              <th style={{ ...firstHeaderStyle, width: "4%", cursor: "pointer" }}
+                  onClick={() => handleSortClick('id')}>
+                  Sr. No. {renderSortIndicator('id')}
               </th>
-              <th 
-                style={{ ...tableCellStyle, width: "15%", cursor: "pointer" }}
-                onClick={() => handleSortClick('name')}
-              >
-                Name {renderSortIndicator('name')}
+              <th style={{ ...tableHeaderStyle, width: "15%", cursor: "pointer" }}
+                  onClick={() => handleSortClick('name')}>
+                  Name {renderSortIndicator('name')}
               </th>
-              <th 
-                style={{ ...tableCellStyle, width: "15%", cursor: "pointer" }}
-                onClick={() => handleSortClick('email')}
-              >
-                Email {renderSortIndicator('email')}
+              <th style={{ ...tableHeaderStyle, width: "15%", cursor: "pointer" }}
+                  onClick={() => handleSortClick('email')}>
+                  Email {renderSortIndicator('email')}
               </th>
-              <th 
-                style={{ ...tableCellStyle, width: "15%", cursor: "pointer" }}
-                onClick={() => handleSortClick('role')}
-              >
-                Role {renderSortIndicator('role')}
+              <th style={{ ...tableHeaderStyle, width: "15%", cursor: "pointer" }}
+                  onClick={() => handleSortClick('role')}>
+                  Role {renderSortIndicator('role')}
               </th>
-              <th 
-                style={{ ...tableCellStyle, width: "12%", cursor: "pointer" }}
-                onClick={() => handleSortClick('location')}
-              >
-                Location {renderSortIndicator('location')}
+              <th style={{ ...tableHeaderStyle, width: "12%", cursor: "pointer" }}
+                  onClick={() => handleSortClick('location')}>
+                  Location {renderSortIndicator('location')}
               </th>
-              <th 
-                style={{ ...tableCellStyle, width: "10%", cursor: "pointer" }}
-                onClick={() => handleSortClick('status')}
-              >
-                Status {renderSortIndicator('status')}
+              <th style={{ ...tableHeaderStyle, width: "10%", cursor: "pointer" }}
+                  onClick={() => handleSortClick('status')}>
+                  Status {renderSortIndicator('status')}
               </th>
-              <th 
-                style={{ ...tableCellStyle, width: "12%", cursor: "pointer" }}
-                onClick={() => handleSortClick('lastActive')}
-              >
-                Last Active {renderSortIndicator('lastActive')}
+              <th style={{ ...tableHeaderStyle, width: "12%", cursor: "pointer" }}
+                  onClick={() => handleSortClick('lastActive')}>
+                  Last Active {renderSortIndicator('lastActive')}
               </th>
-              <th style={{ ...lastCellStyle, width: "10%" }}>Actions</th>
+              <th style={{ ...lastHeaderStyle, width: "10%" }}>Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -236,7 +339,7 @@ const UsersTable = ({
             ) : (
               sortedUsers.map((user, index) => (
                 <tr key={user.id}>
-                  <td style={tableCellStyle}>{index + 1}</td>
+                  <td style={firstCellStyle}>{index + 1}</td>
                   <td style={tableCellStyle}>
                     <div 
                       className="d-flex align-items-center"
@@ -277,20 +380,47 @@ const UsersTable = ({
                       </div>
                     </div>
                   </td>
-                  <td style={tableCellStyle}>{user.email}</td>
+                  <td style={tableCellStyle}>
+                    <div 
+                      style={{ cursor: "pointer" }}
+                      onClick={() => handleUserClick(user)}
+                    >
+                      {user.email}
+                    </div>
+                  </td>
                   <td style={tableCellStyle}>
                     {renderRoleBadge(user)}
                   </td>
-                  <td style={tableCellStyle}>{user.location}</td>
+                  <td style={tableCellStyle}>
+                    <div style={{
+                      whiteSpace: "nowrap",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      maxWidth: "100%"
+                    }}>
+                      {user.location}
+                    </div>
+                  </td>
                   <td style={tableCellStyle}>
                     <Badge
                       bg={user.status === "active" ? "success" : "secondary"}
                       className="text-capitalize"
+                      style={{ fontSize: "0.75rem" }}
                     >
                       {user.status}
                     </Badge>
                   </td>
-                  <td style={tableCellStyle}>{user.lastActive}</td>
+                  <td style={tableCellStyle}>
+                    <div style={{
+                      whiteSpace: "nowrap",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      maxWidth: "100%",
+                      fontSize: "0.75rem"
+                    }}>
+                      {user.lastActive ? formatDate(user.lastActive) : 'N/A'}
+                    </div>
+                  </td>
                   <td style={lastCellStyle}>
                     <div className="d-flex gap-2 justify-content-center">
                       {user.role && user.role !== "user" ? (
@@ -300,16 +430,17 @@ const UsersTable = ({
                             variant="light"
                             size="sm"
                             className="d-flex justify-content-center align-items-center"
-                            style={{ width: "32px", height: "32px", padding: "0" }}
+                            style={{ width: "28px", height: "28px", padding: "0" }}
                             onClick={() => handleApproveUser(user.id)}
                             disabled={approvingUserId === user.id || user.status === "approved"}
-                            title="Approve User"
+                            title={user.status === "approved" ? "Already Approved" : "Approve User"}
                           >
                             {approvingUserId === user.id ? (
                               <span>...</span>
                             ) : (
                               <FaCheck style={{
-                                color: user.status === "approved" ? "var(--bs-success)" : "#6c757d"
+                                color: user.status === "approved" ? "var(--bs-success)" : "#6c757d",
+                                fontSize: "0.8rem"
                               }} />
                             )}
                           </Button>
@@ -319,24 +450,18 @@ const UsersTable = ({
                             variant="light"
                             size="sm"
                             className="d-flex justify-content-center align-items-center"
-                            style={{ 
-                              width: "32px", 
-                              height: "32px", 
-                              padding: "0",
-                              opacity: user.status !== "active" ? "0.5" : "1",
-                              border: "none",
-                              boxShadow: "none"
-                            }}
+                            style={{ width: "28px", height: "28px", padding: "0" }}
                             onClick={() => handleRepost(user.id)}
-                            disabled={repostingUserId === user.id || user.status !== "active"}
-                            title={user.isReposted ? "Repost Again" : "Repost User"}
+                            disabled={repostingUserId === user.id}
+                            title="Repost"
                           >
                             {repostingUserId === user.id ? (
                               <span>...</span>
                             ) : (
                               <FaShareSquare style={{
-                                color: user.status !== "active" ? "#adb5bd" : 
-                                      user.isReposted ? "var(--bs-success)" : "#0d6efd"
+                                color: user.status !== "approved" ? "#adb5bd" :
+                                  user.isReposted ? "var(--bs-success)" : "#0d6efd",
+                                fontSize: "0.8rem"
                               }} />
                             )}
                           </Button>
@@ -346,7 +471,7 @@ const UsersTable = ({
                             variant="light"
                             size="sm"
                             className="d-flex justify-content-center align-items-center"
-                            style={{ width: "32px", height: "32px", padding: "0" }}
+                            style={{ width: "28px", height: "28px", padding: "0" }}
                             onClick={() => handleFlag(user.id)}
                             disabled={flaggingUserId === user.id}
                             title={user.flagged ? "Unflag User" : "Flag User"}
@@ -354,25 +479,56 @@ const UsersTable = ({
                             {flaggingUserId === user.id ? (
                               <span>...</span>
                             ) : user.flagged ? (
-                              <FaFlag style={{ color: "#fd7e14" }} />
+                              <FaFlag
+                                style={{
+                                  color: "#fd7e14",
+                                  fontSize: "0.8rem"
+                                }}
+                              />
                             ) : (
-                              <FiFlag style={{ color: "#6c757d" }} />
+                              <FiFlag
+                                style={{
+                                  color: "#6c757d",
+                                  fontSize: "0.8rem"
+                                }}
+                              />
                             )}
+                          </Button>
+
+                          {/* Edit Button */}
+                          <Button
+                            variant="light"
+                            size="sm"
+                            className="d-flex justify-content-center align-items-center"
+                            style={{ width: "28px", height: "28px", padding: "0" }}
+                            onClick={() => handleEdit(user.id)}
+                            title="Edit User"
+                          >
+                            <FiEdit style={{
+                              color: "#6c757d",
+                              fontSize: "0.8rem"
+                            }} />
                           </Button>
 
                           {/* Delete Button */}
                           <Button
-                            variant="danger"
+                            variant="light"
                             size="sm"
                             className="d-flex justify-content-center align-items-center"
-                            style={{ width: "32px", height: "32px", padding: "0" }}
+                            style={{ width: "28px", height: "28px", padding: "0" }}
+                            onClick={() => handleDelete(user.id)}
                             title="Delete User"
                           >
-                            <FiTrash />
+                            <FiTrash2 style={{
+                              color: "#6c757d",
+                              fontSize: "0.8rem"
+                            }} />
                           </Button>
                         </>
                       ) : (
-                        <span className="text-muted" style={{ fontSize: "0.8rem" }}>No actions available</span>
+                        <span className="text-muted" style={{ fontSize: "0.85rem" }}>
+                          No actions available
+                        </span>
                       )}
                     </div>
                   </td>

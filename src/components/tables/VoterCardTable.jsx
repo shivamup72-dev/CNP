@@ -2,14 +2,18 @@ import React, { useState, useEffect } from "react";
 import { Table, Spinner, Button, Badge } from "react-bootstrap";
 import API from "../../api/endpoint";
 import { formatDate } from "../../utils/DateUtility";
+import { capitalizeWords } from "../../utils/Utility";
 import { FaCheck } from "react-icons/fa";
 import { showSuccessToast, showErrorToast } from "../../components/common/Toast.jsx";
+import VoterCardDetailsModal from "../modals/VoterCardDetailsModal";
 
 const VoterCardTable = () => {
   const [voterCards, setVoterCards] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [approvingId, setApprovingId] = useState(null);
+  const [selectedVoterCard, setSelectedVoterCard] = useState(null);
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
 
   useEffect(() => {
     const fetchVoterCards = async () => {
@@ -107,12 +111,12 @@ const VoterCardTable = () => {
         }}>
           <thead>
             <tr>
-              <th style={{ ...tableCellStyle, width: "8%" }}>Sr. No.</th>
-              <th style={{ ...tableCellStyle, width: "15%" }}>Voter Name</th>
+              <th style={{ ...tableCellStyle, width: "5%" }}>Sr. No.</th>
+              <th style={{ ...tableCellStyle, width: "20%" }}>Voter Name</th>
               <th style={{ ...tableCellStyle, width: "15%" }}>State</th>
               <th style={{ ...tableCellStyle, width: "15%" }}>City</th>
               <th style={{ ...tableCellStyle, width: "15%" }}>Request Date</th>
-              <th style={{ ...tableCellStyle, width: "15%" }}>Status</th>
+              <th style={{ ...tableCellStyle, width: "10%" }}>Status</th>
               <th style={{ ...lastCellStyle, width: "7%" }}>Actions</th>
             </tr>
           </thead>
@@ -140,14 +144,21 @@ const VoterCardTable = () => {
                 <tr key={card.id}>
                   <td style={tableCellStyle}>{index + 1}</td>
                   <td style={tableCellStyle}>
-                    <div style={{
-                      whiteSpace: "nowrap",
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      maxWidth: "100%",
-                      fontSize: "0.75rem"
-                    }}>
-                      {card.full_name || 'N/A'}
+                    <div 
+                      style={{
+                        whiteSpace: "nowrap",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        maxWidth: "100%",
+                        fontSize: "0.75rem",
+                        cursor: "pointer"
+                      }}
+                      onClick={() => {
+                        setSelectedVoterCard(card);
+                        setShowDetailsModal(true);
+                      }}
+                    >
+                      {card.full_name ? capitalizeWords(card.full_name) : 'N/A'}
                     </div>
                   </td>
                   <td style={tableCellStyle}>
@@ -184,13 +195,16 @@ const VoterCardTable = () => {
                     </div>
                   </td>
                   <td style={tableCellStyle}>
-                    <Badge bg={card.approval_status === 'pending' ? 'warning' : 'success'}>
-                      {card.approval_status || 'N/A'}
+                    <Badge 
+                      bg={card.approval_status === 'pending' ? 'warning' : 'success'}
+                      style={{ fontSize: '0.68rem' }}
+                    >
+                      {card.approval_status ? card.approval_status.charAt(0).toUpperCase() + card.approval_status.slice(1) : 'N/A'}
                     </Badge>
                   </td>
                   <td style={lastCellStyle}>
                     <div className="d-flex justify-content-center">
-                      {card.approval_status === 'pending' && (
+                      {card.approval_status === 'pending' ? (
                         <Button
                           variant="light"
                           size="sm"
@@ -206,15 +220,31 @@ const VoterCardTable = () => {
                             <FaCheck style={{ color: "#6c757d", fontSize: "0.8rem" }} />
                           )}
                         </Button>
+                      ) : (
+                        <Button
+                          variant="light"
+                          size="sm"
+                          className="p-0"
+                          style={{ width: "28px", height: "28px" }}
+                          disabled
+                        >
+                          <FaCheck style={{ color: "var(--bs-success)", fontSize: "0.8rem" }} />
+                        </Button>
                       )}
                     </div>
                   </td>
-            </tr>
+                </tr>
               ))
             )}
           </tbody>
         </Table>
       </div>
+
+      <VoterCardDetailsModal
+        show={showDetailsModal}
+        onHide={() => setShowDetailsModal(false)}
+        voterCard={selectedVoterCard}
+      />
     </div>
   );
 };
