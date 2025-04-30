@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Modal, Button, Form, Row, Col, Spinner, Alert } from 'react-bootstrap';
+import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import API from '../../api/endpoint';
 
 const CreateUserOrAdminModal = ({
@@ -39,6 +40,8 @@ const CreateUserOrAdminModal = ({
   const [filteredCities, setFilteredCities] = useState([]);
   const [isLoadingStates, setIsLoadingStates] = useState(false);
   const [isLoadingCities, setIsLoadingCities] = useState(false);
+
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     if (show) {
@@ -449,14 +452,34 @@ const CreateUserOrAdminModal = ({
           <Col md={6}>
             <Form.Group className="mb-3">
               {requiredLabel("Password")}
-              <Form.Control
-                type="password"
-                name="password"
-                value={formData.password}
-                onChange={handleInputChange}
-                isInvalid={!!formErrors.password}
-                className={formSubmitted ? "form-success" : ""}
-              />
+              <div style={{ position: "relative" }}>
+                <Form.Control
+                  type={showPassword ? "text" : "password"}
+                  name="password"
+                  value={formData.password}
+                  onChange={handleInputChange}
+                  isInvalid={!!formErrors.password}
+                  className={formSubmitted ? "form-success" : ""}
+                />
+                <div
+                  onClick={() => setShowPassword(!showPassword)}
+                  style={{
+                    position: "absolute",
+                    right: "10px",
+                    top: "50%",
+                    transform: "translateY(-50%)",
+                    cursor: "pointer",
+                    color: "#6c757d",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    width: "30px",
+                    height: "30px",
+                  }}
+                >
+                  {showPassword ? <FaEyeSlash size={18} /> : <FaEye size={18} />}
+                </div>
+              </div>
               <Form.Control.Feedback type="invalid">
                 {formErrors.password}
               </Form.Control.Feedback>
