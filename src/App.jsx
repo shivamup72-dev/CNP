@@ -3,6 +3,8 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 import Login from "./screens/Auth/Login";
 import ForgotPassword from "./screens/Auth/ForgotPassword";
+import OTPVerification from "./screens/Auth/OTPVerification";
+import ResetPassword from "./screens/Auth/ResetPassword";
 import Dashboard from "./screens/Dashboard/Dashboard";
 import Demo from "./screens/Demo";
 import PostSection from "./screens/Dashboard/postSection/PostSection.jsx";
@@ -23,6 +25,8 @@ const App = () => {
         {/* Public routes */}
         <Route path="/" element={<Login />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/verify-otp" element={<OTPVerification />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/demo" element={<Demo />} />
 
         {/* Protected routes nested under ProtectedLayout */}

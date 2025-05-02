@@ -25,6 +25,7 @@ import "../../assets/css/Dashboard.css";
 import { formatDate } from "../../utils/DateUtility";
 import CreateUserOrAdminModal from '../../components/modals/CreateUserOrAdminModal';
 import UsersTable from './UsersTable';
+import CustomPagination from '../../components/common/CustomPagination';
 
 const AccessControl = () => {
   const navigate = useNavigate();
@@ -43,7 +44,7 @@ const AccessControl = () => {
 
   // Modal states
   const [showCreateUserOrAdminModal, setShowCreateUserOrAdminModal] = useState(false);
-  
+
   // Success message state
   const [userCreationSuccess, setUserCreationSuccess] = useState(null);
   const [showSuccessToast, setShowSuccessToast] = useState(false);
@@ -66,10 +67,10 @@ const AccessControl = () => {
   // Helper to normalize roles from API to match the expected frontend role names
   const normalizeRoleFromAPI = (apiRole) => {
     if (!apiRole) return null;
-    
+
     // Convert to lowercase for consistent comparison
     const lowerRole = apiRole.toLowerCase();
-    
+
     // Map potential variations to our expected role names
     if (lowerRole === "god_admin" || lowerRole === "godadmin" || lowerRole === "god admin") {
       return "god_admin";
@@ -89,7 +90,7 @@ const AccessControl = () => {
     if (lowerRole === "national_manager" || lowerRole === "nationalmanager" || lowerRole === "national manager") {
       return "national_manager";
     }
-    
+
     // Return original if no mapping found
     return apiRole;
   };
@@ -105,20 +106,20 @@ const AccessControl = () => {
       const apiUrl = `/api/v1/web/users/?limit=${limit}&offset=${offset}`;
 
       console.log(`[ACCESS CONTROL] Fetching users from: ${apiUrl}`);
-      
+
       const data = await API.get(apiUrl);
-      
+
       // ADMIN LOGGING: Log all admin users to console
       console.log("====================");
       console.log("ALL ADMIN USERS DATA");
       console.log("====================");
-      
+
       // Filter to only get users with admin_role
       const allAdmins = data.results.filter(user => user.admin_role);
-      
+
       // Log the total count
       console.log(`Found ${allAdmins.length} admins out of ${data.results.length} total users`);
-      
+
       // Log each admin with their role
       allAdmins.forEach((admin, index) => {
         console.log(`Admin #${index + 1}:`);
@@ -129,24 +130,24 @@ const AccessControl = () => {
         console.log(`- Role normalized: ${normalizeRoleFromAPI(admin.admin_role)}`);
         console.log("---");
       });
-      
+
       console.log("Raw admin data:", allAdmins);
       console.log("====================");
-      
+
       // Format the users data
       const formattedUsers = data.results.map(userObj => {
         // Capitalize the first letter of first name and last name
-        const firstName = userObj.user.first_name ? 
-          userObj.user.first_name.charAt(0).toUpperCase() + userObj.user.first_name.slice(1).toLowerCase() : 
+        const firstName = userObj.user.first_name ?
+          userObj.user.first_name.charAt(0).toUpperCase() + userObj.user.first_name.slice(1).toLowerCase() :
           "";
-        
-        const lastName = userObj.user.last_name ? 
-          userObj.user.last_name.charAt(0).toUpperCase() + userObj.user.last_name.slice(1).toLowerCase() : 
+
+        const lastName = userObj.user.last_name ?
+          userObj.user.last_name.charAt(0).toUpperCase() + userObj.user.last_name.slice(1).toLowerCase() :
           "";
-        
+
         // Normalize the role from API
         const normalizedRole = normalizeRoleFromAPI(userObj.admin_role);
-        
+
         // Log specific users with state_manager or god_admin roles (case insensitive)
         if (normalizedRole === "state_manager" || normalizedRole === "god_admin") {
           console.log(`[DEBUG] Found user with role ${userObj.admin_role} (normalized: ${normalizedRole}):`, {
@@ -155,7 +156,7 @@ const AccessControl = () => {
             email: userObj.user.email
           });
         }
-        
+
         return {
           id: userObj.id,
           name: `${firstName} ${lastName}`,
@@ -209,19 +210,19 @@ const AccessControl = () => {
     if (search && search.trim()) {
       window.currentSearchTerm = search;
     }
-    
+
     // Only show loading if it's a deliberate loader request or explicit search
     if (showLoader || window.isDeliberateSearch) {
       setLoading(true);
       // Hide interim data while loading new data
       setShouldShowInterimData(false);
     }
-    
+
     setError(null);
     try {
       // API URL with status filter and search if provided
       let apiUrl = `${API.ENDPOINTS.POSTS}?status=${activeFilter}`;
-      
+
       // Add search parameter if provided
       if (search && search.trim()) {
         apiUrl += `&search=${encodeURIComponent(search)}`;
@@ -230,7 +231,7 @@ const AccessControl = () => {
 
       console.log(`[ACCESS CONTROL] Fetching posts with status: ${activeFilter}`);
       console.log(`[ACCESS CONTROL] Request URL: ${apiUrl}`);
-      
+
       const data = await API.get(apiUrl);
       console.log(`[ACCESS CONTROL] Response:`, data);
 
@@ -259,7 +260,7 @@ const AccessControl = () => {
       setCurrentPostsPage(page);
       setTotalPages(Math.max(1, Math.ceil(data.count / 100)));
       setActiveTab("posts");
-      
+
       // Now that we have data, allow it to be shown
       setShouldShowInterimData(true);
     } catch (e) {
@@ -273,7 +274,7 @@ const AccessControl = () => {
     } finally {
       // Reset the deliberate search flag
       window.isDeliberateSearch = false;
-      
+
       if (showLoader) {
         setLoading(false);
       } else {
@@ -310,11 +311,11 @@ const AccessControl = () => {
     // Log for debugging
     console.log(`[DEBUG] Filtering user:`, user);
     console.log(`[DEBUG] Active role: ${activeRole}, User role: ${user.role}`);
-    
+
     // Get normalized roles for comparison
     const normalizedUserRole = normalizeRoleFromAPI(user.role);
     const normalizedActiveRole = normalizeRoleFromAPI(activeRole);
-    
+
     // Special debug for god_admin
     if (activeRole === "god_admin") {
       console.log(`[GOD ADMIN DEBUG] Checking user ${user.name}, has role: ${user.role}`);
@@ -322,7 +323,7 @@ const AccessControl = () => {
       console.log(`[GOD ADMIN DEBUG] Direct compare: ${user.role === "god_admin"}`);
       console.log(`[GOD ADMIN DEBUG] Normalized compare: ${normalizedUserRole === "god_admin"}`);
     }
-    
+
     // Filter by role
     let matchesRole = true;
     if (activeRole === "admin") {
@@ -333,11 +334,11 @@ const AccessControl = () => {
       matchesRole = !user.role || normalizedUserRole === "user";
     } else if (activeRole !== "all") {
       // Match a specific role
-      if (normalizedActiveRole === "ground_zero_reporter" && 
-          (normalizedUserRole === "ground_zero" || normalizedUserRole === "ground_zero_reporter")) {
+      if (normalizedActiveRole === "ground_zero_reporter" &&
+        (normalizedUserRole === "ground_zero" || normalizedUserRole === "ground_zero_reporter")) {
         matchesRole = true;
-      } else if (normalizedActiveRole === "ground_zero" && 
-                (normalizedUserRole === "ground_zero" || normalizedUserRole === "ground_zero_reporter")) {
+      } else if (normalizedActiveRole === "ground_zero" &&
+        (normalizedUserRole === "ground_zero" || normalizedUserRole === "ground_zero_reporter")) {
         matchesRole = true;
       } else if (normalizedActiveRole === "state_manager" && normalizedUserRole === "state_manager") {
         matchesRole = true;
@@ -349,7 +350,7 @@ const AccessControl = () => {
         matchesRole = normalizedUserRole === normalizedActiveRole;
       }
     }
-    
+
     // Filter by search term
     const matchesSearch =
       user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -358,19 +359,19 @@ const AccessControl = () => {
 
     const result = matchesRole && matchesSearch;
     console.log(`[DEBUG] User ${user.name} matches: ${result} (role: ${matchesRole}, search: ${matchesSearch})`);
-    
+
     return result;
   });
-  
+
   console.log("[DEBUG] Filtered users count:", filteredUsers.length, "out of", users.length);
 
   // Role badge color mapping
   const getRoleBadgeColor = (role) => {
     if (!role) return "light"; // Light gray for regular users without roles
-    
+
     switch (role) {
-      case "ground_zero": 
-      case "ground_zero_reporter": 
+      case "ground_zero":
+      case "ground_zero_reporter":
         return "custom-ground-zero"; // Custom color for ground zero reporters
       case "city_manager": return "info";
       case "state_manager": return "primary";
@@ -386,10 +387,10 @@ const AccessControl = () => {
     };
 
     if (!role) return <span style={iconStyle}><FiUser /></span>; // Default user icon for regular users
-    
+
     switch (role) {
       case "ground_zero":
-      case "ground_zero_reporter": 
+      case "ground_zero_reporter":
         return <span style={iconStyle}><FiMapPin /></span>;
       case "city_manager": return <span style={iconStyle}><FiLayers /></span>;
       case "state_manager": return <span style={iconStyle}><FiGlobe /></span>;
@@ -411,14 +412,14 @@ const AccessControl = () => {
   const handleFilterChange = (filter) => {
     console.log(`[ACCESS CONTROL] Changing filter to: ${filter}`);
     setActiveFilter(filter);
-    
+
     // Log additional info for debugging
     if (filter === "flagged") {
       console.log(`[ACCESS CONTROL] Changing to flagged posts filter`);
     } else if (filter === "deleted") {
       console.log(`[ACCESS CONTROL] Changing to deleted posts filter`);
     }
-    
+
     // Use the fetchPostsData function directly with the current search term
     fetchPostsData(1, searchTerm);
   };
@@ -432,22 +433,22 @@ const AccessControl = () => {
   // Search posts function to handle search term updates
   const searchPosts = (term, filter) => {
     console.log("Access Control: Search term received:", term);
-    
+
     // Always store the current search term to preserve it
     window.currentSearchTerm = term;
-    
+
     // Clear any existing timers to prevent multiple API calls
     if (window.accessControlSearchTimer) {
       clearTimeout(window.accessControlSearchTimer);
     }
-    
+
     // Set a timer to wait until user stops typing
     window.accessControlSearchTimer = setTimeout(() => {
       console.log(`Access Control: User finished typing "${term}", now searching...`);
-      
+
       // Set a flag to indicate we're intentionally searching
       window.isDeliberateSearch = true;
-      
+
       // Now trigger the API call
       fetchPostsData(1, term, false);
     }, 500); // Wait half a second after typing stops
@@ -456,17 +457,17 @@ const AccessControl = () => {
   // Handle user creation
   const handleCreateUser = (userData, successMessage) => {
     console.log("Creating new user with data:", userData);
-    
+
     // After successful creation, refresh the users list
     fetchUsers(1);
-    
+
     // Close the modal
     setShowCreateUserOrAdminModal(false);
 
     // Set success message - use the message provided by the modal
     setUserCreationSuccess(successMessage);
     setShowSuccessToast(true);
-    
+
     // Hide success message after 5 seconds
     setTimeout(() => {
       setShowSuccessToast(false);
@@ -484,10 +485,10 @@ const AccessControl = () => {
       setIsLoadingUsers(true);
       setUsersLoadError(null);
       setShowAdminsList(false); // Hide admin list when showing all users
-      
+
       // Use the standard endpoint
       await fetchUsers(1);
-      
+
       // Set filter to show only regular users (without admin roles or with role "user")
       setActiveRole(null); // Use null to indicate regular users only
       setShowUsersList(true);
@@ -499,17 +500,17 @@ const AccessControl = () => {
       setIsLoadingUsers(false);
     }
   };
-  
+
   // Function to fetch only admin users
   const fetchAllAdmins = async () => {
     try {
       setIsLoadingAdmins(true);
       setAdminsLoadError(null);
       setShowUsersList(false); // Hide users list when showing admins
-      
+
       // Use the standard endpoint
       await fetchUsers(1);
-      
+
       // Show only users with admin roles
       setActiveRole("admin"); // Special flag to show admin users
       setShowAdminsList(true);
@@ -521,23 +522,23 @@ const AccessControl = () => {
       setIsLoadingAdmins(false);
     }
   };
-  
+
   // Function to handle "All Users" button click
   const handleAllUsersClick = () => {
     fetchAllUsers();
   };
-  
+
   // Function to handle "All Admins" button click
   const handleAllAdminsClick = () => {
     fetchAllAdmins();
   };
-  
+
   // Get only regular users (without roles)
   const getRegularUsers = () => {
     // Filter for users without roles or with "user" role
     return users.filter(user => !user.role || user.role === "user");
   };
-  
+
   // Get only admin users and users with roles
   const getAdminUsers = () => {
     // Filter for users with roles (any role except "user")
@@ -548,52 +549,52 @@ const AccessControl = () => {
   const handleRoleFilter = async (role) => {
     console.log(`[DEBUG] Setting active role to: ${role}`);
     console.log(`[DEBUG] Before setting - Active role: ${activeRole}, showUsersList: ${showUsersList}, showAdminsList: ${showAdminsList}`);
-    
+
     // Reset other filters
     setShowUsersList(true);
     setShowAdminsList(false);
     setSearchTerm("");
-    
+
     // Set the active role
     setActiveRole(role);
-    
+
     // For specific important roles, let's fetch all users to make sure we have them in our state
     if (role === "god_admin" || role === "state_manager") {
       console.log(`[FETCH ALL] Fetching all users for ${role} filter`);
       setUsersLoading(true);
-      
+
       try {
         // Fetch all users (with a large limit)
         const apiUrl = `/api/v1/web/users/?limit=100&offset=0`;
         console.log(`[FETCH ALL] Fetching users from: ${apiUrl}`);
-        
+
         const data = await API.get(apiUrl);
         console.log(`[FETCH ALL] Retrieved ${data.results.length} users`);
-        
+
         // Check for the specific role
-        const matchingUsers = data.results.filter(u => 
+        const matchingUsers = data.results.filter(u =>
           normalizeRoleFromAPI(u.admin_role) === role
         );
-        
-        console.log(`[FETCH ALL] Found ${matchingUsers.length} users with role "${role}":`, 
+
+        console.log(`[FETCH ALL] Found ${matchingUsers.length} users with role "${role}":`,
           matchingUsers.map(u => ({
             id: u.id,
             name: `${u.user.first_name} ${u.user.last_name}`,
             role: u.admin_role
           }))
         );
-        
+
         // Format the users data
         const formattedUsers = data.results.map(userObj => {
           // Capitalize the first letter of first name and last name
-          const firstName = userObj.user.first_name ? 
-            userObj.user.first_name.charAt(0).toUpperCase() + userObj.user.first_name.slice(1).toLowerCase() : 
+          const firstName = userObj.user.first_name ?
+            userObj.user.first_name.charAt(0).toUpperCase() + userObj.user.first_name.slice(1).toLowerCase() :
             "";
-          
-          const lastName = userObj.user.last_name ? 
-            userObj.user.last_name.charAt(0).toUpperCase() + userObj.user.last_name.slice(1).toLowerCase() : 
+
+          const lastName = userObj.user.last_name ?
+            userObj.user.last_name.charAt(0).toUpperCase() + userObj.user.last_name.slice(1).toLowerCase() :
             "";
-          
+
           return {
             id: userObj.id,
             name: `${firstName} ${lastName}`,
@@ -609,24 +610,24 @@ const AccessControl = () => {
             dob: userObj.date_of_birth
           };
         });
-        
+
         // Update the users state with all users
         setUsers(formattedUsers);
         setUsersTotalCount(data.count);
         setUsersTotalPages(Math.ceil(data.count / 10));
-        
+
       } catch (error) {
         console.error(`[FETCH ALL] Error fetching all users:`, error);
       } finally {
         setUsersLoading(false);
       }
     }
-    
+
     // Special console logging for admins
     console.log("========================");
     console.log(`FILTERING BY ROLE: ${role}`);
     console.log("========================");
-    
+
     // Log the current state after setting
     setTimeout(() => {
       console.log(`[DEBUG] After setting - Active role: ${activeRole}`);
@@ -637,23 +638,25 @@ const AccessControl = () => {
   return (
     <Container fluid className="p-4" style={{
       background: "linear-gradient(to bottom, #f8fcf8 0%, #f8fcf8 100%)",
+
+      width: "100%",
     }}>
       {/* Toast container for success messages */}
-      <ToastContainer 
-        className="p-3" 
+      <ToastContainer
+        className="p-3"
         position="top-end"
-        style={{ 
+        style={{
           zIndex: 1070,
           marginTop: '60px'
         }}
       >
-        <Toast 
-          show={showSuccessToast} 
+        <Toast
+          show={showSuccessToast}
           onClose={() => setShowSuccessToast(false)}
           delay={5000}
           autohide
           className="border-0"
-          style={{ 
+          style={{
             maxWidth: '250px',
             fontSize: '0.8rem',
             boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
@@ -661,9 +664,9 @@ const AccessControl = () => {
             overflow: 'hidden'
           }}
         >
-          <div className="d-flex align-items-center" 
-            style={{ 
-              borderWidth: '4px', 
+          <div className="d-flex align-items-center"
+            style={{
+              borderWidth: '4px',
               borderLeftColor: '#13d378',
               backgroundColor: '#0a8d4c',
               color: 'white',
@@ -674,9 +677,9 @@ const AccessControl = () => {
               <FiCheckCircle size={12} />
             </span>
             <span style={{ color: 'white', fontWeight: '500' }}>{userCreationSuccess}</span>
-            <button 
-              type="button" 
-              className="btn-close btn-close-white ms-auto" 
+            <button
+              type="button"
+              className="btn-close btn-close-white ms-auto"
               style={{ fontSize: '0.6rem', padding: '4px', marginLeft: '8px' }}
               onClick={() => setShowSuccessToast(false)}
               aria-label="Close"
@@ -697,6 +700,7 @@ const AccessControl = () => {
             boxShadow: "0 1px 3px rgba(0,0,0,0.1)"
           }}
           onClick={() => navigate("/dashboard")}
+
         >
           <FiArrowLeft />
         </Button>
@@ -725,7 +729,7 @@ const AccessControl = () => {
         </Nav.Item>
         {postsData && (
           <Nav.Item>
-            <Nav.Link eventKey="posts" className="d-flex align-items-center">
+            <Nav.Link eventKey="posts" className="d-flex align-items-center" disabled>
               <FiFileText className="me-2" /> Posts
             </Nav.Link>
           </Nav.Item>
@@ -841,7 +845,7 @@ const AccessControl = () => {
                       handleRoleFilter("national_manager");
                     }}
                     className="d-flex align-items-center"
-                    style={{ 
+                    style={{
                       whiteSpace: "normal",
                       textAlign: "left",
                       minHeight: "38px",
@@ -885,18 +889,18 @@ const AccessControl = () => {
 
           {/* Users table */}
           {!usersLoading && users.length > 0 && (
-            <Card className="shadow-sm" style={{  borderRadius: "0.25rem" }}>
+            <Card className="shadow-sm" style={{ borderRadius: "0.25rem" }}>
               <Card.Body>
-                <UsersTable 
+                <UsersTable
                   users={filteredUsers}
                   setUsers={setUsers}
                   getRoleBadgeColor={getRoleBadgeColor}
                   getRoleIcon={getRoleIcon}
                   roleDisplayMap={roleDisplayMap}
-                  title={activeRole === null ? "Regular Users" : 
-                         activeRole === "admin" ? "Admin Users" :
-                         activeRole === "all" ? "All Users" : 
-                         `${roleDisplayMap[activeRole] || activeRole} Users`}
+                  title={activeRole === null ? "Regular Users" :
+                    activeRole === "admin" ? "Admin Users" :
+                      activeRole === "all" ? "All Users" :
+                        `${roleDisplayMap[activeRole] || activeRole} Users`}
                   searchTerm={searchTerm}
                   onSearchChange={(e) => setSearchTerm(e.target.value)}
                   showUsersList={showUsersList}
@@ -907,52 +911,18 @@ const AccessControl = () => {
                   onAllAdminsClick={handleAllAdminsClick}
                   onAddUserClick={() => setShowCreateUserOrAdminModal(true)}
                 />
-                
+
                 {/* Pagination */}
                 {usersTotalPages > 1 && (
                   <div className="d-flex justify-content-center mt-4">
-                    <Pagination>
-                      <Pagination.First 
-                        onClick={() => handleUsersPageChange(1)} 
-                        disabled={currentUsersPage === 1}
-                      />
-                      <Pagination.Prev 
-                        onClick={() => handleUsersPageChange(currentUsersPage - 1)} 
-                        disabled={currentUsersPage === 1}
-                      />
-                      
-                      {Array.from({ length: Math.min(5, usersTotalPages) }).map((_, index) => {
-                        let pageNumber;
-                        if (usersTotalPages <= 5) {
-                          pageNumber = index + 1;
-                        } else if (currentUsersPage <= 3) {
-                          pageNumber = index + 1;
-                        } else if (currentUsersPage >= usersTotalPages - 2) {
-                          pageNumber = usersTotalPages - 4 + index;
-                        } else {
-                          pageNumber = currentUsersPage - 2 + index;
-                        }
-                        
-                        return (
-                          <Pagination.Item
-                            key={pageNumber}
-                            active={pageNumber === currentUsersPage}
-                            onClick={() => handleUsersPageChange(pageNumber)}
-                          >
-                            {pageNumber}
-                          </Pagination.Item>
-                        );
-                      })}
-                      
-                      <Pagination.Next 
-                        onClick={() => handleUsersPageChange(currentUsersPage + 1)} 
-                        disabled={currentUsersPage === usersTotalPages}
-                      />
-                      <Pagination.Last 
-                        onClick={() => handleUsersPageChange(usersTotalPages)} 
-                        disabled={currentUsersPage === usersTotalPages}
-                      />
-                    </Pagination>
+                    <CustomPagination
+                      currentPage={currentUsersPage}
+                      totalPages={usersTotalPages}
+                      totalItems={usersTotalCount}
+                      itemsPerPage={10}
+                      onPageChange={handleUsersPageChange}
+                      size="sm"
+                    />
                   </div>
                 )}
               </Card.Body>
@@ -1243,7 +1213,7 @@ const AccessControl = () => {
       )}
 
       {/* User Creation Modal */}
-      <CreateUserOrAdminModal 
+      <CreateUserOrAdminModal
         show={showCreateUserOrAdminModal}
         onHide={() => setShowCreateUserOrAdminModal(false)}
         handleCreateUser={handleCreateUser}

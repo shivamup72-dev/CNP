@@ -432,17 +432,13 @@ const UsersTable = ({
                             className="d-flex justify-content-center align-items-center"
                             style={{ width: "28px", height: "28px", padding: "0" }}
                             onClick={() => handleApproveUser(user.id)}
-                            disabled={approvingUserId === user.id || user.status === "approved"}
-                            title={user.status === "approved" ? "Already Approved" : "Approve User"}
+                            disabled
+                            title="Approve User"
                           >
-                            {approvingUserId === user.id ? (
-                              <span>...</span>
-                            ) : (
-                              <FaCheck style={{
-                                color: user.status === "approved" ? "var(--bs-success)" : "#6c757d",
-                                fontSize: "0.8rem"
-                              }} />
-                            )}
+                            <FaCheck style={{
+                              color: "#6c757d",
+                              fontSize: "0.8rem"
+                            }} />
                           </Button>
 
                           {/* Repost Button */}
@@ -452,18 +448,13 @@ const UsersTable = ({
                             className="d-flex justify-content-center align-items-center"
                             style={{ width: "28px", height: "28px", padding: "0" }}
                             onClick={() => handleRepost(user.id)}
-                            disabled={repostingUserId === user.id}
+                            disabled
                             title="Repost"
                           >
-                            {repostingUserId === user.id ? (
-                              <span>...</span>
-                            ) : (
-                              <FaShareSquare style={{
-                                color: user.status !== "approved" ? "#adb5bd" :
-                                  user.isReposted ? "var(--bs-success)" : "#0d6efd",
-                                fontSize: "0.8rem"
-                              }} />
-                            )}
+                            <FaShareSquare style={{
+                              color: "#adb5bd",
+                              fontSize: "0.8rem"
+                            }} />
                           </Button>
 
                           {/* Flag Button */}
@@ -473,26 +464,15 @@ const UsersTable = ({
                             className="d-flex justify-content-center align-items-center"
                             style={{ width: "28px", height: "28px", padding: "0" }}
                             onClick={() => handleFlag(user.id)}
-                            disabled={flaggingUserId === user.id}
-                            title={user.flagged ? "Unflag User" : "Flag User"}
+                            disabled
+                            title="Flag User"
                           >
-                            {flaggingUserId === user.id ? (
-                              <span>...</span>
-                            ) : user.flagged ? (
-                              <FaFlag
-                                style={{
-                                  color: "#fd7e14",
-                                  fontSize: "0.8rem"
-                                }}
-                              />
-                            ) : (
-                              <FiFlag
-                                style={{
-                                  color: "#6c757d",
-                                  fontSize: "0.8rem"
-                                }}
-                              />
-                            )}
+                            <FiFlag
+                              style={{
+                                color: "#6c757d",
+                                fontSize: "0.8rem"
+                              }}
+                            />
                           </Button>
 
                           {/* Edit Button */}
@@ -502,6 +482,7 @@ const UsersTable = ({
                             className="d-flex justify-content-center align-items-center"
                             style={{ width: "28px", height: "28px", padding: "0" }}
                             onClick={() => handleEdit(user.id)}
+                            disabled
                             title="Edit User"
                           >
                             <FiEdit style={{
@@ -517,6 +498,7 @@ const UsersTable = ({
                             className="d-flex justify-content-center align-items-center"
                             style={{ width: "28px", height: "28px", padding: "0" }}
                             onClick={() => handleDelete(user.id)}
+                            disabled
                             title="Delete User"
                           >
                             <FiTrash2 style={{

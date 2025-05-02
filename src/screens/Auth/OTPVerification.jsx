@@ -3,12 +3,13 @@ import { useNavigate } from "react-router-dom";
 import { Container, Card, Button, Row, Col } from "react-bootstrap";
 import colors from "../../assets/css/colors.js";
 
-const ForgotPassword = () => {
+const OTPVerification = () => {
   const navigate = useNavigate();
-  const [email, setEmail] = useState("");
+  const [otp, setOtp] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+  const [email, setEmail] = useState("");
 
   // Track window resize for responsive adjustments
   useEffect(() => {
@@ -17,9 +18,56 @@ const ForgotPassword = () => {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
+  // Get email from localStorage when component mounts and send OTP
+  useEffect(() => {
+    const resetEmail = localStorage.getItem("resetEmail");
+    if (resetEmail) {
+      setEmail(resetEmail);
+      // Send OTP when component mounts
+      sendOTP(resetEmail);
+    } else {
+      // If no email found, redirect back to forgot password
+      navigate("/forgot-password");
+    }
+  }, [navigate]);
+
+  // Function to send OTP
+  const sendOTP = async (email) => {
+    try {
+      const formData = new FormData();
+      formData.append('username', email);
+      formData.append('type', 'forgot');
+
+      const response = await fetch("https://stage.suniyenetajee.com/api/v1/account/otp-resend/", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await response.json();
+
+      if (data.status) {
+        setSuccess(data.message || "OTP has been sent to your email");
+        setError("");
+      } else {
+        // Show the specific error message from the backend
+        setError(data.message || "Failed to send OTP. Please try again.");
+        setSuccess("");
+        // If user is not registered, redirect back to forgot password
+        if (data.message === "There is no user register with this email.") {
+          setTimeout(() => {
+            navigate("/forgot-password");
+          }, 2000);
+        }
+      }
+    } catch (error) {
+      console.error('Send OTP Error:', error);
+      setError("Something went wrong. Please try again later.");
+      setSuccess("");
+    }
+  };
+
   // Responsive style calculations
   const getResponsiveStyles = () => {
-    // Mobile breakpoint
     const isMobile = windowWidth < 576;
 
     return {
@@ -47,16 +95,43 @@ const ForgotPassword = () => {
 
   const responsiveStyles = getResponsiveStyles();
 
-  const handleResetPassword = async () => {
-    if (!email) {
-      setError("Please enter your email address");
+  const handleVerifyOTP = async () => {
+    if (!otp) {
+      setError("Please enter the OTP");
       return;
     }
 
-    // Store email in localStorage for OTP verification
-    localStorage.setItem("resetEmail", email);
-    // Navigate to OTP verification screen
-    navigate("/verify-otp");
+    try {
+      const formData = new FormData();
+      formData.append('username', email);
+      formData.append('otp', otp);
+      formData.append('type', 'forgot');
+
+      const response = await fetch("https://stage.suniyenetajee.com/api/v1/account/verify-opt/", {
+        method: "PUT",
+        body: formData,
+      });
+
+      const data = await response.json();
+
+      if (data.message === "You have successfully verified the OTP.") {
+        setSuccess(data.message);
+        setError("");
+        // Navigate to reset password screen after successful verification
+        navigate("/reset-password");
+      } else {
+        setError(data.message || "Invalid OTP. Please try again.");
+        setSuccess("");
+      }
+    } catch (error) {
+      console.error('OTP Verification Error:', error);
+      setError("Something went wrong. Please try again later.");
+      setSuccess("");
+    }
+  };
+
+  const handleResendOTP = async () => {
+    await sendOTP(email);
   };
 
   return (
@@ -86,7 +161,7 @@ const ForgotPassword = () => {
                 fontSize: responsiveStyles.heading.fontSize,
               }}
             >
-              Reset Password
+              Verify OTP
             </h3>
 
             {error && (
@@ -120,14 +195,14 @@ const ForgotPassword = () => {
                 fontSize: responsiveStyles.error.fontSize,
               }}
             >
-              Enter your email address and we'll send you instructions on your email to reset your password.
+              Please enter the OTP sent to your email address.
             </p>
 
             <input
-              type="email"
-              placeholder="Email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              type="text"
+              placeholder="Enter OTP"
+              value={otp}
+              onChange={(e) => setOtp(e.target.value)}
               style={{
                 width: "100%",
                 padding: responsiveStyles.input.padding,
@@ -147,9 +222,9 @@ const ForgotPassword = () => {
                 fontSize: responsiveStyles.button.fontSize,
                 marginTop: 15
               }}
-              onClick={handleResetPassword}
+              onClick={handleVerifyOTP}
             >
-              Submit
+              Verify OTP
             </Button>
 
             <div 
@@ -160,9 +235,22 @@ const ForgotPassword = () => {
                 cursor: "pointer",
                 color: colors.btncolor
               }}
-              onClick={() => navigate("/")}
+              onClick={handleResendOTP}
             >
-              Back to Login
+              Resend OTP
+            </div>
+
+            <div 
+              style={{
+                textAlign: "center",
+                marginTop: "1rem",
+                fontSize: responsiveStyles.error.fontSize,
+                cursor: "pointer",
+                color: colors.btncolor
+              }}
+              onClick={() => navigate("/forgot-password")}
+            >
+              Back to Forgot Password
             </div>
           </Card>
         </Col>
@@ -171,4 +259,4 @@ const ForgotPassword = () => {
   );
 };
 
-export default ForgotPassword; 
+export default OTPVerification; 

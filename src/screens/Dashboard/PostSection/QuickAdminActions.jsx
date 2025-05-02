@@ -79,7 +79,7 @@ const QuickAdminActions = () => {
           </Col>
 
           {/* Districts Button */}
-          <Col xs={6} sm={6} md={6}>
+          {/* <Col xs={6} sm={6} md={6}>
             <BootstrapButton
               variant="light"
               className="w-100 py-2"
@@ -90,10 +90,10 @@ const QuickAdminActions = () => {
               <FaCity style={{ color: "#6f42c1", marginRight: "8px" }} />
               <span>Districts</span>
             </BootstrapButton>
-          </Col>
+          </Col> */}
 
           {/* Poll Data Button */}
-          <Col xs={6} sm={6} md={6}>
+          {/* <Col xs={6} sm={6} md={6}>
             <BootstrapButton
               variant="light"
               className="w-100 py-2"
@@ -105,7 +105,7 @@ const QuickAdminActions = () => {
               <span className="d-none d-sm-inline">Poll Data</span>
               <span className="d-inline d-sm-none">Polls</span>
             </BootstrapButton>
-          </Col>
+          </Col> */}
 
           {/* Edit Forms Button */}
           <Col xs={6} sm={6} md={6}>
