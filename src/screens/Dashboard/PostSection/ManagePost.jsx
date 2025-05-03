@@ -6,7 +6,7 @@ import { FiFlag } from "react-icons/fi";
 import toast from 'react-hot-toast';
 import PostTable from "./PostTable";
 import CustomPagination from "../../../components/common/CustomPagination";
-import Button from "../../../components/common/BootstrapButton";
+import BootstrapButton from "../../../components/common/BootstrapButton";
 import VoterCardTable from "../../../components/tables/VoterCardTable";
 import { useView } from "../../../context/ViewContext";
 
@@ -132,7 +132,7 @@ const ManagePost = ({
             </h5>
             {currentView === 'posts' && (
               <div className="d-flex gap-2">
-                <Button
+                <BootstrapButton
                   variant={selectedButton === 'New' ? "success" : "outline-success"}
                   size="sm"
                   className="px-3 new-post-btn"
@@ -149,8 +149,8 @@ const ManagePost = ({
                   onClick={() => handleButtonClick('New')}
                 >
                   New
-                </Button>
-                <Button
+                </BootstrapButton>
+                <BootstrapButton
                   variant={selectedButton === 'Old' ? "success" : "outline-success"}
                   size="sm"
                   className="px-3 new-post-btn"
@@ -167,8 +167,8 @@ const ManagePost = ({
                   onClick={() => handleButtonClick('Old')}
                 >
                   Old
-                </Button>
-                <Button
+                </BootstrapButton>
+                <BootstrapButton
                   variant="dark"
                   size="sm"
                   className="px-3 new-post-btn"
@@ -177,7 +177,7 @@ const ManagePost = ({
                   onMouseOut={(e) => e.currentTarget.style.opacity = "1.0"}
                 >
                   + New Post
-                </Button>
+                </BootstrapButton>
               </div>
             )}
           </div>
@@ -186,7 +186,7 @@ const ManagePost = ({
           {currentView === 'posts' && (
             <div className="d-flex flex-wrap justify-content-between align-items-center" style={sectionStyle}>
               <div className="d-flex flex-wrap align-items-center gap-2">
-                <Button
+                <BootstrapButton
                   variant={activeFilter === "all" ? "dark" : "outline-dark"}
                   size="sm"
                   className="filter-btn"
@@ -194,8 +194,8 @@ const ManagePost = ({
                 >
                   <FaListUl style={{ marginRight: "4px" }} />
                   All Posts
-                </Button>
-                <Button
+                </BootstrapButton>
+                <BootstrapButton
                   variant={activeFilter === "approved" ? "dark" : "outline-dark"}
                   size="sm"
                   className="filter-btn"
@@ -203,7 +203,7 @@ const ManagePost = ({
                 >
                   <FaCheck style={{ marginRight: "4px" }} />
                   Approved
-                </Button>
+                </BootstrapButton>
               </div>
               <div className="text-muted small">
                 Showing {filteredPosts().length} of {totalPosts} posts

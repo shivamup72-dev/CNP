@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Container, Card, Button, Row, Col } from "react-bootstrap";
+import { Container, Card, Row, Col } from "react-bootstrap";
 import colors from "../../assets/css/colors.js";
+import BootstrapButton from "../../components/common/BootstrapButton";
 
 const OTPVerification = () => {
   const navigate = useNavigate();
@@ -213,7 +214,7 @@ const OTPVerification = () => {
               }}
             />
             
-            <Button
+            <BootstrapButton
               style={{
                 backgroundColor: colors.btncolor,
                 borderColor: colors.btncolor,
@@ -225,7 +226,7 @@ const OTPVerification = () => {
               onClick={handleVerifyOTP}
             >
               Verify OTP
-            </Button>
+            </BootstrapButton>
 
             <div 
               style={{

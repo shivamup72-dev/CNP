@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Modal, Button, Form, Row, Col, Spinner, Alert } from 'react-bootstrap';
+import { Modal, Form, Row, Col, Spinner, Alert } from 'react-bootstrap';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import API from '../../api/endpoint';
+import BootstrapButton from '../common/BootstrapButton';
+import './CreateUserOrAdminModal.css';
 
 const CreateUserOrAdminModal = ({
   show = false,
@@ -363,17 +365,33 @@ const CreateUserOrAdminModal = ({
     <Modal show={show} onHide={onHide} centered size="lg" className="custom-modal">
       <Modal.Header style={{ position: 'relative', borderBottom: '1px solid #dee2e6', padding: '0.7rem' }}>
         <Modal.Title style={{ fontSize: '1.1rem' }}>Add New User or Admin</Modal.Title>
-        <button
-          type="button"
-          className="btn-close"
+        <BootstrapButton
+          variant="dark"
           onClick={onHide}
+          className="btn-close-custom"
           style={{
-            position: 'absolute', right: '1rem', top: '1rem', width: '20px', height: '20px',
-            backgroundColor: '#000', borderRadius: '4px', display: 'flex', alignItems: 'center',
-            justifyContent: 'center', border: 'none', cursor: 'pointer', padding: 0, opacity: 1
-          }}>
-          <span style={{ color: '#fff', fontSize: '1rem', lineHeight: 1 }}>×</span>
-        </button>
+            position: 'absolute',
+            right: '1rem',
+            top: '50%',
+            transform: 'translateY(-50%)',
+            width: '30px',
+            height: '20px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: 0
+          }}
+        >
+          <span style={{ 
+            color: '#fff', 
+            fontSize: '1rem', 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center',
+            lineHeight: '0.5',
+            marginTop: '-2px'
+          }}>×</span>
+        </BootstrapButton>
       </Modal.Header>
 
       <Modal.Body style={{ padding: '0.8rem', maxHeight: '70vh', overflowY: 'auto' }}>
@@ -738,30 +756,40 @@ const CreateUserOrAdminModal = ({
       </Modal.Body>
 
       <Modal.Footer style={{ padding: '0.5rem 0.8rem' }}>
-        <Button variant="secondary" onClick={onHide} size="sm">
+        <BootstrapButton 
+          variant="secondary" 
+          onClick={onHide} 
+          size="sm"
+        >
           Cancel
-        </Button>
-        <Button
-          variant="primary"
+        </BootstrapButton>
+        <BootstrapButton
+          variant="dark"
           onClick={handleCreateWithEffect}
           size="sm"
           className={isButtonActive ? 'pulse-effect' : ''}
-          style={{
-            backgroundColor: isButtonActive ? '#333' : '#000',
-            borderColor: '#000',
-            boxShadow: isButtonActive ? '0 0 8px rgba(0, 0, 0, 0.5)' : 'none',
-            transform: isButtonActive ? 'scale(0.98)' : 'scale(1)',
-            transition: 'all 0.2s ease'
-          }}
           disabled={isCreatingUser}
+          style={{
+            backgroundColor: '#000',
+            borderColor: '#000'
+          }}
         >
           {isCreatingUser ? (
             <>
-              <Spinner animation="border" size="sm" className="me-2" />
+              <Spinner
+                as="span"
+                animation="border"
+                size="sm"
+                role="status"
+                aria-hidden="true"
+                className="me-2"
+              />
               Creating...
             </>
-          ) : "Create"}
-        </Button>
+          ) : (
+            'Create User'
+          )}
+        </BootstrapButton>
       </Modal.Footer>
     </Modal>
   );

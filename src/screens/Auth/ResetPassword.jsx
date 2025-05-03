@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Container, Card, Button, Row, Col } from "react-bootstrap";
+import { Container, Card, Row, Col } from "react-bootstrap";
 import colors from "../../assets/css/colors.js";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
+import BootstrapButton from "../../components/common/BootstrapButton";
 
 const ResetPassword = () => {
   const navigate = useNavigate();
@@ -250,7 +251,7 @@ const ResetPassword = () => {
               </div>
             </div>
 
-            <Button
+            <BootstrapButton
               style={{
                 backgroundColor: colors.btncolor,
                 borderColor: colors.btncolor,
@@ -262,7 +263,7 @@ const ResetPassword = () => {
               onClick={handleResetPassword}
             >
               Reset Password
-            </Button>
+            </BootstrapButton>
 
             <div
               style={{

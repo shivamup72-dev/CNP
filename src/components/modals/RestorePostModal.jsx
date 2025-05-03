@@ -1,6 +1,8 @@
 import React from 'react';
-import { Modal, Button } from 'react-bootstrap';
+import { Modal } from 'react-bootstrap';
 import { FiRefreshCw } from 'react-icons/fi';
+import BootstrapButton from '../common/BootstrapButton';
+import './RestorePostModal.css';
 
 const RestorePostModal = ({
   show,
@@ -20,31 +22,28 @@ const RestorePostModal = ({
       onHide={handleClose}
       centered
       size="md"
+      className="custom-modal"
     >
       <Modal.Header style={{ position: 'relative', borderBottom: '1px solid #dee2e6', padding: '0.8rem' }}>
         <Modal.Title>Restore Post</Modal.Title>
-        <button
-          type="button"
-          className="btn-close"
+        <BootstrapButton
+          variant="dark"
           onClick={handleClose}
+          className="btn-close-custom"
           style={{
             position: 'absolute',
             right: '1rem',
-            top: '1.3rem',
-            width: '24px',
-            height: '24px',
-            backgroundColor: '#000',
-            borderRadius: '4px',
+            top: '1rem',
+            width: '30px',
+            height: '20px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            border: '2px solid red',
-            cursor: 'pointer',
-            opacity: 1.0
+            padding: 0
           }}
         >
-          <span style={{ color: 'white', fontSize: '1.2rem' }}>×</span>
-        </button>
+          <span style={{ color: '#fff', fontSize: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>×</span>
+        </BootstrapButton>
       </Modal.Header>
       <Modal.Body>
         <p>
@@ -60,16 +59,16 @@ const RestorePostModal = ({
         )}
       </Modal.Body>
       <Modal.Footer>
-        <Button variant="secondary" onClick={handleClose}>
+        <BootstrapButton variant="secondary" onClick={handleClose}>
           Cancel
-        </Button>
-        <Button
+        </BootstrapButton>
+        <BootstrapButton
           variant="success"
           onClick={onConfirmRestore}
           className="d-flex align-items-center"
         >
           <FiRefreshCw className="me-2" /> Restore Post
-        </Button>
+        </BootstrapButton>
       </Modal.Footer>
     </Modal>
   );

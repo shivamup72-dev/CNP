@@ -1,5 +1,6 @@
 import { toast } from 'react-hot-toast';
 import { FiCheckCircle, FiAlertCircle, FiInfo, FiX } from 'react-icons/fi';
+import BootstrapButton from './BootstrapButton';
 
 // Custom toast styles
 const toastStyles = {
@@ -52,19 +53,18 @@ export const showSuccessToast = (message, duration = 3000) => {
             {toastStyles.success.icon}
           </span>
           <span style={{ fontWeight: '500' }}>{message}</span>
-          <button
+          <BootstrapButton
+            variant="link"
             onClick={() => toast.dismiss(t.id)}
             style={{
               marginLeft: 'auto',
-              background: 'transparent',
-              border: 'none',
+              padding: '4px',
               color: 'white',
-              cursor: 'pointer',
-              padding: '4px'
+              minWidth: 'auto'
             }}
           >
             <FiX size={14} />
-          </button>
+          </BootstrapButton>
         </div>
       </div>
     ),
@@ -88,19 +88,18 @@ export const showErrorToast = (message, duration = 4000) => {
             {toastStyles.error.icon}
           </span>
           <span style={{ fontWeight: '500' }}>{message}</span>
-          <button
+          <BootstrapButton
+            variant="link"
             onClick={() => toast.dismiss(t.id)}
             style={{
               marginLeft: 'auto',
-              background: 'transparent',
-              border: 'none',
+              padding: '4px',
               color: 'white',
-              cursor: 'pointer',
-              padding: '4px'
+              minWidth: 'auto'
             }}
           >
             <FiX size={14} />
-          </button>
+          </BootstrapButton>
         </div>
       </div>
     ),
@@ -124,19 +123,18 @@ export const showInfoToast = (message, duration = 3000) => {
             {toastStyles.info.icon}
           </span>
           <span style={{ fontWeight: '500' }}>{message}</span>
-          <button
+          <BootstrapButton
+            variant="link"
             onClick={() => toast.dismiss(t.id)}
             style={{
               marginLeft: 'auto',
-              background: 'transparent',
-              border: 'none',
+              padding: '4px',
               color: 'white',
-              cursor: 'pointer',
-              padding: '4px'
+              minWidth: 'auto'
             }}
           >
             <FiX size={14} />
-          </button>
+          </BootstrapButton>
         </div>
       </div>
     ),

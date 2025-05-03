@@ -2,6 +2,8 @@ import React from 'react';
 import { Modal, Row, Col } from 'react-bootstrap';
 import { formatDate } from '../../utils/DateUtility';
 import { capitalizeWords } from '../../utils/Utility';
+import BootstrapButton from '../common/BootstrapButton';
+import './VoterCardDetailsModal.css';
 
 const VoterCardDetailsModal = ({ show, onHide, voterCard }) => {
   if (!voterCard) return null;
@@ -10,17 +12,24 @@ const VoterCardDetailsModal = ({ show, onHide, voterCard }) => {
     <Modal show={show} onHide={onHide} centered size="lg" className="custom-modal">
       <Modal.Header style={{ position: 'relative', borderBottom: '1px solid #dee2e6', padding: '0.7rem' }}>
         <Modal.Title style={{ fontSize: '1.1rem' }}>Voter Card Details</Modal.Title>
-        <button
-          type="button"
-          className="btn-close"
+        <BootstrapButton
+          variant="dark"
           onClick={onHide}
+          className="btn-close-custom"
           style={{
-            position: 'absolute', right: '1rem', top: '1rem', width: '20px', height: '20px',
-            backgroundColor: '#000', borderRadius: '4px', display: 'flex', alignItems: 'center',
-            justifyContent: 'center', border: 'none', cursor: 'pointer', padding: 0, opacity: 1
-          }}>
+            position: 'absolute',
+            right: '1rem',
+            top: '1rem',
+            width: '30px',
+            height: '20px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: 0
+          }}
+        >
           <span style={{ color: '#fff', fontSize: '1rem', lineHeight: 1 }}>×</span>
-        </button>
+        </BootstrapButton>
       </Modal.Header>
 
       <Modal.Body style={{ padding: '1rem' }}>

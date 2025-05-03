@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Container, Card, Button, Row, Col, Form } from "react-bootstrap";
+import { Container, Card, Row, Col, Form } from "react-bootstrap";
 import colors from "../../assets/css/colors.js";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { formatName } from "../../utils/Utility.js";
+import BootstrapButton from "../../components/common/BootstrapButton";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -297,7 +298,7 @@ const Login = () => {
               </div>
             </div>
 
-            <Button
+            <BootstrapButton
               style={{
                 backgroundColor: colors.btncolor,
                 borderColor: colors.btncolor,
@@ -309,7 +310,7 @@ const Login = () => {
               onClick={handleLogin}
             >
               Login
-            </Button>
+            </BootstrapButton>
           </Card>
         </Col>
       </Row>

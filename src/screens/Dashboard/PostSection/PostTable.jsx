@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Table, Spinner, Badge } from "react-bootstrap";
 import { FaCheck, FaShareSquare, FaFlag, FaTrashRestore } from "react-icons/fa";
 import { FiTrash, FiFlag, FiEdit } from "react-icons/fi";
-import Button from "../../../components/common/BootstrapButton";
+import BootstrapButton from "../../../components/common/BootstrapButton";
 import { formatDate } from "../../../utils/DateUtility";
 import { showSuccessToast } from "../../../components/common/Toast.jsx";
 
@@ -281,7 +281,7 @@ const PostTable = ({
                                     </td>
                                     <td style={lastCellStyle}>
                                         <div className="d-flex justify-content-center align-items-center gap-2">
-                                            <Button
+                                            <BootstrapButton
                                                 variant="light"
                                                 size="sm"
                                                 className="d-flex justify-content-center align-items-center"
@@ -298,8 +298,8 @@ const PostTable = ({
                                                         fontSize: "0.8rem"
                                                     }} />
                                                 )}
-                                            </Button>
-                                            <Button
+                                            </BootstrapButton>
+                                            <BootstrapButton
                                                 variant="light"
                                                 size="sm"
                                                 className="d-flex justify-content-center align-items-center"
@@ -328,8 +328,8 @@ const PostTable = ({
                                                         fontSize: "0.8rem"
                                                     }} />
                                                 )}
-                                            </Button>
-                                            <Button
+                                            </BootstrapButton>
+                                            <BootstrapButton
                                                 variant="light"
                                                 size="sm"
                                                 className="d-flex justify-content-center align-items-center"
@@ -355,9 +355,9 @@ const PostTable = ({
                                                         }}
                                                     />
                                                 )}
-                                            </Button>
+                                            </BootstrapButton>
                                             {/* Edit button for all posts, enabled only for Admin posts */}
-                                            <Button
+                                            <BootstrapButton
                                                 variant={isAdminPost(post) ? "dark" : "secondary"}
                                                 size="sm"
                                                 className="d-flex justify-content-center align-items-center"
@@ -382,8 +382,8 @@ const PostTable = ({
                                                     color: "white",
                                                     fontSize: "0.8rem"
                                                 }} />
-                                            </Button>
-                                            <Button
+                                            </BootstrapButton>
+                                            <BootstrapButton
                                                 variant={post.isDeleted || post.post_status === "rejected" ? "success" : "danger"}
                                                 size="sm"
                                                 className="d-flex justify-content-center align-items-center"
@@ -396,7 +396,7 @@ const PostTable = ({
                                                 ) : (
                                                     <FiTrash style={{ fontSize: "0.8rem" }} />
                                                 )}
-                                            </Button>
+                                            </BootstrapButton>
                                         </div>
                                     </td>
                                 </tr>

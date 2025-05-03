@@ -4,6 +4,8 @@ import { FiEdit, FiFlag, FiTrash, FiCheck, FiPlus, FiX } from 'react-icons/fi';
 import { formatDate } from '../../utils/DateUtility';
 import API from '../../api/endpoint';
 import { showSuccessToast } from '../../components/common/Toast.jsx';
+import BootstrapButton from '../common/BootstrapButton';
+import './PostDetailModal.css';
 
 const PostDetailModal = ({
   show = false,
@@ -725,22 +727,33 @@ const PostDetailModal = ({
     >
       <Modal.Header style={{ position: 'relative', borderBottom: 'none', padding: '0.8rem' }}>
         <Modal.Title>{isEditMode ? "Edit Post" : "Post Details"}</Modal.Title>
-        <button
-          type="button"
-          className="btn-close"
+        <BootstrapButton
+          variant="dark"
           onClick={closeModal}
+          className="btn-close-custom"
           style={{
-            position: 'absolute', right: '1rem', top: '1.3rem', width: '24px', height: '24px',
-            backgroundColor: '#000', borderRadius: '4px', display: 'flex', alignItems: 'center',
-            justifyContent: 'center', border: 'none', cursor: 'pointer', padding: 0, opacity: 1
+            position: 'absolute',
+            right: '1rem',
+            top: '50%',
+            transform: 'translateY(-50%)',
+            width: '30px',
+            height: '20px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: 0
           }}
         >
           <span style={{
-            color: 'white', fontSize: '1.2rem', lineHeight: 1,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            width: '100%', height: '100%'
+            color: '#fff',
+            fontSize: '1rem',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            lineHeight: '0.5',
+            marginTop: '-2px'
           }}>×</span>
-        </button>
+        </BootstrapButton>
       </Modal.Header>
 
       <Modal.Body style={{ padding: '1rem' }}>
@@ -934,14 +947,14 @@ const PostDetailModal = ({
                                     className="img-thumbnail" 
                                     style={{ width: '100%', height: '80px', objectFit: 'cover' }}
                                   />
-                                  <button
-                                    type="button"
-                                    className="btn btn-sm btn-danger position-absolute"
-                                    style={{ top: '-5px', right: '-5px', padding: '0.1rem 0.3rem' }}
+                                  <BootstrapButton
+                                    variant="danger"
                                     onClick={() => removeFile(index)}
+                                    className="position-absolute image-action-button"
+                                    style={{ top: '-5px', right: '-5px' }}
                                   >
                                     <FiX size={14} />
-                                  </button>
+                                  </BootstrapButton>
                                   <small className="d-block text-truncate" style={{ fontSize: '0.7rem' }}>
                                     {Math.round(file.size / 1024)} KB
                                   </small>
@@ -953,25 +966,25 @@ const PostDetailModal = ({
                         
                         <div className="button-group d-flex justify-content-end">
                           {previewUrls.length > 0 ? (
-                            <button
-                              className="btn btn-secondary me-2"
+                            <BootstrapButton
+                              variant="secondary"
+                              className="me-2"
                               onClick={() => {
                                 setSelectedFiles([]);
                                 setPreviewUrls([]);
                               }}
                             >
                               Clear All Selection
-                            </button>
+                            </BootstrapButton>
                           ) : (
-                            <button
-                              className="btn btn-primary"
+                            <BootstrapButton
+                              variant="primary"
                               onClick={() => {
-                                // Trigger the file input click
                                 document.getElementById('multipleFilesInput').click();
                               }}
                             >
                               Select Images
-                            </button>
+                            </BootstrapButton>
                           )}
                         </div>
                       </div>
@@ -1010,14 +1023,14 @@ const PostDetailModal = ({
                                     className="img-thumbnail" 
                                     style={{ width: '100%', height: '80px', objectFit: 'cover' }}
                                   />
-                                  <button
-                                    type="button"
-                                    className="btn btn-sm btn-danger position-absolute"
-                                    style={{ top: '-5px', right: '-5px', padding: '0.1rem 0.3rem' }}
+                                  <BootstrapButton
+                                    variant="danger"
                                     onClick={() => removeFile(index)}
+                                    className="position-absolute image-action-button"
+                                    style={{ top: '-5px', right: '-5px' }}
                                   >
                                     <FiX size={14} />
-                                  </button>
+                                  </BootstrapButton>
                                   <small className="d-block text-truncate" style={{ fontSize: '0.7rem' }}>
                                     {Math.round(file.size / 1024)} KB
                                   </small>
@@ -1029,25 +1042,24 @@ const PostDetailModal = ({
                         
                         <div className="button-group d-flex justify-content-center gap-2">
                           {previewUrls.length > 0 ? (
-                            <button
-                              className="btn btn-secondary"
+                            <BootstrapButton
+                              variant="secondary"
                               onClick={() => {
                                 setSelectedFiles([]);
                                 setPreviewUrls([]);
                               }}
                             >
                               Clear All Selection
-                            </button>
+                            </BootstrapButton>
                           ) : (
-                            <button
-                              className="btn btn-primary"
+                            <BootstrapButton
+                              variant="primary"
                               onClick={() => {
-                                // Trigger the file input click
                                 document.getElementById('multipleFilesInputNoImage').click();
                               }}
                             >
                               Select Images
-                            </button>
+                            </BootstrapButton>
                           )}
                         </div>
                       </div>
@@ -1073,7 +1085,7 @@ const PostDetailModal = ({
                 </>
               )}
 
-              <div className="d-flex justify-content-between align-items-start mt-4 pt-3">
+              <div className="d-flex justify-content-between align-items-center mt-4 pt-3">
                 <div className="d-flex">
                   <div style={{
                     width: "40px", height: "40px", borderRadius: "50%", backgroundColor: "#e9ecef",
@@ -1096,16 +1108,31 @@ const PostDetailModal = ({
                     </div>
                   </div>
                 </div>
-                <div>
-                  <Button variant="outline-success" size="sm" className="me-1" title="Approve"><FiCheck /></Button>
-                  <Button variant="outline-warning" size="sm" className="me-1" title="Flag"><FiFlag /></Button>
+                <div className="d-flex align-items-center">
+                  <BootstrapButton 
+                    variant="outline-success" 
+                    size="sm" 
+                    className="me-1" 
+                    title="Approve"
+                    style={{ minWidth: '38px', padding: '6px 12px' }}
+                  >
+                    <FiCheck />
+                  </BootstrapButton>
+                  <BootstrapButton 
+                    variant="outline-warning" 
+                    size="sm" 
+                    className="me-1" 
+                    title="Flag"
+                    style={{ minWidth: '35px', padding: '6px 12px' }}
+                  >
+                    <FiFlag />
+                  </BootstrapButton>
                   {(isAdminPost(selectedPost) || isUserAdmin(selectedPost)) && (
-                    <Button 
+                    <BootstrapButton 
                       variant="outline-dark" 
                       size="sm" 
                       className="me-1" 
                       onClick={() => {
-                        // Initialize both editedPost states
                         const postCopy = JSON.parse(JSON.stringify(selectedPost));
                         setLocalEditedPost(postCopy);
                         if (typeof setEditedPost === 'function') {
@@ -1115,11 +1142,19 @@ const PostDetailModal = ({
                         enableEditMode();
                       }} 
                       title="Edit"
+                      style={{ minWidth: '35px', padding: '6px 12px' }}
                     >
                       <FiEdit />
-                    </Button>
+                    </BootstrapButton>
                   )}
-                  <Button variant="outline-danger" size="sm" className="me-1" title="Delete"><FiTrash /></Button>
+                  <BootstrapButton 
+                    variant="outline-danger" 
+                    size="sm" 
+                    title="Delete"
+                    style={{ minWidth: '35px', padding: '6px 12px' }}
+                  >
+                    <FiTrash />
+                  </BootstrapButton>
                 </div>
               </div>
             </>
@@ -1131,28 +1166,27 @@ const PostDetailModal = ({
         {isEditMode ? (
           isUserAdmin(selectedPost) ? (
           <>
-            <Button variant="secondary" onClick={cancelEditing}>Cancel</Button>
-              <Button 
-                variant="primary" 
-                onClick={() => {
-                  console.log("Save button clicked. editedPost:", editedPost);
-                  handleSafeEditSave();
-                }}
-                style={{ backgroundColor: '#000', borderColor: '#000' }}
-              >
-                Save Changes
-              </Button>
-            </>
+            <BootstrapButton variant="secondary" onClick={cancelEditing}>Cancel</BootstrapButton>
+            <BootstrapButton 
+              variant="dark" 
+              onClick={() => {
+                console.log("Save button clicked. editedPost:", editedPost);
+                handleSafeEditSave();
+              }}
+            >
+              Save Changes
+            </BootstrapButton>
+          </>
           ) : (
-            <Button variant="secondary" onClick={cancelEditing}>Back</Button>
+            <BootstrapButton variant="secondary" onClick={cancelEditing}>Back</BootstrapButton>
           )
         ) : (
           <>
             {isUserAdmin(selectedPost) ? (
               <>
-                <Button variant="secondary" onClick={onHide}>Cancel</Button>
-                <Button 
-                  variant="primary" 
+                <BootstrapButton variant="secondary" onClick={onHide}>Cancel</BootstrapButton>
+                <BootstrapButton 
+                  variant="dark" 
                   onClick={() => {
                     console.log("Save button clicked. editedPost:", editedPost);
                     if (!editedPost && selectedPost) {
@@ -1168,13 +1202,12 @@ const PostDetailModal = ({
                       handleSafeEditSave();
                     }
                   }}
-                  style={{ backgroundColor: '#000', borderColor: '#000' }}
                 >
                   Save Changes
-                </Button>
-          </>
-        ) : (
-          <Button variant="secondary" onClick={onHide} style={{ backgroundColor: '#000', borderColor: '#000' }}>Close</Button>
+                </BootstrapButton>
+              </>
+            ) : (
+              <BootstrapButton variant="dark" onClick={onHide}>Close</BootstrapButton>
             )}
           </>
         )}

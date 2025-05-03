@@ -1,6 +1,6 @@
 // src/screens/Demo.jsx
 import React from "react";
-import { Button } from "react-bootstrap";
+import BootstrapButton from "../components/common/BootstrapButton";
 
 const Demo = () => {
   const handleClick = () => {
@@ -15,9 +15,9 @@ const Demo = () => {
       height: "100vh",
       backgroundColor: "#f8f9fa"
     }}>
-      <Button onClick={handleClick} variant="primary" size="lg">
+      <BootstrapButton onClick={handleClick} variant="primary" size="lg">
         Click Me
-      </Button>
+      </BootstrapButton>
     </div>
   );
 };

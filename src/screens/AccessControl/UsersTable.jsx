@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { Table, Badge, Button, Form, InputGroup, Row, Col, Spinner } from 'react-bootstrap';
+import { Table, Badge, Form, InputGroup, Row, Col, Spinner } from 'react-bootstrap';
 import { FiEye, FiEdit, FiTrash2, FiSearch, FiUser, FiFlag, FiUsers, FiUserCheck, FiUserPlus } from 'react-icons/fi';
 import { FaCheck, FaShareSquare, FaFlag } from 'react-icons/fa';
 import UserDetailsModal from '../../components/modals/UserDetailsModal';
 import { formatDate } from '../../utils/DateUtility';
+import BootstrapButton from '../../components/common/BootstrapButton';
 
 const UsersTable = ({ 
   users, 
@@ -217,10 +218,10 @@ const UsersTable = ({
   return (
     <div>
       <Row className="mb-3 align-items-center">
-        <Col md={4}>
+        <Col md={3}>
           <h5 className="fw-bold mb-0">{title}</h5>
         </Col>
-        <Col md={4} className="d-flex justify-content-center">
+        <Col md={4}>
           <input
             type="text"
             className="form-control"
@@ -230,66 +231,70 @@ const UsersTable = ({
             style={{ maxWidth: "300px" }}
           />
         </Col>
-        <Col md={4} className="d-flex flex-column gap-2 align-items-end">
-          <div className="d-flex gap-2">
-            {isLoadingUsers ? (
-              <Button 
-                variant="outline-dark" 
-                className="d-flex align-items-center"
-                size="sm"
-                disabled
-              >
-                <Spinner animation="border" size="sm" className="me-1" />
-                <span>Loading...</span>
-              </Button>
-            ) : (
-              <Button
-                variant={showUsersList ? "dark" : "outline-dark"}
-                className="d-flex align-items-center"
-                size="sm"
-                onClick={onAllUsersClick}
-                disabled={isLoadingAdmins}
-              >
-                <FiUsers className="me-1" /> All Regular Users
-              </Button>
-            )}
-            
-            {isLoadingAdmins ? (
-              <Button 
-                variant="outline-dark" 
-                className="d-flex align-items-center"
-                size="sm"
-                disabled
-              >
-                <Spinner animation="border" size="sm" className="me-1" />
-                <span>Loading...</span>
-              </Button>
-            ) : (
-              <Button
-                variant={showAdminsList ? "dark" : "outline-dark"}
-                className="d-flex align-items-center"
-                size="sm"
-                onClick={onAllAdminsClick}
-                disabled={isLoadingUsers}
-              >
-                <FiUserCheck className="me-1" /> All Admins
-              </Button>
-            )}
-          </div>
+        <Col md={5} className="d-flex justify-content-end gap-2">
+          {isLoadingUsers ? (
+            <BootstrapButton 
+              variant="outline-dark" 
+              className="d-flex align-items-center"
+              size="sm"
+              disabled
+            >
+              <Spinner animation="border" size="sm" className="me-1" />
+              <span>Loading...</span>
+            </BootstrapButton>
+          ) : (
+            <BootstrapButton
+              variant={showUsersList ? "dark" : "outline-dark"}
+              className="d-flex align-items-center"
+              size="sm"
+              onClick={onAllUsersClick}
+              disabled={isLoadingAdmins}
+            >
+              <FiUsers className="me-1" /> All Regular Users
+            </BootstrapButton>
+          )}
           
-          <Button
+          {isLoadingAdmins ? (
+            <BootstrapButton 
+              variant="outline-dark" 
+              className="d-flex align-items-center"
+              size="sm"
+              disabled
+            >
+              <Spinner animation="border" size="sm" className="me-1" />
+              <span>Loading...</span>
+            </BootstrapButton>
+          ) : (
+            <BootstrapButton
+              variant={showAdminsList ? "dark" : "outline-dark"}
+              className="d-flex align-items-center"
+              size="sm"
+              onClick={onAllAdminsClick}
+              disabled={isLoadingUsers}
+            >
+              <FiUserCheck className="me-1" /> All Admins
+            </BootstrapButton>
+          )}
+        </Col>
+      </Row>
+
+      <Row className="mb-3">
+        <Col className="d-flex justify-content-end">
+          <BootstrapButton
             variant="dark"
-            className="d-flex align-items-center"
+            className="d-flex align-items-center justify-content-center"
             size="sm"
             style={{ 
               backgroundColor: "#000", 
               borderColor: "#000",
-              padding: "0.5rem 1rem"
+              padding: "0.5rem 2.5rem",
+              minWidth: "250px",
+              width: "fit-content"
             }}
             onClick={onAddUserClick}
           >
-            <FiUserPlus className="me-1" /> Add New User or Admin
-          </Button>
+            <FiUserPlus className="me-2" /> Add New User or Admin
+          </BootstrapButton>
         </Col>
       </Row>
       
@@ -426,7 +431,7 @@ const UsersTable = ({
                       {user.role && user.role !== "user" ? (
                         <>
                           {/* Approve Button */}
-                          <Button
+                          <BootstrapButton
                             variant="light"
                             size="sm"
                             className="d-flex justify-content-center align-items-center"
@@ -439,10 +444,10 @@ const UsersTable = ({
                               color: "#6c757d",
                               fontSize: "0.8rem"
                             }} />
-                          </Button>
+                          </BootstrapButton>
 
                           {/* Repost Button */}
-                          <Button
+                          <BootstrapButton
                             variant="light"
                             size="sm"
                             className="d-flex justify-content-center align-items-center"
@@ -455,10 +460,10 @@ const UsersTable = ({
                               color: "#adb5bd",
                               fontSize: "0.8rem"
                             }} />
-                          </Button>
+                          </BootstrapButton>
 
                           {/* Flag Button */}
-                          <Button
+                          <BootstrapButton
                             variant="light"
                             size="sm"
                             className="d-flex justify-content-center align-items-center"
@@ -473,10 +478,10 @@ const UsersTable = ({
                                 fontSize: "0.8rem"
                               }}
                             />
-                          </Button>
+                          </BootstrapButton>
 
                           {/* Edit Button */}
-                          <Button
+                          <BootstrapButton
                             variant="light"
                             size="sm"
                             className="d-flex justify-content-center align-items-center"
@@ -489,10 +494,10 @@ const UsersTable = ({
                               color: "#6c757d",
                               fontSize: "0.8rem"
                             }} />
-                          </Button>
+                          </BootstrapButton>
 
                           {/* Delete Button */}
-                          <Button
+                          <BootstrapButton
                             variant="light"
                             size="sm"
                             className="d-flex justify-content-center align-items-center"
@@ -505,7 +510,7 @@ const UsersTable = ({
                               color: "#6c757d",
                               fontSize: "0.8rem"
                             }} />
-                          </Button>
+                          </BootstrapButton>
                         </>
                       ) : (
                         <span className="text-muted" style={{ fontSize: "0.85rem" }}>

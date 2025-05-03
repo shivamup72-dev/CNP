@@ -3,6 +3,7 @@ import { Modal, Button, Spinner } from 'react-bootstrap';
 import API from '../../api/endpoint';
 import { showSuccessToast, showErrorToast } from '../common/Toast.jsx';
 import { FiX } from 'react-icons/fi';
+import BootstrapButton from '../common/BootstrapButton';
 
 const CreatePostModal = ({
   show = false,
@@ -196,17 +197,21 @@ const CreatePostModal = ({
     <Modal show={show} onHide={resetForm} centered size="md" className="custom-modal">
       <Modal.Header style={{ position: 'relative', borderBottom: '1px solid #dee2e6', padding: '0.7rem' }}>
         <Modal.Title style={{ fontSize: '1.1rem' }}>Create New Post</Modal.Title>
-        <button
-          type="button"
-          className="btn-close"
+        <BootstrapButton
+          variant="link"
           onClick={resetForm}
           style={{
-            position: 'absolute', right: '1rem', top: '1rem', width: '20px', height: '20px',
-            backgroundColor: '#000', borderRadius: '4px', display: 'flex', alignItems: 'center',
-            justifyContent: 'center', border: 'none', cursor: 'pointer', padding: 0, opacity: 1
-          }}>
-          <span style={{ color: '#fff', fontSize: '1rem', lineHeight: 1 }}>×</span>
-        </button>
+            position: 'absolute',
+            right: '0.5rem',
+            top: '50%',
+            transform: 'translateY(-50%)',
+            padding: '0.25rem',
+            color: '#6c757d',
+            minWidth: 'auto'
+          }}
+        >
+          <FiX size={20} />
+        </BootstrapButton>
       </Modal.Header>
 
       <Modal.Body style={{ padding: '0.8rem' }}>
@@ -269,15 +274,25 @@ const CreatePostModal = ({
                         <span className="small text-muted">{item.size}</span>
                       </div>
                     )}
-                    <button 
-                      type="button"
-                      className="position-absolute top-0 end-0 btn btn-sm btn-danger p-0 d-flex justify-content-center align-items-center"
-                      style={{ width: '20px', height: '20px', borderRadius: '50%' }}
+                    <BootstrapButton
+                      variant="danger"
                       onClick={() => removeMediaFile(index)}
+                      style={{
+                        position: 'absolute',
+                        top: '0',
+                        right: '0',
+                        width: '20px',
+                        height: '20px',
+                        padding: '0',
+                        borderRadius: '50%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                      }}
                       disabled={isSubmitting}
                     >
                       <FiX size={14} />
-                    </button>
+                    </BootstrapButton>
                   </div>
                 ))}
               </div>
@@ -287,16 +302,20 @@ const CreatePostModal = ({
       </Modal.Body>
 
       <Modal.Footer style={{ padding: '0.5rem 0.8rem' }}>
-        <Button 
-          variant="secondary" 
-          onClick={resetForm} 
-          size="sm" 
-          style={{ backgroundColor: '#6c757d', borderColor: '#6c757d' }}
+        <BootstrapButton
+          variant="secondary"
+          onClick={resetForm}
+          size="sm"
+          style={{ 
+            backgroundColor: '#6c757d', 
+            borderColor: '#6c757d',
+            padding: '0.25rem 1rem'
+          }}
           disabled={isSubmitting}
         >
           Cancel
-        </Button>
-        <Button
+        </BootstrapButton>
+        <BootstrapButton
           variant="primary"
           onClick={handleCreateWithEffect}
           size="sm"
@@ -306,7 +325,8 @@ const CreatePostModal = ({
             borderColor: '#000',
             boxShadow: isButtonActive ? '0 0 8px rgba(0, 0, 0, 0.5)' : 'none',
             transform: isButtonActive ? 'scale(0.98)' : 'scale(1)',
-            transition: 'all 0.2s ease'
+            transition: 'all 0.2s ease',
+            padding: '0.25rem 1rem'
           }}
           disabled={isSubmitting}
         >
@@ -323,7 +343,7 @@ const CreatePostModal = ({
               Creating...
             </>
           ) : 'Create Post'}
-        </Button>
+        </BootstrapButton>
       </Modal.Footer>
     </Modal>
   );

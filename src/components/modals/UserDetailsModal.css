@@ -1,0 +1,15 @@
+.custom-modal .btn-close-custom {
+  border-radius: 4px !important;
+  opacity: 1 !important;
+  background-color: #000 !important;
+  border: none !important;
+}
+
+.custom-modal .btn-close-custom:focus {
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+.custom-modal .btn-close-custom:hover {
+  opacity: 0.8 !important;
+} 

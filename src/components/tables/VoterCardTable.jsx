@@ -6,6 +6,7 @@ import { capitalizeWords } from "../../utils/Utility";
 import { FaCheck } from "react-icons/fa";
 import { showSuccessToast, showErrorToast } from "../../components/common/Toast.jsx";
 import VoterCardDetailsModal from "../modals/VoterCardDetailsModal";
+import BootstrapButton from "../../components/common/BootstrapButton";
 
 const VoterCardTable = () => {
   const [voterCards, setVoterCards] = useState([]);
@@ -205,7 +206,7 @@ const VoterCardTable = () => {
                   <td style={lastCellStyle}>
                     <div className="d-flex justify-content-center">
                       {card.approval_status === 'pending' ? (
-                        <Button
+                        <BootstrapButton
                           variant="light"
                           size="sm"
                           className="p-0"
@@ -219,9 +220,9 @@ const VoterCardTable = () => {
                           ) : (
                             <FaCheck style={{ color: "#6c757d", fontSize: "0.8rem" }} />
                           )}
-                        </Button>
+                        </BootstrapButton>
                       ) : (
-                        <Button
+                        <BootstrapButton
                           variant="light"
                           size="sm"
                           className="p-0"
@@ -229,7 +230,7 @@ const VoterCardTable = () => {
                           disabled
                         >
                           <FaCheck style={{ color: "var(--bs-success)", fontSize: "0.8rem" }} />
-                        </Button>
+                        </BootstrapButton>
                       )}
                     </div>
                   </td>

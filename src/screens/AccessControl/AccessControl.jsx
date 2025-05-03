@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { Container, Row, Col, Card, Button, Table, Badge, Tabs, Tab, Nav, Alert, Pagination, Spinner, Toast, ToastContainer } from "react-bootstrap";
+import { Container, Row, Col, Card, Table, Badge, Tabs, Tab, Nav, Alert, Pagination, Spinner, Toast, ToastContainer } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 import {
   FiUsers,
@@ -26,6 +26,7 @@ import { formatDate } from "../../utils/DateUtility";
 import CreateUserOrAdminModal from '../../components/modals/CreateUserOrAdminModal';
 import UsersTable from './UsersTable';
 import CustomPagination from '../../components/common/CustomPagination';
+import BootstrapButton from '../../components/common/BootstrapButton';
 
 const AccessControl = () => {
   const navigate = useNavigate();
@@ -677,20 +678,20 @@ const AccessControl = () => {
               <FiCheckCircle size={12} />
             </span>
             <span style={{ color: 'white', fontWeight: '500' }}>{userCreationSuccess}</span>
-            <button
-              type="button"
+            <BootstrapButton
+              variant="link"
               className="btn-close btn-close-white ms-auto"
               style={{ fontSize: '0.6rem', padding: '4px', marginLeft: '8px' }}
               onClick={() => setShowSuccessToast(false)}
               aria-label="Close"
-            ></button>
+            />
           </div>
         </Toast>
       </ToastContainer>
 
       {/* Header with back button */}
       <div className="d-flex align-items-center mb-4">
-        <Button
+        <BootstrapButton
           variant="light"
           className="me-3 rounded-circle p-2 d-flex align-items-center justify-content-center"
           style={{
@@ -700,10 +701,9 @@ const AccessControl = () => {
             boxShadow: "0 1px 3px rgba(0,0,0,0.1)"
           }}
           onClick={() => navigate("/dashboard")}
-
         >
           <FiArrowLeft />
-        </Button>
+        </BootstrapButton>
         <div>
           <h4 className="fw-bold m-0">Access Control Center</h4>
           <p className="text-muted small m-0">Manage user roles and permissions</p>
@@ -792,7 +792,7 @@ const AccessControl = () => {
               <label className="form-label">Filter by Role</label>
               <div className="d-flex flex-column gap-2">
                 <div className="d-flex flex-wrap gap-2">
-                  <Button
+                  <BootstrapButton
                     variant={activeRole === "all" ? "dark" : "outline-dark"}
                     size="sm"
                     onClick={() => {
@@ -802,8 +802,8 @@ const AccessControl = () => {
                     style={{ fontSize: "0.75rem", padding: "0.4rem 0.8rem" }}
                   >
                     <FiUsers className="me-1" /> All (Users + Admins)
-                  </Button>
-                  <Button
+                  </BootstrapButton>
+                  <BootstrapButton
                     variant={activeRole === "ground_zero" || activeRole === "ground_zero_reporter" ? "dark" : "outline-dark"}
                     size="sm"
                     onClick={() => {
@@ -813,8 +813,8 @@ const AccessControl = () => {
                     style={{ fontSize: "0.75rem", padding: "0.4rem 0.8rem" }}
                   >
                     <FiMapPin className="me-1" /> Ground Zero Reporter (Zila/District)
-                  </Button>
-                  <Button
+                  </BootstrapButton>
+                  <BootstrapButton
                     variant={activeRole === "city_manager" ? "dark" : "outline-dark"}
                     size="sm"
                     onClick={() => {
@@ -824,10 +824,10 @@ const AccessControl = () => {
                     style={{ fontSize: "0.75rem", padding: "0.4rem 0.8rem" }}
                   >
                     <FiLayers className="me-1" /> City Manager
-                  </Button>
+                  </BootstrapButton>
                 </div>
                 <div className="d-flex flex-wrap gap-2">
-                  <Button
+                  <BootstrapButton
                     variant={activeRole === "state_manager" ? "dark" : "outline-dark"}
                     size="sm"
                     onClick={() => {
@@ -837,8 +837,8 @@ const AccessControl = () => {
                     style={{ fontSize: "0.75rem" }}
                   >
                     <FiGlobe className="me-1" /> State Manager
-                  </Button>
-                  <Button
+                  </BootstrapButton>
+                  <BootstrapButton
                     variant={activeRole === "national_manager" ? "dark" : "outline-dark"}
                     size="sm"
                     onClick={() => {
@@ -855,8 +855,8 @@ const AccessControl = () => {
                     }}
                   >
                     <FiShield className="me-1 flex-shrink-0" /> National Manager (Demi God)
-                  </Button>
-                  <Button
+                  </BootstrapButton>
+                  <BootstrapButton
                     variant={activeRole === "god_admin" ? "dark" : "outline-dark"}
                     size="sm"
                     onClick={() => {
@@ -866,7 +866,7 @@ const AccessControl = () => {
                     style={{ fontSize: "0.75rem" }}
                   >
                     <FiUser className="me-1" /> God Admin
-                  </Button>
+                  </BootstrapButton>
                 </div>
               </div>
             </Col>
