@@ -3,7 +3,7 @@ import { Table, Badge, Form, InputGroup, Row, Col, Spinner } from 'react-bootstr
 import { FiEye, FiEdit, FiTrash2, FiSearch, FiUser, FiFlag, FiUsers, FiUserCheck, FiUserPlus } from 'react-icons/fi';
 import { FaCheck, FaShareSquare, FaFlag } from 'react-icons/fa';
 import UserDetailsModal from '../../components/modals/UserDetailsModal';
-import { formatDate } from '../../utils/DateUtility';
+import { formatDate } from '../../utils/Utility';
 import BootstrapButton from '../../components/common/BootstrapButton';
 
 const UsersTable = ({ 

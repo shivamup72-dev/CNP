@@ -22,7 +22,7 @@ import {
 import PostSection from "../Dashboard/postSection/PostSection.jsx";
 import API from "../../api/endpoint";
 import "../../assets/css/Dashboard.css";
-import { formatDate } from "../../utils/DateUtility";
+import { formatDate } from "../../utils/Utility";
 import CreateUserOrAdminModal from '../../components/modals/CreateUserOrAdminModal';
 import UsersTable from './UsersTable';
 import CustomPagination from '../../components/common/CustomPagination';
@@ -166,7 +166,7 @@ const AccessControl = () => {
           role: normalizedRole,
           location: userObj.district ? userObj.district.name : (userObj.state ? userObj.state.name : "Unknown"),
           status: "active",
-          lastActive: new Date().toISOString().split('T')[0],
+          lastActive: formatDate(new Date(), 'date-only'),
           phone: userObj.phone_number,
           picture: userObj.picture,
           gender: userObj.gender,
@@ -604,7 +604,7 @@ const AccessControl = () => {
             role: normalizeRoleFromAPI(userObj.admin_role),
             location: userObj.district ? userObj.district.name : (userObj.state ? userObj.state.name : "Unknown"),
             status: "active",
-            lastActive: new Date().toISOString().split('T')[0],
+            lastActive: formatDate(new Date(), 'date-only'),
             phone: userObj.phone_number,
             picture: userObj.picture,
             gender: userObj.gender,

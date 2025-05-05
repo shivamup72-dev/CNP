@@ -1,7 +1,7 @@
 import React from 'react';
 import { Modal, Row, Col } from 'react-bootstrap';
-import { formatDate } from '../../utils/DateUtility';
-import { capitalizeWords } from '../../utils/Utility';
+import { formatDate } from '../../utils/Utility';
+import { capitalizeFirstLetter } from '../../utils/Utility';
 import BootstrapButton from '../common/BootstrapButton';
 import './VoterCardDetailsModal.css';
 
@@ -37,13 +37,13 @@ const VoterCardDetailsModal = ({ show, onHide, voterCard }) => {
           <Col md={6}>
             <div className="mb-2">
               <strong>Full Name:</strong>
-              <div>{capitalizeWords(voterCard.full_name)}</div>
+              <div>{capitalizeFirstLetter(voterCard.full_name)}</div>
             </div>
           </Col>
           <Col md={6}>
             <div className="mb-2">
               <strong>Guardian Name:</strong>
-              <div>{capitalizeWords(voterCard.guardian_name)}</div>
+              <div>{capitalizeFirstLetter(voterCard.guardian_name)}</div>
             </div>
           </Col>
         </Row>
@@ -114,7 +114,7 @@ const VoterCardDetailsModal = ({ show, onHide, voterCard }) => {
               <strong>Status:</strong>
               <div>
                 <span className={`badge bg-${voterCard.approval_status === 'pending' ? 'warning' : 'success'}`}>
-                  {capitalizeWords(voterCard.approval_status)}
+                  {capitalizeFirstLetter(voterCard.approval_status)}
                 </span>
               </div>
             </div>

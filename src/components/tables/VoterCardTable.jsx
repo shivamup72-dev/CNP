@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { Table, Spinner, Button, Badge } from "react-bootstrap";
 import API from "../../api/endpoint";
-import { formatDate } from "../../utils/DateUtility";
-import { capitalizeWords } from "../../utils/Utility";
+import { formatDate } from "../../utils/Utility";
+import { capitalizeFirstLetter } from "../../utils/Utility";
 import { FaCheck } from "react-icons/fa";
 import { showSuccessToast, showErrorToast } from "../../components/common/Toast.jsx";
 import VoterCardDetailsModal from "../modals/VoterCardDetailsModal";
@@ -159,7 +159,7 @@ const VoterCardTable = () => {
                         setShowDetailsModal(true);
                       }}
                     >
-                      {card.full_name ? capitalizeWords(card.full_name) : 'N/A'}
+                      {card.full_name ? capitalizeFirstLetter(card.full_name) : 'N/A'}
                     </div>
                   </td>
                   <td style={tableCellStyle}>

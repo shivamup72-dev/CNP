@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Container, Card, Row, Col, Form } from "react-bootstrap";
 import colors from "../../assets/css/colors.js";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
-import { formatName } from "../../utils/Utility.js";
+import { capitalizeFirstLetter } from "../../utils/Utility.js";
 import BootstrapButton from "../../components/common/BootstrapButton";
 
 const Login = () => {
@@ -124,7 +124,7 @@ const Login = () => {
         
         // Parse and store user data
         const userData = {
-          name: formatName(data.basic?.name || ""),
+          name: capitalizeFirstLetter(data.basic?.name || ""),
           email: data.basic?.email || "",
           role: data.basic?.admin_role || "user",
           isGodAdmin: data.basic?.admin_role === "god_admin",

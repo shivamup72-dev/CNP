@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Modal, Button, Badge, Form, Card } from 'react-bootstrap';
 import { FiEdit, FiFlag, FiTrash, FiCheck, FiPlus, FiX } from 'react-icons/fi';
-import { formatDate } from '../../utils/DateUtility';
+import { formatDate } from '../../utils/Utility';
 import API from '../../api/endpoint';
 import { showSuccessToast } from '../../components/common/Toast.jsx';
 import BootstrapButton from '../common/BootstrapButton';

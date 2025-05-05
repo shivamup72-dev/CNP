@@ -3,7 +3,7 @@ import { Table, Spinner, Badge } from "react-bootstrap";
 import { FaCheck, FaShareSquare, FaFlag, FaTrashRestore } from "react-icons/fa";
 import { FiTrash, FiFlag, FiEdit } from "react-icons/fi";
 import BootstrapButton from "../../../components/common/BootstrapButton";
-import { formatDate } from "../../../utils/DateUtility";
+import { formatDate } from "../../../utils/Utility";
 import { showSuccessToast } from "../../../components/common/Toast.jsx";
 
 const PostTable = ({
@@ -246,7 +246,7 @@ const PostTable = ({
                                                         .join(' ')
                                                     : "Unknown"}
 
-                                                
+
                                             </div>
                                         </div>
                                     </td>

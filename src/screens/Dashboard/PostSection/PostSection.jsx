@@ -11,7 +11,7 @@ import RestorePostModal from '../../../components/modals/RestorePostModal';
 import ManagePost from './ManagePost';
 import FilterAndModeration from './FilterAndModeration';
 import QuickAdminActions from './QuickAdminActions';
-import { formatDateForAPI } from "../../../utils/DateUtility";
+import { formatDate } from '../../../utils/Utility';
 import API from '../../../api/endpoint';
 import { showSuccessToast, showErrorToast } from "../../../components/common/Toast.jsx";
 
@@ -336,7 +336,7 @@ const PostSection = ({
             title: post.description || "No title",
             content: post.description || "No content",
             author: post.created_by?.full_name || "Unknown",
-            date: formatDateForAPI(new Date(post.date_created)),
+            date: formatDate(new Date(post.date_created), 'api'),
             date_created: post.date_created,
             post_status: post.post_status || post.status,
             image: post.media && post.media.length ? API.getImageUrl(post.media[0].media) : null,

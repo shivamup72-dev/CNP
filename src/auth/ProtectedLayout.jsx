@@ -5,6 +5,12 @@ import { Navigate, Outlet, useNavigate } from "react-router-dom";
  * ProtectedLayout serves as a container for protected routes
  * It checks authentication once and renders all nested child routes
  * through the Outlet component if authenticated
+ * 
+ * If you don't use ProtectedLayout, several security and user experience issues would arise:
+1) No Authentication Protection:
+i) Anyone could directly access sensitive routes like /dashboard, /postsection, and /access-control by typing the URLs
+ii)There would be no check if the user is logged in or not
+iii) Example: An unauthenticated user could type yourwebsite.com/dashboard and access the dashboard directly
  */
 const ProtectedLayout = () => {
   const navigate = useNavigate();

@@ -4,6 +4,7 @@ import API from '../../api/endpoint';
 import { showSuccessToast, showErrorToast } from '../common/Toast.jsx';
 import { FiX } from 'react-icons/fi';
 import BootstrapButton from '../common/BootstrapButton';
+import { formatDate } from '../../utils/Utility';
 
 const CreatePostModal = ({
   show = false,
@@ -115,7 +116,7 @@ const CreatePostModal = ({
           ? API.getImageUrl(response.media_files[0].media) 
           : mediaPreviews[0]?.preview || null,
         allMedia: response.media_files || [],
-        date: new Date().toISOString(),
+        date: formatDate(new Date(), 'api'),
         post_status: response.status === "publish" ? "approved" : "pending",
         isReposted: false,
         // Keep track of author details

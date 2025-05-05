@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Modal, Form } from 'react-bootstrap';
-import { formatDate } from '../../utils/DateUtility';
+import { formatDate } from '../../utils/Utility';
 import API from '../../api/endpoint';
 import BootstrapButton from '../common/BootstrapButton';
 

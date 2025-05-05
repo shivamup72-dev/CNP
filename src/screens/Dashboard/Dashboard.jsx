@@ -14,8 +14,8 @@ import PostDetailModal from "../../components/modals/PostDetailModal";
 import CreatePostModal from "../../components/modals/CreatePostModal";
 import API from "../../api/endpoint";
 import "../../assets/css/Dashboard.css";
-import { formatDate } from '../../utils/DateUtility';
-import { formatName } from '../../utils/Utility';
+import { formatDate } from '../../utils/Utility';
+import { capitalizeFirstLetter } from '../../utils/Utility';
 
 
 const Dashboard = () => {
@@ -79,7 +79,7 @@ const Dashboard = () => {
         
         // Ensure name is properly capitalized
         if (parsedUserData.name) {
-          parsedUserData.name = formatName(parsedUserData.name);
+          parsedUserData.name = capitalizeFirstLetter(parsedUserData.name);
         }
         
         setUserData(parsedUserData);
@@ -293,7 +293,7 @@ const Dashboard = () => {
         image: p.media.length ? API.getImageUrl(p.media[0].media) : null,
         allMedia: p.media || [],
         post_status: p.post_status,
-        date: formatDate(p.date_created),
+        date: formatDate(p.date_created, 'short'),
         date_created: p.date_created,
         age: formatPostAge(p.date_created),
         ageColor: getPostAgeColor(p.date_created),
@@ -328,7 +328,7 @@ const Dashboard = () => {
               image: p.media.length ? API.getImageUrl(p.media[0].media) : null,
               allMedia: p.media || [],
               post_status: p.post_status,
-              date: formatDate(p.date_created),
+              date: formatDate(p.date_created, 'short'),
               date_created: p.date_created,
               age: formatPostAge(p.date_created),
               ageColor: getPostAgeColor(p.date_created),
@@ -376,7 +376,7 @@ const Dashboard = () => {
               image: p.media.length ? API.getImageUrl(p.media[0].media) : null,
               allMedia: p.media || [],
               post_status: p.post_status,
-              date: formatDate(p.date_created),
+              date: formatDate(p.date_created, 'short'),
               date_created: p.date_created,
               age: formatPostAge(p.date_created),
               ageColor: getPostAgeColor(p.date_created),
@@ -513,7 +513,7 @@ const Dashboard = () => {
       </div>
 
       <p className="mb-4" style={{ fontSize: "12px" }}>
-        Welcome, <strong>{formatName(userData.name) || "User"}</strong> ({formatRoleName(userData.role) || "User"})
+        Welcome, <strong>{capitalizeFirstLetter(userData.name) || "User"}</strong> ({formatRoleName(userData.role) || "User"})
       </p>
 
       <StatsCards customStats={statsCardsData} />

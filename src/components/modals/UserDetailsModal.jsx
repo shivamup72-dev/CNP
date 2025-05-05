@@ -1,7 +1,7 @@
 import React from 'react';
 import { Modal, Row, Col } from 'react-bootstrap';
-import { formatDate } from '../../utils/DateUtility';
-import { capitalizeWords } from '../../utils/Utility';
+import { formatDate } from '../../utils/Utility';
+import { capitalizeFirstLetter } from '../../utils/Utility';
 import { FiUser } from 'react-icons/fi';
 import BootstrapButton from '../common/BootstrapButton';
 import './UserDetailsModal.css';
@@ -73,7 +73,7 @@ const UserDetailsModal = ({ show, onHide, user }) => {
             </div>
           </Col>
           <Col md={9}>
-            <h4 className="mb-3">{capitalizeWords(user.name)}</h4>
+            <h4 className="mb-3">{capitalizeFirstLetter(user.name)}</h4>
             <div className="d-flex align-items-center mb-2">
               <span 
                 className={`badge me-2 ${getRoleBadgeColor(user.role) === 'custom-ground-zero' ? 'custom-ground-zero' : `bg-${getRoleBadgeColor(user.role)}`}`}
@@ -82,10 +82,10 @@ const UserDetailsModal = ({ show, onHide, user }) => {
                   color: '#fff'
                 } : {}}
               >
-                {!user.role || user.role === "user" ? "Regular User" : capitalizeWords(user.role.replace('_', ' '))}
+                {!user.role || user.role === "user" ? "Regular User" : capitalizeFirstLetter(user.role.replace('_', ' '))}
               </span>
               <span className={`badge bg-${user.status === 'active' ? 'success' : 'danger'}`}>
-                {capitalizeWords(user.status)}
+                {capitalizeFirstLetter(user.status)}
               </span>
             </div>
           </Col>
