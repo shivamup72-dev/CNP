@@ -166,6 +166,28 @@ const Login = () => {
     }
   };
 
+  const handleKYCAdminLogin = async () => {
+    // Set temporary auth data without making API call
+    localStorage.setItem("auth", "true");
+    localStorage.setItem("token", "temp_kyc_token");
+    localStorage.setItem("api_token", "temp_kyc_token");
+    
+    const userData = {
+      name: "KYC Admin",
+      email: "kyc.admin@example.com",
+      role: "kyc_admin",
+      isGodAdmin: false,
+      userId: "temp_kyc_id",
+      profileId: "temp_kyc_profile"
+    };
+    
+    localStorage.setItem("userData", JSON.stringify(userData));
+    localStorage.setItem("user_id", "temp_kyc_id");
+    
+    // Navigate directly to KYC dashboard
+    navigate("/kyc-dashboard");
+  };
+
   // Helper function to determine user role based on permissions
   const determineUserRole = (permissions) => {
     if (!permissions || permissions.length === 0) {
@@ -310,6 +332,16 @@ const Login = () => {
               onClick={handleLogin}
             >
               Login
+            </BootstrapButton>
+
+            {/* Temporary KYC Admin Login Button */}
+            <BootstrapButton
+              variant="outline-success"
+              className="w-100 mt-5"
+              onClick={handleKYCAdminLogin}
+              style={responsiveStyles.button}
+            >
+              KYC Admin Login
             </BootstrapButton>
           </Card>
         </Col>

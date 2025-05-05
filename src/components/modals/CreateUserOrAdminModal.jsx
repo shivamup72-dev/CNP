@@ -356,7 +356,8 @@ const CreateUserOrAdminModal = ({
       'state_manager': 'State-level management access',
       'city_manager': 'City-level management access',
       'ground_zero_reporter': 'Report creation access',
-      'user': 'Basic user access'
+      'kyc_admin': 'KYC document verification and management access',
+      'user': 'Basic access for regular users'
     };
     return descriptions[role] || '';
   };
@@ -519,7 +520,8 @@ const CreateUserOrAdminModal = ({
                 <option value="state_manager">State Manager</option>
                 <option value="city_manager">City Manager</option>
                 <option value="ground_zero_reporter">Ground Zero Reporter</option>
-                <option value="user">User</option>
+                <option value="kyc_admin">KYC Admin</option>
+                <option value="user">Regular User</option>
               </Form.Select>
               {formData.admin_role && (
                 <small className="text-muted d-block mt-1">

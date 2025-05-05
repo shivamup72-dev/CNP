@@ -304,7 +304,8 @@ const AccessControl = () => {
     "city_manager": "Can view both Ground Zero & City posts. Can view flagged & deleted posts with reasons only of their zila and city. Cannot edit or delete posts.",
     "state_manager": "Can view Ground Zero, City & State posts. Can view flagged & deleted posts with reasons only of their zila, city and state, not of others city or state. Cannot edit or delete posts.",
     "national_manager": "Can view Ground Zero, City, State & National posts. Can view flagged & deleted posts with reasons of all city, state, zila everything. Cannot edit or delete posts.",
-    "god_admin": "Can view all 5 level's posts. Can view flagged & deleted posts with reasons of all city, state, zila everything. Has full control of adding, editing & deleting all posts of users & admins. Can delete users and admin accounts if needed."
+    "god_admin": "Can view all 5 level's posts. Can view flagged & deleted posts with reasons of all city, state, zila everything. Has full control of adding, editing & deleting all posts of users & admins. Can delete users and admin accounts if needed.",
+    "kyc_admin": "Can manage and verify KYC documents. Has access to user verification requests and can approve or reject KYC submissions. Can view and manage user verification status."
   };
 
   // Filter users based on selected role and search term
@@ -378,6 +379,7 @@ const AccessControl = () => {
       case "state_manager": return "primary";
       case "national_manager": return "warning";
       case "god_admin": return "danger";
+      case "kyc_admin": return "success";
       default: return "secondary";
     }
   };
@@ -397,6 +399,7 @@ const AccessControl = () => {
       case "state_manager": return <span style={iconStyle}><FiGlobe /></span>;
       case "national_manager": return <span style={iconStyle}><FiShield /></span>;
       case "god_admin": return <span style={iconStyle}><FiUser /></span>;
+      case "kyc_admin": return <span style={iconStyle}><FiUserCheck /></span>;
       default: return <span style={iconStyle}><FiUser /></span>;
     }
   };
@@ -866,6 +869,17 @@ const AccessControl = () => {
                     style={{ fontSize: "0.75rem" }}
                   >
                     <FiUser className="me-1" /> God Admin
+                  </BootstrapButton>
+                  <BootstrapButton
+                    variant={activeRole === "kyc_admin" ? "dark" : "outline-dark"}
+                    size="sm"
+                    onClick={() => {
+                      handleRoleFilter("kyc_admin");
+                    }}
+                    className="d-flex align-items-center"
+                    style={{ fontSize: "0.75rem" }}
+                  >
+                    <FiUserCheck className="me-1" /> KYC Admin
                   </BootstrapButton>
                 </div>
               </div>

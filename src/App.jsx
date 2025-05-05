@@ -9,6 +9,7 @@ import Dashboard from "./screens/Dashboard/Dashboard";
 import Demo from "./screens/Demo";
 import PostSection from "./screens/Dashboard/postSection/PostSection.jsx";
 import AccessControl from "./screens/AccessControl/AccessControl";
+import KYCDashboard from "./screens/KYC/KYCDashboard";
 import ProtectedLayout from "./auth/ProtectedLayout";
 
 const App = () => {
@@ -34,6 +35,7 @@ const App = () => {
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/postsection" element={<PostSection />} />
           <Route path="/access-control" element={<AccessControl />} />
+          <Route path="/kyc-dashboard" element={<KYCDashboard />} />
         </Route>
       </Routes>
     </Router>
