@@ -1,16 +1,28 @@
-import React, { useState } from 'react';
-import { Table, Badge, Form, InputGroup, Row, Col, Spinner } from 'react-bootstrap';
-import { FiEye, FiEdit, FiTrash2, FiSearch, FiUser, FiFlag, FiUsers, FiUserCheck, FiUserPlus } from 'react-icons/fi';
+import React, { useState, useEffect } from 'react';
+import { Table, Badge, Form, InputGroup, Row, Col, Spinner, Modal, Alert } from 'react-bootstrap';
+import { FiEye, FiEdit, FiTrash2, FiSearch, FiUser, FiFlag, FiUsers, FiUserCheck, FiUserPlus, FiX } from 'react-icons/fi';
 import { FaCheck, FaShareSquare, FaFlag } from 'react-icons/fa';
 import UserDetailsModal from '../../components/modals/UserDetailsModal';
 import { formatDate } from '../../utils/Utility';
 import BootstrapButton from '../../components/common/BootstrapButton';
+import API from '../../api/endpoint';
 
-const UsersTable = ({ 
-  users, 
-  setUsers, 
-  getRoleBadgeColor, 
-  getRoleIcon, 
+const styles = `
+  .delete-user-btn:hover:not(:disabled) {
+    background-color: #dc3545 !important;
+    border-color: #dc3545 !important;
+    color: white !important;
+  }
+  .delete-user-btn:hover:not(:disabled) svg {
+    color: white !important;
+  }
+`;
+
+const UsersTable = ({
+  users,
+  setUsers,
+  getRoleBadgeColor,
+  getRoleIcon,
   roleDisplayMap,
   title = "All Users",
   searchTerm,
@@ -32,7 +44,11 @@ const UsersTable = ({
   const [showUserDetails, setShowUserDetails] = useState(false);
   const [editingUserId, setEditingUserId] = useState(null);
   const [deletingUserId, setDeletingUserId] = useState(null);
-  
+  const [error, setError] = useState(null);
+  const [showDeactivateModal, setShowDeactivateModal] = useState(false);
+  const [userToDeactivate, setUserToDeactivate] = useState(null);
+  const [deactivationError, setDeactivationError] = useState(null);
+
   // Common table cell style for consistency
   const tableCellStyle = {
     verticalAlign: "middle",
@@ -54,7 +70,7 @@ const UsersTable = ({
     padding: "0.4rem",
     fontSize: "0.75rem"
   };
-  
+
   // Table header style
   const tableHeaderStyle = {
     ...tableCellStyle,
@@ -72,7 +88,7 @@ const UsersTable = ({
     ...tableHeaderStyle,
     borderRight: "1px solid #e0e0e0"
   };
-  
+
   // Filter users based on search term
   const filteredUsers = users.filter(user => {
     const searchLower = searchTerm.toLowerCase();
@@ -83,29 +99,29 @@ const UsersTable = ({
       roleDisplayMap[user.role]?.toLowerCase().includes(searchLower)
     );
   });
-  
+
   // Sort users
   const sortedUsers = [...filteredUsers].sort((a, b) => {
     let aValue = a[sortField];
     let bValue = b[sortField];
-    
+
     // Handle special cases
     if (sortField === 'role') {
       aValue = roleDisplayMap[a.role] || a.role;
       bValue = roleDisplayMap[b.role] || b.role;
     }
-    
+
     // Handle string comparison
     if (typeof aValue === 'string') {
       aValue = aValue.toLowerCase();
       bValue = bValue.toLowerCase();
     }
-    
+
     if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1;
     if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;
     return 0;
   });
-  
+
   // Handle sort header click
   const handleSortClick = (field) => {
     if (sortField === field) {
@@ -117,13 +133,13 @@ const UsersTable = ({
       setSortDirection('asc');
     }
   };
-  
+
   // Render sort indicator
   const renderSortIndicator = (field) => {
     if (sortField !== field) return null;
     return <span className="ms-1">{sortDirection === 'asc' ? '↑' : '↓'}</span>;
   };
-  
+
   // Render role badge with proper handling for empty roles
   const renderRoleBadge = (user) => {
     // If user has no role or role is "user", render as regular user
@@ -134,7 +150,7 @@ const UsersTable = ({
         </div>
       );
     }
-    
+
     // Otherwise render the badge as before
     return (
       <Badge
@@ -157,13 +173,13 @@ const UsersTable = ({
       </Badge>
     );
   };
-  
+
   // Handle approve action
   const handleApproveUser = (userId) => {
     setApprovingUserId(userId);
     setTimeout(() => {
-      setUsers(prev => prev.map(user => 
-        user.id === userId ? {...user, status: 'approved'} : user
+      setUsers(prev => prev.map(user =>
+        user.id === userId ? { ...user, status: 'approved' } : user
       ));
       setApprovingUserId(null);
     }, 500);
@@ -173,8 +189,8 @@ const UsersTable = ({
   const handleRepost = (userId) => {
     setRepostingUserId(userId);
     setTimeout(() => {
-      setUsers(prev => prev.map(user => 
-        user.id === userId ? {...user, isReposted: true} : user
+      setUsers(prev => prev.map(user =>
+        user.id === userId ? { ...user, isReposted: true } : user
       ));
       setRepostingUserId(null);
     }, 500);
@@ -184,8 +200,8 @@ const UsersTable = ({
   const handleFlag = (userId) => {
     setFlaggingUserId(userId);
     setTimeout(() => {
-      setUsers(prev => prev.map(user => 
-        user.id === userId ? {...user, flagged: !user.flagged} : user
+      setUsers(prev => prev.map(user =>
+        user.id === userId ? { ...user, flagged: !user.flagged } : user
       ));
       setFlaggingUserId(null);
     }, 500);
@@ -207,14 +223,72 @@ const UsersTable = ({
   };
 
   // Handle delete action
-  const handleDelete = (userId) => {
-    setDeletingUserId(userId);
-    // TODO: Implement delete functionality
-    setTimeout(() => {
+  const handleDelete = async () => {
+    if (!userToDeactivate) return;
+    
+    try {
+      setDeletingUserId(userToDeactivate.id);
+      setDeactivationError(null);
+
+      const formData = new FormData();
+      // If user is inactive, we'll reactivate them, otherwise deactivate them
+      formData.append('status', userToDeactivate.status === 'inactive' ? 'active' : 'inactive');
+
+      console.log('Making API request with:', {
+        url: `/api/v1/web/inactive-user/${userToDeactivate.id}/`,
+        formData: Object.fromEntries(formData.entries())
+      });
+
+      await API.post(`/api/v1/web/inactive-user/${userToDeactivate.id}/`, formData, {
+        headers: {
+          'Authorization': `Token 7b257e1452f1115b0c70f80a1d54ccd8615aa52c`
+        }
+      }).then(response => {
+        console.log('Confirm Deletion API Response:', response);
+        // Update the user's status
+        setUsers(prev => prev.map(user => 
+          user.id === userToDeactivate.id 
+            ? { ...user, status: user.status === 'inactive' ? 'active' : 'inactive' } 
+            : user
+        ));
+        setShowDeactivateModal(false);
+        setUserToDeactivate(null);
+      }).catch(error => {
+        console.error('API Error:', error);
+        throw error;
+      });
+
+    } catch (err) {
+      console.error('Error updating user status:', err);
+      setDeactivationError(
+        err.response?.data?.message || 
+        err.response?.data?.detail || 
+        err.message || 
+        'Failed to update user status. Please try again.'
+      );
+    } finally {
       setDeletingUserId(null);
-    }, 500);
+    }
   };
-  
+
+  const resetForm = () => {
+    setShowDeactivateModal(false);
+    setUserToDeactivate(null);
+    setDeactivationError(null);
+  };
+
+  useEffect(() => {
+    // Add the styles to the document
+    const styleSheet = document.createElement("style");
+    styleSheet.innerText = styles;
+    document.head.appendChild(styleSheet);
+
+    // Cleanup on unmount
+    return () => {
+      document.head.removeChild(styleSheet);
+    };
+  }, []);
+
   return (
     <div>
       <Row className="mb-3 align-items-center">
@@ -233,8 +307,8 @@ const UsersTable = ({
         </Col>
         <Col md={5} className="d-flex justify-content-end gap-2">
           {isLoadingUsers ? (
-            <BootstrapButton 
-              variant="outline-dark" 
+            <BootstrapButton
+              variant="outline-dark"
               className="d-flex align-items-center"
               size="sm"
               disabled
@@ -253,10 +327,10 @@ const UsersTable = ({
               <FiUsers className="me-1" /> All Regular Users
             </BootstrapButton>
           )}
-          
+
           {isLoadingAdmins ? (
-            <BootstrapButton 
-              variant="outline-dark" 
+            <BootstrapButton
+              variant="outline-dark"
               className="d-flex align-items-center"
               size="sm"
               disabled
@@ -284,8 +358,8 @@ const UsersTable = ({
             variant="dark"
             className="d-flex align-items-center justify-content-center"
             size="sm"
-            style={{ 
-              backgroundColor: "#000", 
+            style={{
+              backgroundColor: "#000",
               borderColor: "#000",
               padding: "0.5rem 2.5rem",
               minWidth: "250px",
@@ -297,41 +371,45 @@ const UsersTable = ({
           </BootstrapButton>
         </Col>
       </Row>
-      
+
       <div className="table-responsive" style={{ marginTop: "2rem" }}>
-        <Table hover responsive className="mb-0" style={{ 
+        <Table hover responsive className="mb-0" style={{
           border: "none",
-          margin: 0 
+          margin: 0
         }}>
           <thead>
             <tr>
               <th style={{ ...firstHeaderStyle, width: "4%", cursor: "pointer" }}
-                  onClick={() => handleSortClick('id')}>
-                  Sr. No. {renderSortIndicator('id')}
+                onClick={() => handleSortClick('id')}>
+                Sr. No. {renderSortIndicator('id')}
               </th>
               <th style={{ ...tableHeaderStyle, width: "15%", cursor: "pointer" }}
-                  onClick={() => handleSortClick('name')}>
-                  Name {renderSortIndicator('name')}
+                onClick={() => handleSortClick('name')}>
+                Name {renderSortIndicator('name')}
               </th>
               <th style={{ ...tableHeaderStyle, width: "15%", cursor: "pointer" }}
-                  onClick={() => handleSortClick('email')}>
-                  Email {renderSortIndicator('email')}
+                onClick={() => handleSortClick('email')}>
+                Email {renderSortIndicator('email')}
               </th>
               <th style={{ ...tableHeaderStyle, width: "15%", cursor: "pointer" }}
-                  onClick={() => handleSortClick('role')}>
-                  Role {renderSortIndicator('role')}
+                onClick={() => handleSortClick('role')}>
+                Role {renderSortIndicator('role')}
               </th>
               <th style={{ ...tableHeaderStyle, width: "12%", cursor: "pointer" }}
-                  onClick={() => handleSortClick('location')}>
-                  Location {renderSortIndicator('location')}
+                onClick={() => handleSortClick('location')}>
+                Location {renderSortIndicator('location')}
               </th>
               <th style={{ ...tableHeaderStyle, width: "10%", cursor: "pointer" }}
-                  onClick={() => handleSortClick('status')}>
-                  Status {renderSortIndicator('status')}
+                onClick={() => handleSortClick('status')}>
+                Status {renderSortIndicator('status')}
               </th>
               <th style={{ ...tableHeaderStyle, width: "12%", cursor: "pointer" }}
-                  onClick={() => handleSortClick('lastActive')}>
-                  Last Active {renderSortIndicator('lastActive')}
+                onClick={() => handleSortClick('lastActive')}>
+                Last Active {renderSortIndicator('lastActive')}
+              </th>
+              <th style={{ ...tableHeaderStyle, width: "8%", cursor: "pointer" }}
+                onClick={() => handleSortClick('delete')}>
+                Deactivate {renderSortIndicator('delete')}
               </th>
               <th style={{ ...lastHeaderStyle, width: "10%" }}>Actions</th>
             </tr>
@@ -346,7 +424,7 @@ const UsersTable = ({
                 <tr key={user.id}>
                   <td style={firstCellStyle}>{index + 1}</td>
                   <td style={tableCellStyle}>
-                    <div 
+                    <div
                       className="d-flex align-items-center"
                       style={{ cursor: "pointer" }}
                       onClick={() => handleUserClick(user)}
@@ -386,7 +464,7 @@ const UsersTable = ({
                     </div>
                   </td>
                   <td style={tableCellStyle}>
-                    <div 
+                    <div
                       style={{ cursor: "pointer" }}
                       onClick={() => handleUserClick(user)}
                     >
@@ -416,15 +494,52 @@ const UsersTable = ({
                     </Badge>
                   </td>
                   <td style={tableCellStyle}>
-                    <div style={{
-                      whiteSpace: "nowrap",
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      maxWidth: "100%",
-                      fontSize: "0.75rem"
-                    }}>
-                      {user.lastActive ? formatDate(user.lastActive) : 'N/A'}
-                    </div>
+                    {user.lastActive ? formatDate(user.lastActive) : 'Never'}
+                  </td>
+                  <td style={tableCellStyle}>
+                    <BootstrapButton
+                      variant={user.status === 'inactive' ? "danger" : "light"}
+                      size="sm"
+                      onClick={() => {
+                        setUserToDeactivate(user);
+                        setShowDeactivateModal(true);
+                      }}
+                      disabled={deletingUserId === user.id}
+                      className={user.status === 'inactive' ? "" : "delete-user-btn"}
+                      style={{ 
+                        fontSize: '0.7rem',
+                        padding: '0.2rem 0.5rem',
+                        border: '1px solid #dee2e6',
+                        transition: 'all 0.2s ease',
+                        opacity: 1,
+                        cursor: 'pointer'
+                      }}
+                    >
+                      {deletingUserId === user.id ? (
+                        <>
+                          <Spinner
+                            as="span"
+                            animation="border"
+                            size="sm"
+                            role="status"
+                            aria-hidden="true"
+                            className="me-1"
+                            style={{ width: '0.7rem', height: '0.7rem' }}
+                          />
+                          {user.status === 'inactive' ? 'Activating...' : 'Deactivating...'}
+                        </>
+                      ) : user.status === 'inactive' ? (
+                        <>
+                          <FiX className="me-1" style={{ width: '0.7rem', height: '0.7rem' }} />
+                          Click to Activate
+                        </>
+                      ) : (
+                        <>
+                          <FiTrash2 className="me-1" style={{ width: '0.7rem', height: '0.7rem' }} />
+                          Deactivate
+                        </>
+                      )}
+                    </BootstrapButton>
                   </td>
                   <td style={lastCellStyle}>
                     <div className="d-flex gap-2 justify-content-center">
@@ -495,22 +610,6 @@ const UsersTable = ({
                               fontSize: "0.8rem"
                             }} />
                           </BootstrapButton>
-
-                          {/* Delete Button */}
-                          <BootstrapButton
-                            variant="light"
-                            size="sm"
-                            className="d-flex justify-content-center align-items-center"
-                            style={{ width: "28px", height: "28px", padding: "0" }}
-                            onClick={() => handleDelete(user.id)}
-                            disabled
-                            title="Delete User"
-                          >
-                            <FiTrash2 style={{
-                              color: "#6c757d",
-                              fontSize: "0.8rem"
-                            }} />
-                          </BootstrapButton>
                         </>
                       ) : (
                         <span className="text-muted" style={{ fontSize: "0.85rem" }}>
@@ -525,6 +624,104 @@ const UsersTable = ({
           </tbody>
         </Table>
       </div>
+
+      {/* Deactivation Confirmation Modal */}
+      <Modal
+        show={showDeactivateModal}
+        onHide={() => {
+          setShowDeactivateModal(false);
+          setUserToDeactivate(null);
+          setDeactivationError(null);
+        }}
+        centered
+      >
+        <Modal.Header style={{ position: 'relative', borderBottom: '1px solid #dee2e6', padding: '0.7rem' }}>
+          <Modal.Title style={{ fontSize: '1.1rem' }}>
+            {userToDeactivate?.status === 'inactive' ? 'Confirm Activation' : 'Confirm Deactivation'}
+          </Modal.Title>
+          <BootstrapButton
+            variant="dark"
+            onClick={() => {
+              setShowDeactivateModal(false);
+              setUserToDeactivate(null);
+              setDeactivationError(null);
+            }}
+            style={{
+              position: 'absolute',
+              right: '0.5rem',
+              top: '50%',
+              transform: 'translateY(-50%)',
+              padding: '0.25rem',
+              minWidth: 'auto',
+              width: '32px',
+              height: '32px',
+              borderRadius: '4px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: '#000',
+              border: 'none'
+            }}
+          >
+            <FiX size={20} color="white" />
+          </BootstrapButton>
+        </Modal.Header>
+        <Modal.Body style={{ paddingTop: '0.5rem' }}>
+          {deactivationError ? (
+            <Alert variant="danger" className="mb-0">
+              {deactivationError}
+            </Alert>
+          ) : (
+            <p className="mb-0">
+              Are you sure you want to {userToDeactivate?.status === 'inactive' ? 'activate' : 'deactivate'} <strong>{userToDeactivate?.name}</strong>?
+              {userToDeactivate?.status !== 'inactive' && (
+                <>
+                  <br />
+                  <span className="text-danger" style={{ fontSize: '0.875rem' }}>
+                    This action cannot be undone.
+                  </span>
+                </>
+              )}
+            </p>
+          )}
+        </Modal.Body>
+        <Modal.Footer style={{ border: 'none', paddingTop: '1rem' }}>
+          <BootstrapButton
+            variant="light"
+            size="sm"
+            onClick={() => {
+              setShowDeactivateModal(false);
+              setUserToDeactivate(null);
+              setDeactivationError(null);
+            }}
+          >
+            Cancel
+          </BootstrapButton>
+          <BootstrapButton
+            variant={userToDeactivate?.status === 'inactive' ? "success" : "danger"}
+            size="sm"
+            onClick={handleDelete}
+            disabled={deletingUserId !== null}
+          >
+            {deletingUserId !== null ? (
+              <>
+                <Spinner
+                  as="span"
+                  animation="border"
+                  size="sm"
+                  role="status"
+                  aria-hidden="true"
+                  className="me-1"
+                  style={{ width: '0.7rem', height: '0.7rem' }}
+                />
+                {userToDeactivate?.status === 'inactive' ? 'Activating...' : 'Deactivating...'}
+              </>
+            ) : (
+              userToDeactivate?.status === 'inactive' ? 'Activate User' : 'Deactivate User'
+            )}
+          </BootstrapButton>
+        </Modal.Footer>
+      </Modal>
 
       {/* User Details Modal */}
       <UserDetailsModal

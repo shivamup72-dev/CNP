@@ -1,323 +1,184 @@
 import React, { useState, useEffect } from 'react';
 import { Container, Table, Badge, Spinner, Alert, Nav, Pagination, Form, InputGroup } from 'react-bootstrap';
-import { FiCheckCircle, FiSearch } from 'react-icons/fi';
+import { FiCheckCircle, FiSearch, FiXCircle } from 'react-icons/fi';
 import API from '../../api/endpoint';
 import BootstrapButton from '../../components/common/BootstrapButton';
 import { formatDate } from '../../utils/Utility';
 
+const styles = `
+  .approve-kyc-btn:hover:not(:disabled) {
+    background-color: #198754 !important;
+    border-color: #198754 !important;
+    color: white !important;
+  }
+  .approve-kyc-btn:hover:not(:disabled) svg {
+    color: white !important;
+  }
+  .reject-kyc-btn:hover:not(:disabled) {
+    background-color: #dc3545 !important;
+    border-color: #dc3545 !important;
+    color: white !important;
+  }
+  .reject-kyc-btn:hover:not(:disabled) svg {
+    color: white !important;
+  }
+`;
+
 const KYCDashboard = () => {
-  const [users, setUsers] = useState([]);
+  const [kycData, setKycData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [approvingId, setApprovingId] = useState(null);
+  const [rejectingId, setRejectingId] = useState(null);
   const [activeTab, setActiveTab] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
-  const [userTypeFilter, setUserTypeFilter] = useState('all'); // 'all', 'political', 'regular'
   const [searchQuery, setSearchQuery] = useState('');
+  const [apiApprovedKYCs, setApiApprovedKYCs] = useState(new Set());
+  const [apiRejectedKYCs, setApiRejectedKYCs] = useState(new Set());
   const itemsPerPage = 10;
 
-  // Expanded dummy data for KYC verification
-  const dummyUsers = [
-    // Original 6 entries
-    {
-      id: 1,
-      name: "Rajesh Kumar Sharma",
-      email: "rajesh.sharma@gmail.com",
-      phone_number: "+91 98765 43210",
-      is_political_party: false,
-      kyc_submitted_date: "2024-03-20T10:30:00Z",
-      kyc_documents: [{ url: "#aadhar" }, { url: "#pan" }],
-      is_approved: false
-    },
-    {
-      id: 2,
-      name: "Bharatiya Janata Party - Delhi Unit",
-      email: "bjp.delhi@party.com",
-      phone_number: "+91 99999 88888",
-      is_political_party: true,
-      kyc_submitted_date: "2024-03-19T15:45:00Z",
-      kyc_documents: [{ url: "#registration" }, { url: "#affidavit" }, { url: "#authorization" }],
-      is_approved: true
-    },
-    {
-      id: 3,
-      name: "Priya Patel",
-      email: "priya.patel@yahoo.com",
-      phone_number: "+91 87654 32109",
-      is_political_party: false,
-      kyc_submitted_date: "2024-03-18T09:15:00Z",
-      kyc_documents: [{ url: "#aadhar" }, { url: "#pan" }],
-      is_approved: true
-    },
-    {
-      id: 4,
-      name: "Indian National Congress - Maharashtra",
-      email: "inc.maharashtra@party.com",
-      phone_number: "+91 77777 66666",
-      is_political_party: true,
-      kyc_submitted_date: "2024-03-17T14:20:00Z",
-      kyc_documents: [{ url: "#registration" }, { url: "#affidavit" }],
-      is_approved: false
-    },
-    {
-      id: 5,
-      name: "Amit Singh Verma",
-      email: "amit.verma@hotmail.com",
-      phone_number: "+91 95555 44444",
-      is_political_party: false,
-      kyc_submitted_date: "2024-03-16T11:20:00Z",
-      kyc_documents: [{ url: "#aadhar" }, { url: "#pan" }],
-      is_approved: false
-    },
-    {
-      id: 6,
-      name: "Aam Aadmi Party - Punjab",
-      email: "aap.punjab@party.com",
-      phone_number: "+91 88888 55555",
-      is_political_party: true,
-      kyc_submitted_date: "2024-03-15T16:30:00Z",
-      kyc_documents: [{ url: "#registration" }, { url: "#affidavit" }, { url: "#authorization" }],
-      is_approved: true
-    },
-    // Additional entries to reach 23
-    {
-      id: 7,
-      name: "Suresh Mehta",
-      email: "suresh.mehta@gmail.com",
-      phone_number: "+91 98765 43220",
-      is_political_party: false,
-      kyc_submitted_date: "2024-03-14T10:30:00Z",
-      kyc_documents: [{ url: "#aadhar" }, { url: "#pan" }],
-      is_approved: true
-    },
-    {
-      id: 8,
-      name: "Samajwadi Party - UP",
-      email: "sp.up@party.com",
-      phone_number: "+91 99999 77777",
-      is_political_party: true,
-      kyc_submitted_date: "2024-03-13T15:45:00Z",
-      kyc_documents: [{ url: "#registration" }, { url: "#affidavit" }],
-      is_approved: false
-    },
-    {
-      id: 9,
-      name: "Anita Desai",
-      email: "anita.desai@yahoo.com",
-      phone_number: "+91 87654 32111",
-      is_political_party: false,
-      kyc_submitted_date: "2024-03-12T09:15:00Z",
-      kyc_documents: [{ url: "#aadhar" }, { url: "#pan" }],
-      is_approved: false
-    },
-    {
-      id: 10,
-      name: "DMK - Tamil Nadu",
-      email: "dmk.tn@party.com",
-      phone_number: "+91 77777 66655",
-      is_political_party: true,
-      kyc_submitted_date: "2024-03-11T14:20:00Z",
-      kyc_documents: [{ url: "#registration" }, { url: "#affidavit" }, { url: "#authorization" }],
-      is_approved: true
-    },
-    {
-      id: 11,
-      name: "Vikram Singh",
-      email: "vikram.singh@gmail.com",
-      phone_number: "+91 95555 44433",
-      is_political_party: false,
-      kyc_submitted_date: "2024-03-10T11:20:00Z",
-      kyc_documents: [{ url: "#aadhar" }, { url: "#pan" }],
-      is_approved: true
-    },
-    {
-      id: 12,
-      name: "Shiv Sena - Mumbai",
-      email: "shivsena.mumbai@party.com",
-      phone_number: "+91 88888 55544",
-      is_political_party: true,
-      kyc_submitted_date: "2024-03-09T16:30:00Z",
-      kyc_documents: [{ url: "#registration" }, { url: "#affidavit" }],
-      is_approved: false
-    },
-    {
-      id: 13,
-      name: "Meera Reddy",
-      email: "meera.reddy@yahoo.com",
-      phone_number: "+91 98765 43230",
-      is_political_party: false,
-      kyc_submitted_date: "2024-03-08T10:30:00Z",
-      kyc_documents: [{ url: "#aadhar" }, { url: "#pan" }],
-      is_approved: false
-    },
-    {
-      id: 14,
-      name: "TDP - Andhra Pradesh",
-      email: "tdp.ap@party.com",
-      phone_number: "+91 99999 88877",
-      is_political_party: true,
-      kyc_submitted_date: "2024-03-07T15:45:00Z",
-      kyc_documents: [{ url: "#registration" }, { url: "#affidavit" }, { url: "#authorization" }],
-      is_approved: true
-    },
-    {
-      id: 15,
-      name: "Arjun Malhotra",
-      email: "arjun.malhotra@gmail.com",
-      phone_number: "+91 87654 32122",
-      is_political_party: false,
-      kyc_submitted_date: "2024-03-06T09:15:00Z",
-      kyc_documents: [{ url: "#aadhar" }, { url: "#pan" }],
-      is_approved: true
-    },
-    {
-      id: 16,
-      name: "JD(U) - Bihar",
-      email: "jdu.bihar@party.com",
-      phone_number: "+91 77777 66677",
-      is_political_party: true,
-      kyc_submitted_date: "2024-03-05T14:20:00Z",
-      kyc_documents: [{ url: "#registration" }, { url: "#affidavit" }],
-      is_approved: false
-    },
-    {
-      id: 17,
-      name: "Neha Gupta",
-      email: "neha.gupta@yahoo.com",
-      phone_number: "+91 95555 44455",
-      is_political_party: false,
-      kyc_submitted_date: "2024-03-04T11:20:00Z",
-      kyc_documents: [{ url: "#aadhar" }, { url: "#pan" }],
-      is_approved: false
-    },
-    {
-      id: 18,
-      name: "NCP - Maharashtra",
-      email: "ncp.maha@party.com",
-      phone_number: "+91 88888 55566",
-      is_political_party: true,
-      kyc_submitted_date: "2024-03-03T16:30:00Z",
-      kyc_documents: [{ url: "#registration" }, { url: "#affidavit" }, { url: "#authorization" }],
-      is_approved: true
-    },
-    {
-      id: 19,
-      name: "Rahul Joshi",
-      email: "rahul.joshi@gmail.com",
-      phone_number: "+91 98765 43240",
-      is_political_party: false,
-      kyc_submitted_date: "2024-03-02T10:30:00Z",
-      kyc_documents: [{ url: "#aadhar" }, { url: "#pan" }],
-      is_approved: true
-    },
-    {
-      id: 20,
-      name: "BJD - Odisha",
-      email: "bjd.odisha@party.com",
-      phone_number: "+91 99999 88899",
-      is_political_party: true,
-      kyc_submitted_date: "2024-03-01T15:45:00Z",
-      kyc_documents: [{ url: "#registration" }, { url: "#affidavit" }],
-      is_approved: false
-    },
-    {
-      id: 21,
-      name: "Kavita Sharma",
-      email: "kavita.sharma@yahoo.com",
-      phone_number: "+91 87654 32133",
-      is_political_party: false,
-      kyc_submitted_date: "2024-02-29T09:15:00Z",
-      kyc_documents: [{ url: "#aadhar" }, { url: "#pan" }],
-      is_approved: false
-    },
-    {
-      id: 22,
-      name: "TMC - West Bengal",
-      email: "tmc.wb@party.com",
-      phone_number: "+91 77777 66688",
-      is_political_party: true,
-      kyc_submitted_date: "2024-02-28T14:20:00Z",
-      kyc_documents: [{ url: "#registration" }, { url: "#affidavit" }, { url: "#authorization" }],
-      is_approved: true
-    },
-    {
-      id: 23,
-      name: "Sanjay Patil",
-      email: "sanjay.patil@gmail.com",
-      phone_number: "+91 95555 44466",
-      is_political_party: false,
-      kyc_submitted_date: "2024-02-27T11:20:00Z",
-      kyc_documents: [{ url: "#aadhar" }, { url: "#pan" }],
-      is_approved: true
-    }
-  ];
-
   useEffect(() => {
-    fetchUsers();
+    fetchKYCData();
+
+    // Add the styles to the document
+    const styleSheet = document.createElement("style");
+    styleSheet.innerText = styles;
+    document.head.appendChild(styleSheet);
+
+    // Cleanup on unmount
+    return () => {
+      document.head.removeChild(styleSheet);
+    };
   }, []);
 
-  const fetchUsers = async () => {
+  const fetchKYCData = async () => {
     try {
       setLoading(true);
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      setUsers(dummyUsers);
+      setError(null);
+
+      console.log('Making API request to fetch KYC data...');
+      
+      const response = await API.get('/api/v1/web/kyc/', {
+        headers: {
+          'Authorization': `Token 7b257e1452f1115b0c70f80a1d54ccd8615aa52c`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      console.log('API Response:', response);
+
+      // The response is already in the correct format with results array
+      if (response && response.results) {
+        setKycData(response.results);
+      } else {
+        throw new Error('Invalid response format from server');
+      }
     } catch (err) {
-      console.error('Error loading dummy data:', err);
-      setError('Failed to load users. Please try again.');
+      console.error('Error fetching KYC data:', err);
+      console.error('Error details:', {
+        message: err.message,
+        response: err.response?.data,
+        status: err.response?.status,
+        statusText: err.response?.statusText
+      });
+      
+      setError(
+        err.response?.data?.detail || 
+        err.response?.data?.message || 
+        err.message || 
+        'Failed to load KYC data. Please try again.'
+      );
     } finally {
       setLoading(false);
     }
   };
 
-  const handleApproveKYC = async (userId) => {
+  const handleApproveKYC = async (kycId) => {
     try {
-      setApprovingId(userId);
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      setUsers(users.map(user => 
-        user.id === userId ? { ...user, is_approved: true } : user
-      ));
+      setApprovingId(kycId);
+      setError(null);
+
+      const response = await API.put(`/api/v1/web/verify-kyc/${kycId}/`, {}, {
+        headers: {
+          'Authorization': `Token 7b257e1452f1115b0c70f80a1d54ccd8615aa52c`
+        }
+      });
+      
+      if (response.data?.message === "KYC request approved successfully") {
+        setKycData(prev => prev.map(kyc => 
+          kyc.id === kycId ? { ...kyc, verify_status: 'approved', is_verify: true } : kyc
+        ));
+        setApiApprovedKYCs(prev => new Set([...prev, kycId]));
+      } else {
+        throw new Error('Unexpected response from server');
+      }
     } catch (err) {
       console.error('Error approving KYC:', err);
-      setError('Failed to approve KYC. Please try again.');
+      setError(err.response?.data?.message || err.message || 'Failed to approve KYC. Please try again.');
     } finally {
       setApprovingId(null);
     }
   };
 
-  const filteredUsers = () => {
-    let filtered = users;
+  const handleRejectKYC = async (kycId) => {
+    try {
+      setRejectingId(kycId);
+      setError(null);
+
+      const response = await API.put(`/api/v1/web/reject-kyc/${kycId}/`, {}, {
+        headers: {
+          'Authorization': `Token 7b257e1452f1115b0c70f80a1d54ccd8615aa52c`
+        }
+      });
+
+      console.log('Reject KYC Response:', response);
+      
+      // The response comes directly with the message property
+      if (response?.message === "KYC request rejected successfully") {
+        // Update the local state to reflect the change
+        setKycData(prev => prev.map(kyc => 
+          kyc.id === kycId ? { ...kyc, verify_status: 'rejected', is_verify: false } : kyc
+        ));
+        
+        // Update the sets tracking KYC statuses
+        setApiRejectedKYCs(prev => new Set([...prev, kycId]));
+        setApiApprovedKYCs(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(kycId);
+          return newSet;
+        });
+      } else {
+        throw new Error('Failed to reject KYC');
+      }
+    } catch (err) {
+      console.error('Error rejecting KYC:', err);
+      setError(err.response?.message || err.message || 'Failed to reject KYC. Please try again.');
+    } finally {
+      setRejectingId(null);
+    }
+  };
+
+  const filteredKYC = () => {
+    let filtered = kycData;
     
-    // First filter by approval status
+    // Filter by approval status
     switch (activeTab) {
       case 'pending':
-        filtered = filtered.filter(user => !user.is_approved);
+        filtered = filtered.filter(kyc => !kyc.is_verify);
         break;
       case 'approved':
-        filtered = filtered.filter(user => user.is_approved);
+        filtered = filtered.filter(kyc => kyc.is_verify);
         break;
       default:
         break;
     }
 
-    // Then filter by user type
-    switch (userTypeFilter) {
-      case 'political':
-        filtered = filtered.filter(user => user.is_political_party);
-        break;
-      case 'regular':
-        filtered = filtered.filter(user => !user.is_political_party);
-        break;
-      default:
-        break;
-    }
-
-    // Then filter by search query
+    // Filter by search query
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase().trim();
-      filtered = filtered.filter(user => 
-        user.name.toLowerCase().includes(query) ||
-        user.email.toLowerCase().includes(query) ||
-        user.phone_number.includes(query)
+      filtered = filtered.filter(kyc => 
+        kyc.id.toString().includes(query) ||
+        (kyc.user?.name || '').toLowerCase().includes(query)
       );
     }
     
@@ -328,27 +189,15 @@ const KYCDashboard = () => {
   };
 
   const getTotalFilteredCount = () => {
-    let filtered = users;
+    let filtered = kycData;
     
     // Filter by approval status
     switch (activeTab) {
       case 'pending':
-        filtered = filtered.filter(user => !user.is_approved);
+        filtered = filtered.filter(kyc => !kyc.is_verify);
         break;
       case 'approved':
-        filtered = filtered.filter(user => user.is_approved);
-        break;
-      default:
-        break;
-    }
-
-    // Filter by user type
-    switch (userTypeFilter) {
-      case 'political':
-        filtered = filtered.filter(user => user.is_political_party);
-        break;
-      case 'regular':
-        filtered = filtered.filter(user => !user.is_political_party);
+        filtered = filtered.filter(kyc => kyc.is_verify);
         break;
       default:
         break;
@@ -359,10 +208,10 @@ const KYCDashboard = () => {
 
   const totalPages = Math.ceil(
     (activeTab === 'pending'
-      ? users.filter(u => !u.is_approved).length
+      ? kycData.filter(k => !k.is_verify).length
       : activeTab === 'approved'
-      ? users.filter(u => u.is_approved).length
-      : users.length) / itemsPerPage
+      ? kycData.filter(k => k.is_verify).length
+      : kycData.length) / itemsPerPage
   );
 
   const handlePageChange = (pageNumber) => {
@@ -371,7 +220,7 @@ const KYCDashboard = () => {
 
   const handleSearch = (e) => {
     setSearchQuery(e.target.value);
-    setCurrentPage(1); // Reset to first page when searching
+    setCurrentPage(1);
   };
 
   const tableCellStyle = {
@@ -392,7 +241,12 @@ const KYCDashboard = () => {
     <Container fluid className="p-4" style={{ background: "#f8fcf8" }}>
       <div className="d-flex justify-content-between align-items-center mb-4">
         <div>
-          <h4 className="fw-bold m-0">KYC Verification Dashboard</h4>
+          <div className="d-flex align-items-center gap-2">
+            <h4 className="fw-bold m-0">KYC Verification Dashboard</h4>
+            <span className="text-muted" style={{ fontSize: '0.7rem' }}>
+              (Access given by - <span className="fw-medium text-dark">God Admin</span>)
+            </span>
+          </div>
           <p className="text-muted small m-0">Manage user KYC verifications</p>
         </div>
       </div>
@@ -417,7 +271,7 @@ const KYCDashboard = () => {
                 fontSize: '0.75rem'
               }}
             >
-              All Users
+              All KYCs
               <Badge bg="secondary" className="ms-2">
                 {getTotalFilteredCount()}
               </Badge>
@@ -435,7 +289,7 @@ const KYCDashboard = () => {
             >
               Pending Approval
               <Badge bg="warning" text="dark" className="ms-2">
-                {users.filter(u => !u.is_approved).length}
+                {kycData.filter(k => !k.is_verify).length}
               </Badge>
             </Nav.Link>
           </Nav.Item>
@@ -451,7 +305,7 @@ const KYCDashboard = () => {
             >
               Approved
               <Badge bg="success" className="ms-2">
-                {users.filter(u => u.is_approved).length}
+                {kycData.filter(k => k.is_verify).length}
               </Badge>
             </Nav.Link>
           </Nav.Item>
@@ -470,7 +324,7 @@ const KYCDashboard = () => {
             </InputGroup.Text>
             <Form.Control
               type="text"
-              placeholder="Search by name, email, or phone..."
+              placeholder="Search by ID..."
               value={searchQuery}
               onChange={handleSearch}
               style={{ 
@@ -481,39 +335,6 @@ const KYCDashboard = () => {
               }}
             />
           </InputGroup>
-        </div>
-
-        <div className="d-flex gap-2">
-          <BootstrapButton
-            variant={userTypeFilter === 'political' ? 'dark' : 'outline-dark'}
-            size="sm"
-            onClick={() => {
-              setUserTypeFilter(userTypeFilter === 'political' ? 'all' : 'political');
-              setCurrentPage(1);
-            }}
-            style={{ 
-              fontSize: '0.75rem',
-              paddingLeft: '1.5rem',
-              paddingRight: '1.5rem'
-            }}
-          >
-            Political Party
-          </BootstrapButton>
-          <BootstrapButton
-            variant={userTypeFilter === 'regular' ? 'dark' : 'outline-dark'}
-            size="sm"
-            onClick={() => {
-              setUserTypeFilter(userTypeFilter === 'regular' ? 'all' : 'regular');
-              setCurrentPage(1);
-            }}
-            style={{ 
-              fontSize: '0.75rem',
-              paddingLeft: '1.5rem',
-              paddingRight: '1.5rem'
-            }}
-          >
-            Regular User
-          </BootstrapButton>
         </div>
       </div>
 
@@ -526,7 +347,7 @@ const KYCDashboard = () => {
       {loading ? (
         <div className="text-center py-5">
           <Spinner animation="border" variant="primary" />
-          <p className="mt-2">Loading users...</p>
+          <p className="mt-2">Loading KYC data...</p>
         </div>
       ) : (
         <>
@@ -534,100 +355,231 @@ const KYCDashboard = () => {
             <Table responsive bordered hover className="mb-0">
               <thead className="bg-light">
                 <tr>
-                  <th style={tableHeaderStyle}>Name</th>
-                  <th style={tableHeaderStyle}>Email</th>
-                  <th style={tableHeaderStyle}>Phone</th>
-                  <th style={tableHeaderStyle}>Type</th>
+                  <th style={tableHeaderStyle}>S.No</th>
+                  <th style={tableHeaderStyle}>User</th>
                   <th style={tableHeaderStyle}>Status</th>
-                  <th style={tableHeaderStyle}>Submitted On</th>
+                  <th style={tableHeaderStyle}>Created Date</th>
+                  <th style={tableHeaderStyle}>Updated Date</th>
                   <th style={tableHeaderStyle}>Documents</th>
                   <th style={tableHeaderStyle}>Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {filteredUsers().map(user => (
-                  <tr key={user.id}>
-                    <td style={{
-                      ...tableCellStyle,
-                      fontWeight: user.is_political_party ? 500 : 400
-                    }}>{user.name}</td>
-                    <td style={tableCellStyle}>{user.email}</td>
-                    <td style={tableCellStyle}>{user.phone_number}</td>
+                {filteredKYC().map((kyc, index) => (
+                  <tr key={kyc.id}>
                     <td style={tableCellStyle}>
-                      <Badge bg={user.is_political_party ? "dark" : "secondary"} style={{ 
-                        fontSize: '0.7rem', 
-                        padding: '0.4em 0.7em',
-                        fontWeight: '500'
-                      }}>
-                        {user.is_political_party ? "Political Party" : "Regular User"}
-                      </Badge>
+                      {((currentPage - 1) * itemsPerPage) + index + 1}
+                    </td>
+                    <td style={tableCellStyle}>
+                      <div className="d-flex align-items-center gap-2">
+                        {kyc.self_image ? (
+                          <img 
+                            src={kyc.self_image} 
+                            alt="Profile" 
+                            style={{
+                              width: '32px',
+                              height: '32px',
+                              borderRadius: '50%',
+                              objectFit: 'cover',
+                              border: '2px solid #e9ecef'
+                            }}
+                          />
+                        ) : (
+                          <div 
+                            style={{
+                              width: '32px',
+                              height: '32px',
+                              borderRadius: '50%',
+                              backgroundColor: '#e9ecef',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontSize: '0.7rem',
+                              color: '#6c757d'
+                            }}
+                          >
+                            NA
+                          </div>
+                        )}
+                        <span style={{ fontSize: '0.75rem' }}>
+                          {kyc.user?.name || 'Not Available'}
+                        </span>
+                      </div>
                     </td>
                     <td style={tableCellStyle}>
                       <Badge 
-                        bg={user.is_approved ? "success" : "warning"} 
-                        text={user.is_approved ? "light" : "dark"} 
+                        bg={kyc.is_verify ? "success" : "warning"} 
+                        text={kyc.is_verify ? "light" : "dark"} 
                         style={{ 
                           fontSize: '0.7rem', 
                           padding: '0.4em 0.7em',
                           fontWeight: '500'
                         }}
                       >
-                        {user.is_approved ? "Approved" : "Pending"}
+                        {kyc.verify_status || (kyc.is_verify ? "Approved" : "Pending")}
                       </Badge>
                     </td>
-                    <td style={tableCellStyle}>{formatDate(user.kyc_submitted_date)}</td>
+                    <td style={tableCellStyle}>{formatDate(kyc.date_created)}</td>
+                    <td style={tableCellStyle}>{formatDate(kyc.date_updated)}</td>
                     <td style={tableCellStyle}>
-                      {user.kyc_documents?.map((doc, index) => (
+                      {kyc.aadhar_front && (
                         <a
-                          key={index}
-                          href={doc.url}
+                          href={kyc.aadhar_front}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="me-3 text-decoration-none"
-                          style={{ 
-                            color: '#0d6efd',
-                            fontSize: '0.75rem'
-                          }}
+                          style={{ color: '#0d6efd', fontSize: '0.75rem' }}
                         >
-                          {user.is_political_party 
-                            ? ['Registration', 'Affidavit', 'Authorization'][index]
-                            : ['Aadhar Card', 'PAN Card'][index]}
+                          Aadhar Front
                         </a>
-                      ))}
+                      )}
+                      {kyc.aadhar_back && (
+                        <a
+                          href={kyc.aadhar_back}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="me-3 text-decoration-none"
+                          style={{ color: '#0d6efd', fontSize: '0.75rem' }}
+                        >
+                          Aadhar Back
+                        </a>
+                      )}
+                      {kyc.video && (
+                        <a
+                          href={kyc.video}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="me-3 text-decoration-none"
+                          style={{ color: '#0d6efd', fontSize: '0.75rem' }}
+                        >
+                          Video
+                        </a>
+                      )}
+                      {kyc.paper_cutting1 && (
+                        <a
+                          href={kyc.paper_cutting1}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="me-3 text-decoration-none"
+                          style={{ color: '#0d6efd', fontSize: '0.75rem' }}
+                        >
+                          Paper Cutting 1
+                        </a>
+                      )}
+                      {kyc.paper_cutting2 && (
+                        <a
+                          href={kyc.paper_cutting2}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="me-3 text-decoration-none"
+                          style={{ color: '#0d6efd', fontSize: '0.75rem' }}
+                        >
+                          Paper Cutting 2
+                        </a>
+                      )}
                     </td>
                     <td style={tableCellStyle}>
-                      {!user.is_approved && (
-                        <BootstrapButton
-                          variant="success"
-                          size="sm"
-                          onClick={() => handleApproveKYC(user.id)}
-                          disabled={approvingId === user.id}
-                          style={{ 
-                            fontSize: '0.7rem',
-                            padding: '0.2rem 0.5rem'
-                          }}
-                        >
-                          {approvingId === user.id ? (
-                            <>
-                              <Spinner
-                                as="span"
-                                animation="border"
-                                size="sm"
-                                role="status"
-                                aria-hidden="true"
-                                className="me-1"
-                                style={{ width: '0.7rem', height: '0.7rem' }}
-                              />
-                              Approving...
-                            </>
-                          ) : (
-                            <>
-                              <FiCheckCircle className="me-1" style={{ width: '0.7rem', height: '0.7rem' }} />
-                              Approve KYC
-                            </>
-                          )}
-                        </BootstrapButton>
-                      )}
+                      <div className="d-flex gap-2">
+                        {apiApprovedKYCs.has(kyc.id) || kyc.is_verify ? (
+                          <BootstrapButton
+                            variant="success"
+                            size="sm"
+                            disabled
+                            style={{ 
+                              fontSize: '0.7rem',
+                              padding: '0.2rem 0.5rem',
+                              opacity: 1
+                            }}
+                          >
+                            <FiCheckCircle className="me-1" style={{ width: '0.7rem', height: '0.7rem' }} />
+                            KYC Approved
+                          </BootstrapButton>
+                        ) : (
+                          <BootstrapButton
+                            variant="light"
+                            size="sm"
+                            onClick={() => handleApproveKYC(kyc.id)}
+                            disabled={approvingId === kyc.id || rejectingId === kyc.id || apiRejectedKYCs.has(kyc.id)}
+                            className="approve-kyc-btn"
+                            style={{ 
+                              fontSize: '0.7rem',
+                              padding: '0.2rem 0.5rem',
+                              border: '1px solid #dee2e6',
+                              transition: 'all 0.2s ease'
+                            }}
+                          >
+                            {approvingId === kyc.id ? (
+                              <>
+                                <Spinner
+                                  as="span"
+                                  animation="border"
+                                  size="sm"
+                                  role="status"
+                                  aria-hidden="true"
+                                  className="me-1"
+                                  style={{ width: '0.7rem', height: '0.7rem' }}
+                                />
+                                Approving...
+                              </>
+                            ) : (
+                              <>
+                                <FiCheckCircle className="me-1" style={{ width: '0.7rem', height: '0.7rem' }} />
+                                Approve KYC
+                              </>
+                            )}
+                          </BootstrapButton>
+                        )}
+
+                        {apiRejectedKYCs.has(kyc.id) || kyc.verify_status === 'rejected' ? (
+                          <BootstrapButton
+                            variant="danger"
+                            size="sm"
+                            disabled
+                            style={{ 
+                              fontSize: '0.7rem',
+                              padding: '0.2rem 0.5rem',
+                              opacity: 1
+                            }}
+                          >
+                            <FiXCircle className="me-1" style={{ width: '0.7rem', height: '0.7rem' }} />
+                            KYC Rejected
+                          </BootstrapButton>
+                        ) : (
+                          <BootstrapButton
+                            variant="light"
+                            size="sm"
+                            onClick={() => handleRejectKYC(kyc.id)}
+                            disabled={rejectingId === kyc.id || approvingId === kyc.id}
+                            className="reject-kyc-btn"
+                            style={{ 
+                              fontSize: '0.7rem',
+                              padding: '0.2rem 0.5rem',
+                              border: '1px solid #dee2e6',
+                              transition: 'all 0.2s ease'
+                            }}
+                          >
+                            {rejectingId === kyc.id ? (
+                              <>
+                                <Spinner
+                                  as="span"
+                                  animation="border"
+                                  size="sm"
+                                  role="status"
+                                  aria-hidden="true"
+                                  className="me-1"
+                                  style={{ width: '0.7rem', height: '0.7rem' }}
+                                />
+                                Rejecting...
+                              </>
+                            ) : (
+                              <>
+                                <FiXCircle className="me-1" style={{ width: '0.7rem', height: '0.7rem' }} />
+                                Reject KYC
+                              </>
+                            )}
+                          </BootstrapButton>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -639,16 +591,16 @@ const KYCDashboard = () => {
             <div className="small text-muted">
               Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, 
                 activeTab === 'pending'
-                  ? users.filter(u => !u.is_approved).length
+                  ? kycData.filter(k => !k.is_verify).length
                   : activeTab === 'approved'
-                  ? users.filter(u => u.is_approved).length
-                  : users.length
+                  ? kycData.filter(k => k.is_verify).length
+                  : kycData.length
               )} of {
                 activeTab === 'pending'
-                  ? users.filter(u => !u.is_approved).length
+                  ? kycData.filter(k => !k.is_verify).length
                   : activeTab === 'approved'
-                  ? users.filter(u => u.is_approved).length
-                  : users.length
+                  ? kycData.filter(k => k.is_verify).length
+                  : kycData.length
               } entries
             </div>
             
