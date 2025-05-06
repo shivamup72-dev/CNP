@@ -65,6 +65,10 @@ const AccessControl = () => {
   const [usersLoadError, setUsersLoadError] = useState(null);
   const [adminsLoadError, setAdminsLoadError] = useState(null);
 
+  const [showDeletedUsers, setShowDeletedUsers] = useState(false);
+  const [isLoadingDeletedUsers, setIsLoadingDeletedUsers] = useState(false);
+  const [deletedUsersError, setDeletedUsersError] = useState(null);
+
   // Helper to normalize roles from API to match the expected frontend role names
   const normalizeRoleFromAPI = (apiRole) => {
     if (!apiRole) return null;
@@ -639,6 +643,86 @@ const AccessControl = () => {
     }, 0);
   };
 
+  // Function to fetch deleted users
+  const fetchDeletedUsers = async () => {
+    try {
+      setIsLoadingDeletedUsers(true);
+      setDeletedUsersError(null);
+      setShowUsersList(false);
+      setShowAdminsList(false);
+
+      // Dummy deleted users data
+      const dummyDeletedUsers = [
+        {
+          id: 1,
+          name: "John Smith",
+          email: "john.smith@example.com",
+          role: "city_manager",
+          location: "Mumbai",
+          status: "inactive",
+          lastActive: "2024-03-15",
+          picture: null,
+          deletedOn: "2024-03-20"
+        },
+        {
+          id: 2,
+          name: "Sarah Wilson",
+          email: "sarah.wilson@example.com",
+          role: "ground_zero",
+          location: "Delhi",
+          status: "inactive",
+          lastActive: "2024-03-10",
+          picture: null,
+          deletedOn: "2024-03-18"
+        },
+        {
+          id: 3,
+          name: "Michael Brown",
+          email: "michael.brown@example.com",
+          role: "state_manager",
+          location: "Bangalore",
+          status: "inactive",
+          lastActive: "2024-03-12",
+          picture: null,
+          deletedOn: "2024-03-16"
+        },
+        {
+          id: 4,
+          name: "Emily Davis",
+          email: "emily.davis@example.com",
+          role: null,
+          location: "Chennai",
+          status: "inactive",
+          lastActive: "2024-03-08",
+          picture: null,
+          deletedOn: "2024-03-15"
+        }
+      ];
+
+      // Set the dummy data
+      setUsers(dummyDeletedUsers);
+      setUsersTotalPages(1);
+      setUsersTotalCount(dummyDeletedUsers.length);
+      setShowDeletedUsers(true);
+      setActiveTab("users");
+      
+      // Reset other states
+      setActiveRole("all");
+      setSearchTerm("");
+
+    } catch (error) {
+      console.error("Error fetching deleted users:", error);
+      setDeletedUsersError("Failed to load deleted users. Please try again.");
+    } finally {
+      setIsLoadingDeletedUsers(false);
+    }
+  };
+
+  // Function to handle "Deleted Users" button click
+  const handleDeletedUsersClick = () => {
+    fetchDeletedUsers();
+  };
+
   return (
     <Container fluid className="p-4" style={{
       background: "linear-gradient(to bottom, #f8fcf8 0%, #f8fcf8 100%)",
@@ -911,10 +995,13 @@ const AccessControl = () => {
                   getRoleBadgeColor={getRoleBadgeColor}
                   getRoleIcon={getRoleIcon}
                   roleDisplayMap={roleDisplayMap}
-                  title={activeRole === null ? "Regular Users" :
+                  title={
+                    showDeletedUsers ? "Deleted Users" :
+                    activeRole === null ? "Regular Users" :
                     activeRole === "admin" ? "Admin Users" :
-                      activeRole === "all" ? "All Users" :
-                        `${roleDisplayMap[activeRole] || activeRole} Users`}
+                    activeRole === "all" ? "All Users" :
+                    `${roleDisplayMap[activeRole] || activeRole} Users`
+                  }
                   searchTerm={searchTerm}
                   onSearchChange={(e) => setSearchTerm(e.target.value)}
                   showUsersList={showUsersList}
@@ -923,6 +1010,7 @@ const AccessControl = () => {
                   isLoadingAdmins={isLoadingAdmins}
                   onAllUsersClick={handleAllUsersClick}
                   onAllAdminsClick={handleAllAdminsClick}
+                  onDeletedUsersClick={handleDeletedUsersClick}
                   onAddUserClick={() => setShowCreateUserOrAdminModal(true)}
                 />
 

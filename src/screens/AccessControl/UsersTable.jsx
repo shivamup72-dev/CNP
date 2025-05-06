@@ -33,7 +33,8 @@ const UsersTable = ({
   isLoadingAdmins,
   onAllUsersClick,
   onAllAdminsClick,
-  onAddUserClick
+  onAddUserClick,
+  onDeletedUsersClick
 }) => {
   const [sortField, setSortField] = useState('name');
   const [sortDirection, setSortDirection] = useState('asc');
@@ -349,6 +350,16 @@ const UsersTable = ({
               <FiUserCheck className="me-1" /> All Admins
             </BootstrapButton>
           )}
+
+          <BootstrapButton
+            variant="outline-danger"
+            className="d-flex align-items-center"
+            size="sm"
+            onClick={onDeletedUsersClick}
+            disabled={isLoadingUsers || isLoadingAdmins}
+          >
+            <FiTrash2 className="me-1" /> Deleted Users
+          </BootstrapButton>
         </Col>
       </Row>
 
