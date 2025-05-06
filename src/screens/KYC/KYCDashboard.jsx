@@ -238,7 +238,16 @@ const KYCDashboard = () => {
   };
 
   return (
-    <Container fluid className="p-4" style={{ background: "#f8fcf8" }}>
+    <Container fluid className="p-4" style={{ 
+      background: "linear-gradient(135deg, #f8fcf8 0%, #e8f5e8 100%)",
+      minHeight: "100vh",
+      position: "fixed",
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      overflowY: "auto"
+    }}>
       <div className="d-flex justify-content-between align-items-center mb-4">
         <div>
           <div className="d-flex align-items-center gap-2">

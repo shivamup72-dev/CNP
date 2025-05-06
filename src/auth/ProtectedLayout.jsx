@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Navigate, Outlet, useNavigate } from "react-router-dom";
+import { Navigate, Outlet, useNavigate, useLocation } from "react-router-dom";
 
 /**
  * ProtectedLayout serves as a container for protected routes
@@ -14,21 +14,52 @@ iii) Example: An unauthenticated user could type yourwebsite.com/dashboard and a
  */
 const ProtectedLayout = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [authChecked, setAuthChecked] = useState(false);
 
   // Check if user is authenticated by looking for the auth token in localStorage
   const isAuthenticated = localStorage.getItem("auth") === "true";
 
-  // Handle authentication state
+  // Get user data from localStorage
+  const getUserData = () => {
+    const userDataStr = localStorage.getItem("userData");
+    if (userDataStr) {
+      try {
+        return JSON.parse(userDataStr);
+      } catch (e) {
+        console.error("Error parsing user data:", e);
+        return null;
+      }
+    }
+    return null;
+  };
+
+  // Handle authentication and authorization
   useEffect(() => {
-    // If not authenticated, navigate to login
     if (!isAuthenticated) {
       navigate("/");
+    } else {
+      const userData = getUserData();
+      const currentPath = location.pathname;
+
+      // If user is KYC admin
+      if (userData?.role === "kyc_admin") {
+        // Only allow access to KYC dashboard
+        if (currentPath !== "/kyc-dashboard") {
+          console.log("KYC admin attempting to access unauthorized route, redirecting to KYC dashboard...");
+          navigate("/kyc-dashboard");
+        }
+      } else {
+        // For non-KYC admins, prevent access to KYC dashboard
+        if (currentPath === "/kyc-dashboard") {
+          console.log("Non-KYC admin attempting to access KYC dashboard, redirecting to main dashboard...");
+          navigate("/dashboard");
+        }
+      }
     }
 
-    // Mark authentication as checked to avoid multiple redirects
     setAuthChecked(true);
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, navigate, location]);
 
   // During initial render, show nothing while authentication is being checked
   if (!authChecked) {
@@ -54,20 +85,7 @@ const ProtectedLayout = () => {
   }
 
   // If authenticated, render the outlet which will render the nested child routes
-  return (
-    <div
-      className="protected-container"
-      style={{
-        width: '100%',
-        height: '100vh',
-        display: 'flex',
-        flexDirection: 'column',
-        backgroundColor: '#f8fcf8' // Match the app's background color
-      }}
-    >
-      <Outlet />
-    </div>
-  );
+  return <Outlet />;
 };
 
 export default ProtectedLayout; 

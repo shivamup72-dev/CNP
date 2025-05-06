@@ -154,9 +154,15 @@ const Login = () => {
           localStorage.removeItem("savedCredentials");
         }
         
-        // Navigate to dashboard
-        console.log("Navigating to dashboard...");
-        navigate("/dashboard");
+        // Navigate based on user role
+        console.log("Checking user role for navigation:", userData.role);
+        if (userData.role === "kyc_admin") {
+          console.log("KYC admin detected, navigating to KYC dashboard...");
+          navigate("/kyc-dashboard");
+        } else {
+          console.log("Regular user/admin detected, navigating to dashboard...");
+          navigate("/dashboard");
+        }
       } else {
         setError(data.message || data.non_field_errors?.[0] || "Invalid credentials. Please try again.");
       }
@@ -332,16 +338,6 @@ const Login = () => {
               onClick={handleLogin}
             >
               Login
-            </BootstrapButton>
-
-            {/* Temporary KYC Admin Login Button */}
-            <BootstrapButton
-              variant="outline-success"
-              className="w-100 mt-5"
-              onClick={handleKYCAdminLogin}
-              style={responsiveStyles.button}
-            >
-              KYC Admin Login
             </BootstrapButton>
           </Card>
         </Col>
