@@ -34,7 +34,8 @@ const UsersTable = ({
   onAllUsersClick,
   onAllAdminsClick,
   onAddUserClick,
-  onDeletedUsersClick
+  onDeletedUsersClick,
+  showDeletedUsers
 }) => {
   const [sortField, setSortField] = useState('name');
   const [sortDirection, setSortDirection] = useState('asc');
@@ -155,7 +156,7 @@ const UsersTable = ({
     // Otherwise render the badge as before
     return (
       <Badge
-        bg={getRoleBadgeColor(user.role)}
+        bg={user.role === "kyc_admin" ? "dark" : getRoleBadgeColor(user.role)}
         className={`d-flex align-items-center ${user.role === "national_manager" ? "gap-0" : "gap-1"} w-100`}
         style={{
           maxWidth: user.role === "national_manager" ? "150px" : "150px",
@@ -164,8 +165,10 @@ const UsersTable = ({
           padding: user.role === "national_manager" ? "5px 8px" : "",
           lineHeight: user.role === "national_manager" ? "1" : "",
           fontSize: "11.2px",
-          backgroundColor: (user.role === "ground_zero" || user.role === "ground_zero_reporter") ? "#9370DB" : undefined,
-          color: (user.role === "ground_zero" || user.role === "ground_zero_reporter") ? "#fff" : undefined
+          backgroundColor: user.role === "kyc_admin" ? "#343a40" : 
+            (user.role === "ground_zero" || user.role === "ground_zero_reporter") ? "#9370DB" : undefined,
+          color: user.role === "kyc_admin" ? "#ffffff" : 
+            (user.role === "ground_zero" || user.role === "ground_zero_reporter") ? "#fff" : undefined
         }}
       >
         {getRoleIcon(user.role)} {user.role === "national_manager" ? (
@@ -428,7 +431,12 @@ const UsersTable = ({
           <tbody>
             {sortedUsers.length === 0 ? (
               <tr>
-                <td colSpan="8" className="text-center py-4">No users found matching your search criteria</td>
+                <td colSpan="8" className="text-center py-4">
+                  {showDeletedUsers ? 
+                    "No deleted users found in the system." :
+                    "No users found matching your search criteria"
+                  }
+                </td>
               </tr>
             ) : (
               sortedUsers.map((user, index) => (
@@ -623,7 +631,7 @@ const UsersTable = ({
                           </BootstrapButton>
                         </>
                       ) : (
-                        <span className="text-muted" style={{ fontSize: "0.85rem" }}>
+                        <span className="text-muted" style={{ fontSize: "0.8rem" }}>
                           No actions available
                         </span>
                       )}

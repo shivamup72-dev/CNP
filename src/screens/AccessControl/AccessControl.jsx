@@ -106,7 +106,7 @@ const AccessControl = () => {
     setUsersError(null);
 
     try {
-      const limit = 10;
+      const limit = 50;
       const offset = (page - 1) * limit;
       const apiUrl = `/api/v1/web/users/?limit=${limit}&offset=${offset}`;
 
@@ -114,30 +114,34 @@ const AccessControl = () => {
 
       const data = await API.get(apiUrl);
 
+      // Log the complete API response
+      console.log("get api response:", data);
+
+
       // ADMIN LOGGING: Log all admin users to console
-      console.log("====================");
-      console.log("ALL ADMIN USERS DATA");
-      console.log("====================");
+      // console.log("====================");
+      // console.log("ALL ADMIN USERS DATA");
+      // console.log("====================");
 
       // Filter to only get users with admin_role
       const allAdmins = data.results.filter(user => user.admin_role);
 
       // Log the total count
-      console.log(`Found ${allAdmins.length} admins out of ${data.results.length} total users`);
+      // console.log(`Found ${allAdmins.length} admins out of ${data.results.length} total users`);
 
       // Log each admin with their role
-      allAdmins.forEach((admin, index) => {
-        console.log(`Admin #${index + 1}:`);
-        console.log(`- ID: ${admin.id}`);
-        console.log(`- Name: ${admin.user.first_name} ${admin.user.last_name}`);
-        console.log(`- Email: ${admin.user.email}`);
-        console.log(`- Role: ${admin.admin_role} (${typeof admin.admin_role})`);
-        console.log(`- Role normalized: ${normalizeRoleFromAPI(admin.admin_role)}`);
-        console.log("---");
-      });
+      // allAdmins.forEach((admin, index) => {
+      //   console.log(`Admin #${index + 1}:`);
+      //   console.log(`- ID: ${admin.id}`);
+      //   console.log(`- Name: ${admin.user.first_name} ${admin.user.last_name}`);
+      //   console.log(`- Email: ${admin.user.email}`);
+      //   console.log(`- Role: ${admin.admin_role} (${typeof admin.admin_role})`);
+      //   console.log(`- Role normalized: ${normalizeRoleFromAPI(admin.admin_role)}`);
+      //   console.log("---");
+      // });
 
-      console.log("Raw admin data:", allAdmins);
-      console.log("====================");
+      // console.log("Raw admin data:", allAdmins);
+      // console.log("====================");
 
       // Format the users data
       const formattedUsers = data.results.map(userObj => {
@@ -154,13 +158,14 @@ const AccessControl = () => {
         const normalizedRole = normalizeRoleFromAPI(userObj.admin_role);
 
         // Log specific users with state_manager or god_admin roles (case insensitive)
-        if (normalizedRole === "state_manager" || normalizedRole === "god_admin") {
-          console.log(`[DEBUG] Found user with role ${userObj.admin_role} (normalized: ${normalizedRole}):`, {
-            id: userObj.id,
-            name: `${firstName} ${lastName}`,
-            email: userObj.user.email
-          });
-        }
+        // if (normalizedRole === "state_manager" || normalizedRole === "god_admin") {
+        //   console.log(`[DEBUG] Found user with role ${userObj.admin_role} (normalized: ${normalizedRole}):`,
+        //      {
+        //     id: userObj.id,
+        //     name: `${firstName} ${lastName}`,
+        //     email: userObj.user.email
+        //   });
+        // }
 
         return {
           id: userObj.id,
@@ -298,7 +303,8 @@ const AccessControl = () => {
     "city_manager": "City Manager",
     "state_manager": "State Manager",
     "national_manager": "National Manager",
-    "god_admin": "God Admin"
+    "god_admin": "God Admin",
+    "kyc_admin": "KYC Admin"
   };
 
   // Role description mapping
@@ -308,26 +314,27 @@ const AccessControl = () => {
     "city_manager": "Can view both Ground Zero & City posts. Can view flagged & deleted posts with reasons only of their zila and city. Cannot edit or delete posts.",
     "state_manager": "Can view Ground Zero, City & State posts. Can view flagged & deleted posts with reasons only of their zila, city and state, not of others city or state. Cannot edit or delete posts.",
     "national_manager": "Can view Ground Zero, City, State & National posts. Can view flagged & deleted posts with reasons of all city, state, zila everything. Cannot edit or delete posts.",
-    "god_admin": "Can view all 5 level's posts. Can view flagged & deleted posts with reasons of all city, state, zila everything. Has full control of adding, editing & deleting all posts of users & admins. Can delete users and admin accounts if needed."
+    "god_admin": "Can view all 5 level's posts. Can view flagged & deleted posts with reasons of all city, state, zila everything. Has full control of adding, editing & deleting all posts of users & admins. Can delete users and admin accounts if needed.",
+    "kyc_admin": "Can view all posts. Can view flagged & deleted posts with reasons of all city, state, zila everything. Has limited control of adding, editing & deleting posts of users & admins. Cannot delete users and admin accounts if needed."
   };
 
   // Filter users based on selected role and search term
   const filteredUsers = users.filter(user => {
     // Log for debugging
-    console.log(`[DEBUG] Filtering user:`, user);
-    console.log(`[DEBUG] Active role: ${activeRole}, User role: ${user.role}`);
+    // console.log(`[DEBUG] Filtering user:`, user);
+    // console.log(`[DEBUG] Active role: ${activeRole}, User role: ${user.role}`);
 
     // Get normalized roles for comparison
     const normalizedUserRole = normalizeRoleFromAPI(user.role);
     const normalizedActiveRole = normalizeRoleFromAPI(activeRole);
 
     // Special debug for god_admin
-    if (activeRole === "god_admin") {
-      console.log(`[GOD ADMIN DEBUG] Checking user ${user.name}, has role: ${user.role}`);
-      console.log(`[GOD ADMIN DEBUG] Normalized: activeRole=${normalizedActiveRole}, userRole=${normalizedUserRole}`);
-      console.log(`[GOD ADMIN DEBUG] Direct compare: ${user.role === "god_admin"}`);
-      console.log(`[GOD ADMIN DEBUG] Normalized compare: ${normalizedUserRole === "god_admin"}`);
-    }
+    // if (activeRole === "god_admin") {
+    //   console.log(`[GOD ADMIN DEBUG] Checking user ${user.name}, has role: ${user.role}`);
+    //   console.log(`[GOD ADMIN DEBUG] Normalized: activeRole=${normalizedActiveRole}, userRole=${normalizedUserRole}`);
+    //   console.log(`[GOD ADMIN DEBUG] Direct compare: ${user.role === "god_admin"}`);
+    //   console.log(`[GOD ADMIN DEBUG] Normalized compare: ${normalizedUserRole === "god_admin"}`);
+    // }
 
     // Filter by role
     let matchesRole = true;
@@ -363,12 +370,11 @@ const AccessControl = () => {
       (user.location && user.location.toLowerCase().includes(searchTerm.toLowerCase()));
 
     const result = matchesRole && matchesSearch;
-    console.log(`[DEBUG] User ${user.name} matches: ${result} (role: ${matchesRole}, search: ${matchesSearch})`);
+    // console.log(`[DEBUG] User ${user.name} matches: ${result} (role: ${matchesRole}, search: ${matchesSearch})`);
 
     return result;
   });
 
-  console.log("[DEBUG] Filtered users count:", filteredUsers.length, "out of", users.length);
 
   // Role badge color mapping
   const getRoleBadgeColor = (role) => {
@@ -382,6 +388,7 @@ const AccessControl = () => {
       case "state_manager": return "primary";
       case "national_manager": return "warning";
       case "god_admin": return "danger";
+      case "kyc_admin": return "dark";
       default: return "secondary";
     }
   };
@@ -570,7 +577,7 @@ const AccessControl = () => {
 
       try {
         // Fetch all users (with a large limit)
-        const apiUrl = `/api/v1/web/users/?limit=100&offset=0`;
+        const apiUrl = `/api/v1/web/users/?limit=50&offset=0`;
         console.log(`[FETCH ALL] Fetching users from: ${apiUrl}`);
 
         const data = await API.get(apiUrl);
@@ -619,7 +626,7 @@ const AccessControl = () => {
         // Update the users state with all users
         setUsers(formattedUsers);
         setUsersTotalCount(data.count);
-        setUsersTotalPages(Math.ceil(data.count / 10));
+        setUsersTotalPages(Math.ceil(data.count / 50));
 
       } catch (error) {
         console.error(`[FETCH ALL] Error fetching all users:`, error);
@@ -648,58 +655,44 @@ const AccessControl = () => {
       setShowUsersList(false);
       setShowAdminsList(false);
 
-      // Dummy deleted users data
-      const dummyDeletedUsers = [
-        {
-          id: 1,
-          name: "John Smith",
-          email: "john.smith@example.com",
-          role: "city_manager",
-          location: "Mumbai",
-          status: "inactive",
-          lastActive: "2024-03-15",
-          picture: null,
-          deletedOn: "2024-03-20"
-        },
-        {
-          id: 2,
-          name: "Sarah Wilson",
-          email: "sarah.wilson@example.com",
-          role: "ground_zero",
-          location: "Delhi",
-          status: "inactive",
-          lastActive: "2024-03-10",
-          picture: null,
-          deletedOn: "2024-03-18"
-        },
-        {
-          id: 3,
-          name: "Michael Brown",
-          email: "michael.brown@example.com",
-          role: "state_manager",
-          location: "Bangalore",
-          status: "inactive",
-          lastActive: "2024-03-12",
-          picture: null,
-          deletedOn: "2024-03-16"
-        },
-        {
-          id: 4,
-          name: "Emily Davis",
-          email: "emily.davis@example.com",
-          role: null,
-          location: "Chennai",
-          status: "inactive",
-          lastActive: "2024-03-08",
-          picture: null,
-          deletedOn: "2024-03-15"
-        }
-      ];
+      // Fetch inactive users from API
+      const apiUrl = `/api/v1/web/users/?status=inactive`;
+      console.log(`[ACCESS CONTROL] Fetching inactive users from: ${apiUrl}`);
 
-      // Set the dummy data
-      setUsers(dummyDeletedUsers);
-      setUsersTotalPages(1);
-      setUsersTotalCount(dummyDeletedUsers.length);
+      const data = await API.get(apiUrl);
+      console.log("get inactive users api response:", data);
+
+      // Format the users data
+      const formattedUsers = data.results.map(userObj => {
+        // Capitalize the first letter of first name and last name
+        const firstName = userObj.user.first_name ?
+          userObj.user.first_name.charAt(0).toUpperCase() + userObj.user.first_name.slice(1).toLowerCase() :
+          "";
+
+        const lastName = userObj.user.last_name ?
+          userObj.user.last_name.charAt(0).toUpperCase() + userObj.user.last_name.slice(1).toLowerCase() :
+          "";
+
+        return {
+          id: userObj.id,
+          name: `${firstName} ${lastName}`,
+          email: userObj.user.email,
+          username: userObj.user.username,
+          role: normalizeRoleFromAPI(userObj.admin_role),
+          location: userObj.district ? userObj.district.name : (userObj.state ? userObj.state.name : "Unknown"),
+          status: "inactive",
+          lastActive: formatDate(new Date(), 'date-only'),
+          phone: userObj.phone_number,
+          picture: userObj.picture,
+          gender: userObj.gender,
+          dob: userObj.date_of_birth
+        };
+      });
+
+      // Set the users data
+      setUsers(formattedUsers);
+      setUsersTotalPages(Math.ceil(data.count / 50));
+      setUsersTotalCount(data.count);
       setShowDeletedUsers(true);
       setActiveTab("users");
 
@@ -723,7 +716,7 @@ const AccessControl = () => {
   return (
     <Container fluid className="p-4" style={{
       background: "linear-gradient(to bottom, #f8fcf8 0%, #f8fcf8 100%)",
-
+      minHeight: "100vh",
       width: "100%",
     }}>
       {/* Toast container for success messages */}
@@ -972,7 +965,7 @@ const AccessControl = () => {
           )}
 
           {/* Users table */}
-          {!usersLoading && users.length > 0 && (
+          {!usersLoading && (
             <Card className="shadow-sm" style={{ borderRadius: "0.25rem" }}>
               <Card.Body>
                 <UsersTable
@@ -998,6 +991,7 @@ const AccessControl = () => {
                   onAllAdminsClick={handleAllAdminsClick}
                   onDeletedUsersClick={handleDeletedUsersClick}
                   onAddUserClick={() => setShowCreateUserOrAdminModal(true)}
+                  showDeletedUsers={showDeletedUsers}
                 />
 
                 {/* Pagination */}
@@ -1007,7 +1001,7 @@ const AccessControl = () => {
                       currentPage={currentUsersPage}
                       totalPages={usersTotalPages}
                       totalItems={usersTotalCount}
-                      itemsPerPage={10}
+                      itemsPerPage={50}
                       onPageChange={handleUsersPageChange}
                       size="sm"
                     />
@@ -1015,13 +1009,6 @@ const AccessControl = () => {
                 )}
               </Card.Body>
             </Card>
-          )}
-
-          {/* No users message */}
-          {!usersLoading && users.length === 0 && !usersError && (
-            <Alert variant="info">
-              No users found. Add a new user using the "Add New User or Admin" button.
-            </Alert>
           )}
         </>
       )}
