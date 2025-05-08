@@ -54,21 +54,31 @@ const UsersTable = ({
   // Common table cell style for consistency
   const tableCellStyle = {
     verticalAlign: "middle",
-    borderRight: "1px solid #e0e0e0",
-    borderBottom: "1px solid #e0e0e0",
+    borderRightWidth: "1px",
+    borderRightStyle: "solid",
+    borderRightColor: "#e0e0e0",
+    borderBottomWidth: "1px",
+    borderBottomStyle: "solid",
+    borderBottomColor: "#e0e0e0",
     padding: "0.4rem 0.5rem",
     fontSize: "0.75rem"
   };
 
   const firstCellStyle = {
     ...tableCellStyle,
-    borderLeft: "1px solid #e0e0e0"
+    borderLeftWidth: "1px",
+    borderLeftStyle: "solid",
+    borderLeftColor: "#e0e0e0"
   };
 
   const lastCellStyle = {
     verticalAlign: "middle",
-    borderBottom: "1px solid #e0e0e0",
-    borderRight: "1px solid #e0e0e0",
+    borderBottomWidth: "1px",
+    borderBottomStyle: "solid",
+    borderBottomColor: "#e0e0e0",
+    borderRightWidth: "1px",
+    borderRightStyle: "solid",
+    borderRightColor: "#e0e0e0",
     padding: "0.4rem",
     fontSize: "0.75rem"
   };
@@ -78,17 +88,23 @@ const UsersTable = ({
     ...tableCellStyle,
     fontSize: "0.85rem",
     fontWeight: "bold",
-    borderTop: "1px solid #e0e0e0"
+    borderTopWidth: "1px",
+    borderTopStyle: "solid",
+    borderTopColor: "#e0e0e0"
   };
 
   const firstHeaderStyle = {
     ...tableHeaderStyle,
-    borderLeft: "1px solid #e0e0e0"
+    borderLeftWidth: "1px",
+    borderLeftStyle: "solid",
+    borderLeftColor: "#e0e0e0"
   };
 
   const lastHeaderStyle = {
     ...tableHeaderStyle,
-    borderRight: "1px solid #e0e0e0"
+    borderRightWidth: "1px",
+    borderRightStyle: "solid",
+    borderRightColor: "#e0e0e0"
   };
 
   // Filter users based on search term
@@ -243,33 +259,37 @@ const UsersTable = ({
         formData: Object.fromEntries(formData.entries())
       });
 
-      await API.post(`/api/v1/web/inactive-user/${userToDeactivate.id}/`, formData, {
-        headers: {
-          'Authorization': `Token 7b257e1452f1115b0c70f80a1d54ccd8615aa52c`
-        }
-      }).then(response => {
-        console.log('Confirm Deletion API Response:', response);
-        // Update the user's status
-        setUsers(prev => prev.map(user => 
-          user.id === userToDeactivate.id 
-            ? { ...user, status: user.status === 'inactive' ? 'active' : 'inactive' } 
-            : user
-        ));
-        setShowDeactivateModal(false);
-        setUserToDeactivate(null);
-      }).catch(error => {
-        console.error('API Error:', error);
-        throw error;
-      });
+      const response = await API.post(`/api/v1/web/inactive-user/${userToDeactivate.id}/`, formData);
+
+      console.log('API Response:', response);
+      
+      // If we get a success message, show it briefly before closing
+      if (response.data?.message) {
+        setDeactivationError(response.data.message);
+        // Clear the message after 2 seconds
+        setTimeout(() => {
+          setDeactivationError(null);
+        }, 2000);
+      }
+      
+      // Update the user's status
+      setUsers(prev => prev.map(user => 
+        user.id === userToDeactivate.id 
+          ? { ...user, status: user.status === 'inactive' ? 'active' : 'inactive' } 
+          : user
+      ));
+      setShowDeactivateModal(false);
+      setUserToDeactivate(null);
 
     } catch (err) {
       console.error('Error updating user status:', err);
-      setDeactivationError(
-        err.response?.data?.message || 
-        err.response?.data?.detail || 
-        err.message || 
-        'Failed to update user status. Please try again.'
-      );
+      // Show the actual error message from the backend
+      const errorMessage = err.response?.data?.message || 
+                          err.response?.data?.detail || 
+                          err.response?.data?.error || 
+                          err.message || 
+                          'Failed to update user status';
+      setDeactivationError(errorMessage);
     } finally {
       setDeletingUserId(null);
     }
@@ -528,10 +548,14 @@ const UsersTable = ({
                       style={{ 
                         fontSize: '0.7rem',
                         padding: '0.2rem 0.5rem',
-                        border: '1px solid #dee2e6',
+                        borderWidth: '1px',
+                        borderStyle: 'solid',
+                        borderColor: '#dee2e6',
                         transition: 'all 0.2s ease',
                         opacity: 1,
-                        cursor: 'pointer'
+                        cursor: 'pointer',
+                        backgroundColor: user.status === 'inactive' ? '#dc3545' : '#f8f9fa',
+                        color: user.status === 'inactive' ? '#ffffff' : '#212529'
                       }}
                     >
                       {deletingUserId === user.id ? (
@@ -654,7 +678,13 @@ const UsersTable = ({
         }}
         centered
       >
-        <Modal.Header style={{ position: 'relative', borderBottom: '1px solid #dee2e6', padding: '0.7rem' }}>
+        <Modal.Header style={{ 
+          position: 'relative', 
+          borderBottomWidth: '1px',
+          borderBottomStyle: 'solid',
+          borderBottomColor: '#dee2e6',
+          padding: '0.7rem' 
+        }}>
           <Modal.Title style={{ fontSize: '1.1rem' }}>
             {userToDeactivate?.status === 'inactive' ? 'Confirm Activation' : 'Confirm Deactivation'}
           </Modal.Title>
@@ -679,7 +709,8 @@ const UsersTable = ({
               alignItems: 'center',
               justifyContent: 'center',
               backgroundColor: '#000',
-              border: 'none'
+              borderWidth: '0',
+              borderStyle: 'none'
             }}
           >
             <FiX size={20} color="white" />

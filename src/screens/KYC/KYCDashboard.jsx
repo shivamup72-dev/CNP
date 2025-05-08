@@ -22,6 +22,15 @@ const styles = `
   .reject-kyc-btn:hover:not(:disabled) svg {
     color: white !important;
   }
+  .reject-kyc-btn {
+    border-width: 1px !important;
+    border-style: solid !important;
+    border-color: #dee2e6 !important;
+  }
+  .reject-kyc-btn:hover:not(:disabled) {
+    border-width: 1px !important;
+    border-style: solid !important;
+  }
 `;
 
 const KYCDashboard = () => {
@@ -508,12 +517,14 @@ const KYCDashboard = () => {
                             variant="light"
                             size="sm"
                             onClick={() => handleApproveKYC(kyc.id)}
-                            disabled={approvingId === kyc.id || rejectingId === kyc.id || apiRejectedKYCs.has(kyc.id)}
+                            disabled={approvingId === kyc.id || rejectingId === kyc.id}
                             className="approve-kyc-btn"
                             style={{ 
                               fontSize: '0.7rem',
                               padding: '0.2rem 0.5rem',
-                              border: '1px solid #dee2e6',
+                              borderWidth: '1px',
+                              borderStyle: 'solid',
+                              borderColor: '#dee2e6',
                               transition: 'all 0.2s ease'
                             }}
                           >
@@ -563,7 +574,9 @@ const KYCDashboard = () => {
                             style={{ 
                               fontSize: '0.7rem',
                               padding: '0.2rem 0.5rem',
-                              border: '1px solid #dee2e6',
+                              borderWidth: '1px',
+                              borderStyle: 'solid',
+                              borderColor: '#dee2e6',
                               transition: 'all 0.2s ease'
                             }}
                           >
